@@ -1,0 +1,11 @@
+C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Infrastructure\bin\Debug\net10.0\SIGECDC.Infrastructure.deps.json
+C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Infrastructure\bin\Debug\net10.0\SIGECDC.Infrastructure.dll
+C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Infrastructure\bin\Debug\net10.0\SIGECDC.Infrastructure.pdb
+C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Infrastructure\obj\Debug\net10.0\SIGECDC.Infrastructure.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Infrastructure\obj\Debug\net10.0\SIGECDC.Infrastructure.AssemblyInfoInputs.cache
+C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Infrastructure\obj\Debug\net10.0\SIGECDC.Infrastructure.AssemblyInfo.cs
+C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Infrastructure\obj\Debug\net10.0\SIGECDC.Infrastructure.csproj.CoreCompileInputs.cache
+C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Infrastructure\obj\Debug\net10.0\SIGECDC.Infrastructure.dll
+C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Infrastructure\obj\Debug\net10.0\refint\SIGECDC.Infrastructure.dll
+C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Infrastructure\obj\Debug\net10.0\SIGECDC.Infrastructure.pdb
+C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Infrastructure\obj\Debug\net10.0\ref\SIGECDC.Infrastructure.dll

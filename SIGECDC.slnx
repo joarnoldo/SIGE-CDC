@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="SIGECDC.Application/SIGECDC.Application.csproj" />
+  <Project Path="SIGECDC.Domain/SIGECDC.Domain.csproj" />
+  <Project Path="SIGECDC.Infrastructure/SIGECDC.Infrastructure.csproj" />
+  <Project Path="SIGECDC.Persistence/SIGECDC.Persistence.csproj" />
+  <Project Path="SIGECDC.Web/SIGECDC.Web.csproj" />
+</Solution>

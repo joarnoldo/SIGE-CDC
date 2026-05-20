@@ -1,0 +1,11 @@
+C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Persistence\bin\Debug\net10.0\SIGECDC.Persistence.deps.json
+C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Persistence\bin\Debug\net10.0\SIGECDC.Persistence.dll
+C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Persistence\bin\Debug\net10.0\SIGECDC.Persistence.pdb
+C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Persistence\obj\Debug\net10.0\SIGECDC.Persistence.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Persistence\obj\Debug\net10.0\SIGECDC.Persistence.AssemblyInfoInputs.cache
+C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Persistence\obj\Debug\net10.0\SIGECDC.Persistence.AssemblyInfo.cs
+C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Persistence\obj\Debug\net10.0\SIGECDC.Persistence.csproj.CoreCompileInputs.cache
+C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Persistence\obj\Debug\net10.0\SIGECDC.Persistence.dll
+C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Persistence\obj\Debug\net10.0\refint\SIGECDC.Persistence.dll
+C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Persistence\obj\Debug\net10.0\SIGECDC.Persistence.pdb
+C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Persistence\obj\Debug\net10.0\ref\SIGECDC.Persistence.dll
