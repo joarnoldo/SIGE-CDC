@@ -2,16 +2,16 @@
 
 @using System.ComponentModel.DataAnnotations
 @using Microsoft.AspNetCore.Identity
-@using SIGECDC.Web.Data
+@using SIGECDC.Persistence.Identity
 
 @inject SignInManager<ApplicationUser> SignInManager
 @inject UserManager<ApplicationUser> UserManager
 @inject IdentityRedirectManager RedirectManager
 @inject ILogger<LoginWithRecoveryCode> Logger
 
-<PageTitle>Recovery code verification</PageTitle>
+<PageTitle>Verificacion con codigo de recuperacion</PageTitle>
 
-<h1>Recovery code verification</h1>
+<h1>Verificacion con codigo de recuperacion</h1>
 <hr />
 <StatusMessage Message="@message" />
 <p>
@@ -24,11 +24,11 @@
             <DataAnnotationsValidator />
             <ValidationSummary class="text-danger" role="alert" />
             <div class="form-floating mb-3">
-                <InputText @bind-Value="Input.RecoveryCode" id="Input.RecoveryCode" class="form-control" autocomplete="off" placeholder="RecoveryCode" />
-                <label for="Input.RecoveryCode" class="form-label">Recovery Code</label>
+                <InputText @bind-Value="Input.RecoveryCode" id="Input.RecoveryCode" class="form-control" autocomplete="off" placeholder="Codigo de recuperacion" />
+                <label for="Input.RecoveryCode" class="form-label">Codigo de recuperacion</label>
                 <ValidationMessage For="() => Input.RecoveryCode" class="text-danger" />
             </div>
-            <button type="submit" class="w-100 btn btn-lg btn-primary">Log in</button>
+            <button type="submit" class="w-100 btn btn-lg btn-primary">Iniciar sesion</button>
         </EditForm>
     </div>
 </div>
@@ -49,7 +49,7 @@
 
         // Ensure the user has gone through the username & password screen first
         user = await SignInManager.GetTwoFactorAuthenticationUserAsync() ??
-            throw new InvalidOperationException("Unable to load two-factor authentication user.");
+            throw new InvalidOperationException("No se pudo cargar el usuario de autenticacion de dos factores.");
     }
 
     private async Task OnValidSubmitAsync()
@@ -62,18 +62,18 @@
 
         if (result.Succeeded)
         {
-            Logger.LogInformation("User with ID '{UserId}' logged in with a recovery code.", userId);
+            Logger.LogInformation("El usuario con ID '{UserId}' inicio sesion con codigo de recuperacion.", userId);
             RedirectManager.RedirectTo(ReturnUrl);
         }
         else if (result.IsLockedOut)
         {
-            Logger.LogWarning("User account locked out.");
+            Logger.LogWarning("Cuenta de usuario bloqueada.");
             RedirectManager.RedirectTo("Account/Lockout");
         }
         else
         {
-            Logger.LogWarning("Invalid recovery code entered for user with ID '{UserId}' ", userId);
-            message = "Error: Invalid recovery code entered.";
+            Logger.LogWarning("Codigo de recuperacion invalido para el usuario con ID '{UserId}' ", userId);
+            message = "Error: el codigo de recuperacion no es valido.";
         }
     }
 
@@ -81,7 +81,7 @@
     {
         [Required]
         [DataType(DataType.Text)]
-        [Display(Name = "Recovery Code")]
+        [Display(Name = "Codigo de recuperacion")]
         public string RecoveryCode { get; set; } = "";
     }
 }

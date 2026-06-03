@@ -1,5 +1,5 @@
 ﻿<!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 
 <head>
     <meta charset="utf-8" />
@@ -7,6 +7,12 @@
     <base href="/" />
     <ResourcePreloader />
     <link rel="stylesheet" href="@Assets["lib/bootstrap/dist/css/bootstrap.min.css"]" />
+    <link rel="stylesheet" href="@Assets["css/base.css"]" />
+    <link rel="stylesheet" href="@Assets["css/layout.css"]" />
+    <link rel="stylesheet" href="@Assets["css/components.css"]" />
+    <link rel="stylesheet" href="@Assets["css/forms.css"]" />
+    <link rel="stylesheet" href="@Assets["css/tables.css"]" />
+    <link rel="stylesheet" href="@Assets["css/public.css"]" />
     <link rel="stylesheet" href="@Assets["app.css"]" />
     <link rel="stylesheet" href="@Assets["SIGECDC.Web.styles.css"]" />
     <ImportMap />
@@ -14,11 +20,10 @@
     <HeadOutlet />
 </head>
 
-<body>
+<body class="public-body">
     <Routes />
     <ReconnectModal />
     <script src="@Assets["_framework/blazor.web.js"]"></script>
-    <script src="@Assets["Components/Account/Shared/PasskeySubmit.razor.js"]" type="module"></script>
 </body>
 
 </html>

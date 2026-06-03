@@ -1,0 +1,20 @@
+# Build outputs
+bin/
+obj/
+
+# Visual Studio local files
+.vs/
+*.user
+*.suo
+
+# Rider / ReSharper
+.idea/
+_ReSharper*/
+*.DotSettings.user
+
+# OS files
+Thumbs.db
+Desktop.ini
+
+# Logs
+*.log

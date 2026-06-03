@@ -1,7 +1,7 @@
 ﻿@page "/Account/Manage/PersonalData"
 
 @using Microsoft.AspNetCore.Identity
-@using SIGECDC.Web.Data
+@using SIGECDC.Persistence.Identity
 
 @inject UserManager<ApplicationUser> UserManager
 @inject IdentityRedirectManager RedirectManager
@@ -13,16 +13,16 @@
 
 <div class="row">
     <div class="col-md-6">
-        <p>Your account contains personal data that you have given us. This page allows you to download or delete that data.</p>
+        <p>Su cuenta contiene datos personales proporcionados al sistema. Esta pagina permite descargarlos o eliminarlos.</p>
         <p>
-            <strong>Deleting this data will permanently remove your account, and this cannot be recovered.</strong>
+            <strong>Al eliminar estos datos, la cuenta se cerrara de forma permanente y no podra recuperarse.</strong>
         </p>
-        <form action="Account/Manage/DownloadPersonalData" method="post">
+        <form action="Account/Manage/DescargarPersonalData" method="post">
             <AntiforgeryToken />
-            <button class="btn btn-primary" type="submit">Download</button>
+            <button class="btn btn-primary" type="submit">Descargar</button>
         </form>
         <p>
-            <a href="Account/Manage/DeletePersonalData" class="btn btn-danger">Delete</a>
+            <a href="Account/Manage/DeletePersonalData" class="btn btn-danger">Eliminar</a>
         </p>
     </div>
 </div>

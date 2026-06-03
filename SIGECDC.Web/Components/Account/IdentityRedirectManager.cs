@@ -1,6 +1,6 @@
-using Microsoft.AspNetCore.Components;
+﻿using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Identity;
-using SIGECDC.Web.Data;
+using SIGECDC.Persistence.Identity;
 
 namespace SIGECDC.Web.Components.Account
 {
@@ -50,6 +50,6 @@ namespace SIGECDC.Web.Components.Account
             => RedirectToWithStatus(CurrentPath, message, context);
 
         public void RedirectToInvalidUser(UserManager<ApplicationUser> userManager, HttpContext context)
-            => RedirectToWithStatus("Account/InvalidUser", $"Error: Unable to load user with ID '{userManager.GetUserId(context.User)}'.", context);
+            => RedirectToWithStatus("Account/InvalidUser", $"Error: no se pudo cargar el usuario con ID '{userManager.GetUserId(context.User)}'.", context);
     }
 }

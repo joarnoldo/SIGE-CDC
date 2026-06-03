@@ -1,0 +1,60 @@
+.table-card {
+  padding: 1.2rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(199, 209, 216, 0.8);
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: var(--shadow-soft);
+}
+
+.table-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  margin-bottom: 1rem;
+}
+
+.table-responsive {
+  overflow-x: auto;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 860px;
+}
+
+.data-table th,
+.data-table td {
+  padding: 0.92rem 0.9rem;
+  text-align: left;
+  border-bottom: 1px solid rgba(199, 209, 216, 0.64);
+  vertical-align: top;
+}
+
+.data-table th {
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-stone-700);
+}
+
+.data-table tbody tr:hover {
+  background: rgba(244, 246, 247, 0.68);
+}
+
+.table-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.table-actions a,
+.table-actions button {
+  padding: 0.45rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid rgba(123, 143, 156, 0.28);
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--color-ink-700);
+}

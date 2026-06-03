@@ -1,23 +1,118 @@
-﻿@inherits LayoutComponentBase
+@inherits LayoutComponentBase
+@implements IDisposable
 
-<div class="page">
-    <div class="sidebar">
-        <NavMenu />
+@inject NavigationManager NavigationManager
+
+<header class="site-header">
+    <div class="container site-header__inner">
+        <a class="brand" href="">
+            <span class="brand-mark">SC</span>
+            <span class="brand-copy">
+                <strong>Canales y Drenajes del Caribe S.R.L.</strong>
+                <span>Obras civiles e infraestructura</span>
+            </span>
+        </a>
+
+        <nav class="site-nav" aria-label="Navegacion publica">
+            <NavLink href="" Match="NavLinkMatch.All" ActiveClass="is-active">Inicio</NavLink>
+            <NavLink href="quienes-somos" ActiveClass="is-active">Quienes Somos</NavLink>
+            <NavLink href="servicios" ActiveClass="is-active">Servicios</NavLink>
+            <NavLink href="contacto" ActiveClass="is-active">Contacto</NavLink>
+            <NavLink href="politicas" ActiveClass="is-active">Politicas</NavLink>
+        </nav>
+
+        <AuthorizeView>
+            <Authorized>
+                <nav class="site-nav" aria-label="Sesion">
+                    <AuthorizeView Roles="Administrador" Context="adminContext">
+                        <Authorized>
+                            <NavLink href="admin/consultas-contacto" ActiveClass="is-active">Consultas</NavLink>
+                        </Authorized>
+                    </AuthorizeView>
+                    <NavLink href="Account/Manage" ActiveClass="is-active">Mi cuenta</NavLink>
+                    <form action="Account/Logout" method="post">
+                        <AntiforgeryToken />
+                        <input type="hidden" name="ReturnUrl" value="@rutaActual" />
+                        <button class="btn btn--secondary" type="submit">Cerrar sesion</button>
+                    </form>
+                </nav>
+            </Authorized>
+            <NotAuthorized>
+                <a class="btn btn--secondary" href="Account/Login">Acceso interno SIGE-CDC</a>
+            </NotAuthorized>
+        </AuthorizeView>
     </div>
+</header>
 
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
+<main class="public-main">
+    @Body
+</main>
+
+<footer class="site-footer">
+    <div class="container">
+        <div class="site-footer__inner">
+            <a class="brand" href="">
+                <span class="brand-mark">SC</span>
+                <span class="brand-copy">
+                    <strong>Canales y Drenajes del Caribe S.R.L.</strong>
+                    <span>Obras civiles e infraestructura</span>
+                </span>
+            </a>
+            <span>Canales y Drenajes del Caribe S.R.L.</span>
         </div>
-
-        <article class="content px-4">
-            @Body
-        </article>
-    </main>
-</div>
+        <div class="site-footer__grid">
+            <section>
+                <h3>Canales y Drenajes del Caribe S.R.L.</h3>
+                <p>Empresa costarricense dedicada a obras civiles, puentes, drenajes y soporte operativo para proyectos de infraestructura.</p>
+            </section>
+            <section>
+                <h3>Sitio publico</h3>
+                <ul>
+                    <li><a href="">Inicio</a></li>
+                    <li><a href="quienes-somos">Quienes Somos</a></li>
+                    <li><a href="servicios">Servicios</a></li>
+                </ul>
+            </section>
+            <section>
+                <h3>Contacto</h3>
+                <ul>
+                    <li><a href="contacto">Formulario de contacto</a></li>
+                    <li><a href="politicas">Politicas del sitio</a></li>
+                </ul>
+            </section>
+            <section>
+                <h3>Acceso</h3>
+                <ul>
+                    <li><a href="Account/Login">Acceso privado</a></li>
+                </ul>
+            </section>
+        </div>
+    </div>
+</footer>
 
 <div id="blazor-error-ui" data-nosnippet>
-    An unhandled error has occurred.
-    <a href="." class="reload">Reload</a>
-    <span class="dismiss">🗙</span>
+    Ocurrio un error inesperado.
+    <a href="." class="reload">Recargar</a>
+    <span class="dismiss">x</span>
 </div>
+
+@code {
+    private string rutaActual = "";
+
+    protected override void OnInitialized()
+    {
+        rutaActual = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+        NavigationManager.LocationChanged += OnLocationChanged;
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        rutaActual = NavigationManager.ToBaseRelativePath(e.Location);
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        NavigationManager.LocationChanged -= OnLocationChanged;
+    }
+}

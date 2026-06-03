@@ -1,30 +1,29 @@
-﻿@page "/Error"
+@page "/Error"
 @using System.Diagnostics
 
-<PageTitle>Error</PageTitle>
+<PageTitle>Error | Canales y Drenajes del Caribe S.R.L.</PageTitle>
 
-<h1 class="text-danger">Error.</h1>
-<h2 class="text-danger">An error occurred while processing your request.</h2>
+<section class="page-banner">
+    <div class="container page-banner__inner stack--tight">
+        <p class="eyebrow">Error</p>
+        <h1>No pudimos procesar la solicitud.</h1>
+        <p class="lead">Puede volver al inicio o intentar nuevamente en unos minutos.</p>
+    </div>
+</section>
 
-@if (ShowRequestId)
-{
-    <p>
-        <strong>Request ID:</strong> <code>@RequestId</code>
-    </p>
-}
+<section class="section-shell section-shell--compact">
+    <div class="container panel-highlight stack">
+        @if (ShowRequestId)
+        {
+            <p>
+                <strong>Referencia:</strong> <code>@RequestId</code>
+            </p>
+        }
+        <a class="btn btn--primary" href="">Volver al inicio</a>
+    </div>
+</section>
 
-<h3>Development Mode</h3>
-<p>
-    Swapping to <strong>Development</strong> environment will display more detailed information about the error that occurred.
-</p>
-<p>
-    <strong>The Development environment shouldn't be enabled for deployed applications.</strong>
-    It can result in displaying sensitive information from exceptions to end users.
-    For local debugging, enable the <strong>Development</strong> environment by setting the <strong>ASPNETCORE_ENVIRONMENT</strong> environment variable to <strong>Development</strong>
-    and restarting the app.
-</p>
-
-@code{
+@code {
     [CascadingParameter]
     private HttpContext? HttpContext { get; set; }
 

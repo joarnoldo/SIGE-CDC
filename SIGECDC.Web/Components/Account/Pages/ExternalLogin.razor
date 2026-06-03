@@ -6,7 +6,7 @@
 @using System.Text.Encodings.Web
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.AspNetCore.WebUtilities
-@using SIGECDC.Web.Data
+@using SIGECDC.Persistence.Identity
 
 @inject SignInManager<ApplicationUser> SignInManager
 @inject UserManager<ApplicationUser> UserManager
@@ -16,17 +16,17 @@
 @inject IdentityRedirectManager RedirectManager
 @inject ILogger<ExternalLogin> Logger
 
-<PageTitle>Register</PageTitle>
+<PageTitle>Registrar</PageTitle>
 
 <StatusMessage Message="@message" />
-<h1>Register</h1>
-<h2>Associate your @ProviderDisplayName account.</h2>
+<h1>Registrar</h1>
+<h2>Asociar la cuenta de @ProviderDisplayName.</h2>
 <hr />
 
 <div  class="alert alert-info">
-    You've successfully authenticated with <strong>@ProviderDisplayName</strong>.
-    Please enter an email address for this site below and click the Register button to finish
-    logging in.
+    Se autentico correctamente con <strong>@ProviderDisplayName</strong>.
+    Ingrese un correo electronico para completar
+    el acceso.
 </div>
 
 <div class="row">
@@ -35,11 +35,11 @@
             <DataAnnotationsValidator />
             <ValidationSummary class="text-danger" role="alert" />
             <div class="form-floating mb-3">
-                <InputText @bind-Value="Input.Email" id="Input.Email" class="form-control" autocomplete="email" placeholder="Please enter your email." />
-                <label for="Input.Email" class="form-label">Email</label>
+                <InputText @bind-Value="Input.Email" id="Input.Email" class="form-control" autocomplete="email" placeholder="Ingrese su correo electronico." />
+                <label for="Input.Email" class="form-label">Correo electronico</label>
                 <ValidationMessage For="() => Input.Email" />
             </div>
-            <button type="submit" class="w-100 btn btn-lg btn-primary">Register</button>
+            <button type="submit" class="w-100 btn btn-lg btn-primary">Registrar</button>
         </EditForm>
     </div>
 </div>
@@ -73,14 +73,14 @@
 
         if (RemoteError is not null)
         {
-            RedirectManager.RedirectToWithStatus("Account/Login", $"Error from external provider: {RemoteError}", HttpContext);
+            RedirectManager.RedirectToWithStatus("Account/Login", $"Error del proveedor externo: {RemoteError}", HttpContext);
             return;
         }
 
         var info = await SignInManager.GetExternalLoginInfoAsync();
         if (info is null)
         {
-            RedirectManager.RedirectToWithStatus("Account/Login", "Error loading external login information.", HttpContext);
+            RedirectManager.RedirectToWithStatus("Account/Login", "Error al cargar la informacion del acceso externo.", HttpContext);
             return;
         }
 
@@ -104,11 +104,11 @@
     {
         if (externalLoginInfo is null)
         {
-            RedirectManager.RedirectToWithStatus("Account/Login", "Error loading external login information.", HttpContext);
+            RedirectManager.RedirectToWithStatus("Account/Login", "Error al cargar la informacion del acceso externo.", HttpContext);
             return;
         }
 
-        // Sign in the user with this external login provider if the user already has a login.
+        // Inicia sesion con el proveedor externo si el usuario ya tiene un acceso asociado.
         var result = await SignInManager.ExternalLoginSignInAsync(
             externalLoginInfo.LoginProvider,
             externalLoginInfo.ProviderKey,
@@ -118,7 +118,7 @@
         if (result.Succeeded)
         {
             Logger.LogInformation(
-                "{Name} logged in with {LoginProvider} provider.",
+                "{Name} inicio sesion con el proveedor {LoginProvider}.",
                 externalLoginInfo.Principal.Identity?.Name,
                 externalLoginInfo.LoginProvider);
             RedirectManager.RedirectTo(ReturnUrl);
@@ -130,7 +130,7 @@
             return;
         }
 
-        // If the user does not have an account, then ask the user to create an account.
+        // Si el usuario no tiene cuenta, se solicita completar el registro.
         if (externalLoginInfo.Principal.HasClaim(c => c.Type == ClaimTypes.Email))
         {
             Input.Email = externalLoginInfo.Principal.FindFirstValue(ClaimTypes.Email) ?? "";
@@ -141,7 +141,7 @@
     {
         if (externalLoginInfo is null)
         {
-            RedirectManager.RedirectToWithStatus("Account/Login", "Error loading external login information during confirmation.", HttpContext);
+            RedirectManager.RedirectToWithStatus("Account/Login", "Error al cargar la informacion del acceso externo durante la confirmacion.", HttpContext);
             return;
         }
 
@@ -157,7 +157,7 @@
             result = await UserManager.AddLoginAsync(user, externalLoginInfo);
             if (result.Succeeded)
             {
-                Logger.LogInformation("User created an account using {Name} provider.", externalLoginInfo.LoginProvider);
+                Logger.LogInformation("Usuario creado usando el proveedor {Name}.", externalLoginInfo.LoginProvider);
 
                 var userId = await UserManager.GetUserIdAsync(user);
                 var code = await UserManager.GenerateEmailConfirmationTokenAsync(user);
@@ -168,7 +168,7 @@
                     new Dictionary<string, object?> { ["userId"] = userId, ["code"] = code });
                 await EmailSender.SendConfirmationLinkAsync(user, Input.Email, HtmlEncoder.Default.Encode(callbackUrl));
 
-                // If account confirmation is required, we need to show the link if we don't have a real email sender
+                // Si la confirmacion es obligatoria y no hay correo real, se muestra el enlace de desarrollo.
                 if (UserManager.Options.SignIn.RequireConfirmedAccount)
                 {
                     RedirectManager.RedirectTo("Account/RegisterConfirmation", new() { ["email"] = Input.Email });
@@ -203,7 +203,7 @@
     {
         if (!UserManager.SupportsUserEmail)
         {
-            throw new NotSupportedException("The default UI requires a user store with email support.");
+            throw new NotSupportedException("La interfaz de Identity requiere un almacen de usuarios con soporte de correo electronico.");
         }
         return (IUserEmailStore<ApplicationUser>)UserStore;
     }

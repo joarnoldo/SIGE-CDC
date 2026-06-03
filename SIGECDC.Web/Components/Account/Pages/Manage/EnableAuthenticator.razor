@@ -5,7 +5,7 @@
 @using System.Text
 @using System.Text.Encodings.Web
 @using Microsoft.AspNetCore.Identity
-@using SIGECDC.Web.Data
+@using SIGECDC.Persistence.Identity
 
 @inject UserManager<ApplicationUser> UserManager
 @inject UrlEncoder UrlEncoder
@@ -27,7 +27,7 @@ else
         <ol class="list">
             <li>
                 <p>
-                    Download a two-factor authenticator app like Microsoft Authenticator for
+                    Descargar a two-factor authenticator app like Microsoft Authenticator for
                     <a href="https://go.microsoft.com/fwlink/?Linkid=825072">Android</a> and
                     <a href="https://go.microsoft.com/fwlink/?Linkid=825073">iOS</a> or
                     Google Authenticator for
@@ -110,7 +110,7 @@ else
 
         if (!is2faTokenValid)
         {
-            message = "Error: Verification code is invalid.";
+            message = "Error: Codigo de verificacion is invalid.";
             return;
         }
 
@@ -132,7 +132,7 @@ else
 
     private async ValueTask LoadSharedKeyAndQrCodeUriAsync(ApplicationUser user)
     {
-        // Load the authenticator key & QR code URI to display on the form
+        // Carga la clave del autenticador y la URI del codigo QR para mostrarlas en el formulario
         var unformattedKey = await UserManager.GetAuthenticatorKeyAsync(user);
         if (string.IsNullOrEmpty(unformattedKey))
         {
@@ -176,7 +176,7 @@ else
     private sealed class InputModel
     {
         [Required]
-        [StringLength(7, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
+        [StringLength(7, ErrorMessage = "El campo {0} debe tener al menos {2} y como maximo {1} caracteres.", MinimumLength = 6)]
         [DataType(DataType.Text)]
         [Display(Name = "Verification Code")]
         public string Code { get; set; } = "";

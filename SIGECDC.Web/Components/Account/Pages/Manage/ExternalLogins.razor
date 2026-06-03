@@ -2,7 +2,7 @@
 
 @using Microsoft.AspNetCore.Authentication
 @using Microsoft.AspNetCore.Identity
-@using SIGECDC.Web.Data
+@using SIGECDC.Persistence.Identity
 
 @inject UserManager<ApplicationUser> UserManager
 @inject SignInManager<ApplicationUser> SignInManager
@@ -14,7 +14,7 @@
 <StatusMessage />
 @if (currentLogins?.Count > 0)
 {
-    <h3>Registered Logins</h3>
+    <h3>Registrared Logins</h3>
     <table class="table">
         <tbody>
             @foreach (var login in currentLogins)
@@ -29,7 +29,7 @@
                                 <div>
                                     <input type="hidden" name="@nameof(LoginProvider)" value="@login.LoginProvider" />
                                     <input type="hidden" name="@nameof(ProviderKey)" value="@login.ProviderKey" />
-                                    <button type="submit" class="btn btn-primary" title="Remove this @login.ProviderDisplayName login from your account">Remove</button>
+                                    <button type="submit" class="btn btn-primary" title="Quitar este acceso de @login.ProviderDisplayName de la cuenta">Quitar</button>
                                 </div>
                             </form>
                         }
@@ -53,7 +53,7 @@
             <p>
                 @foreach (var provider in otherLogins)
                 {
-                    <button type="submit" class="btn btn-primary" name="Provider" value="@provider.Name" title="Log in using your @provider.DisplayName account">
+                    <button type="submit" class="btn btn-primary" name="Provider" value="@provider.Name" title="Iniciar sesion con la cuenta de @provider.DisplayName">
                         @provider.DisplayName
                     </button>
                 }
@@ -121,12 +121,12 @@
         var result = await UserManager.RemoveLoginAsync(user, LoginProvider!, ProviderKey!);
         if (!result.Succeeded)
         {
-            RedirectManager.RedirectToCurrentPageWithStatus("Error: The external login was not removed.", HttpContext);
+            RedirectManager.RedirectToCurrentPageWithStatus("Error: el acceso externo no fue eliminado.", HttpContext);
         }
         else
         {
             await SignInManager.RefreshSignInAsync(user);
-            RedirectManager.RedirectToCurrentPageWithStatus("The external login was removed.", HttpContext);
+            RedirectManager.RedirectToCurrentPageWithStatus("El acceso externo fue eliminado.", HttpContext);
         }
     }
 
@@ -142,7 +142,7 @@
         var info = await SignInManager.GetExternalLoginInfoAsync(userId);
         if (info is null)
         {
-            RedirectManager.RedirectToCurrentPageWithStatus("Error: Could not load external login info.", HttpContext);
+            RedirectManager.RedirectToCurrentPageWithStatus("Error: no se pudo cargar la informacion del acceso externo.", HttpContext);
             return;
         }
 
@@ -152,11 +152,11 @@
             // Clear the existing external cookie to ensure a clean login process
             await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
 
-            RedirectManager.RedirectToCurrentPageWithStatus("The external login was added.", HttpContext);
+            RedirectManager.RedirectToCurrentPageWithStatus("El acceso externo fue agregado.", HttpContext);
         }
         else
         {
-            RedirectManager.RedirectToCurrentPageWithStatus("Error: The external login was not added. External logins can only be associated with one account.", HttpContext);
+            RedirectManager.RedirectToCurrentPageWithStatus("Error: el acceso externo no fue agregado. Solo puede asociarse a una cuenta.", HttpContext);
         }
     }
 }

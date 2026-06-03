@@ -1,21 +1,20 @@
-﻿@page "/Account/ResendEmailConfirmation"
-
+﻿
 @using System.ComponentModel.DataAnnotations
 @using System.Text
 @using System.Text.Encodings.Web
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.AspNetCore.WebUtilities
-@using SIGECDC.Web.Data
+@using SIGECDC.Persistence.Identity
 
 @inject UserManager<ApplicationUser> UserManager
 @inject IEmailSender<ApplicationUser> EmailSender
 @inject NavigationManager NavigationManager
 @inject IdentityRedirectManager RedirectManager
 
-<PageTitle>Resend email confirmation</PageTitle>
+<PageTitle>Reenviar confirmacion de correo</PageTitle>
 
-<h1>Resend email confirmation</h1>
-<h2>Enter your email.</h2>
+<h1>Reenviar confirmacion de correo</h1>
+<h2>Ingrese su correo electronico.</h2>
 <hr />
 <StatusMessage Message="@message" />
 <div class="row">
@@ -25,10 +24,10 @@
             <ValidationSummary class="text-danger" role="alert" />
             <div class="form-floating mb-3">
                 <InputText @bind-Value="Input.Email" id="Input.Email" class="form-control" aria-required="true" placeholder="name@example.com" />
-                <label for="Input.Email" class="form-label">Email</label>
+                <label for="Input.Email" class="form-label">Correo electronico</label>
                 <ValidationMessage For="() => Input.Email" class="text-danger" />
             </div>
-            <button type="submit" class="w-100 btn btn-lg btn-primary">Resend</button>
+            <button type="submit" class="w-100 btn btn-lg btn-primary">Reenviar</button>
         </EditForm>
     </div>
 </div>
@@ -49,7 +48,7 @@
         var user = await UserManager.FindByEmailAsync(Input.Email!);
         if (user is null)
         {
-            message = "Verification email sent. Please check your email.";
+            message = "Se envio el correo de verificacion. Revise su correo electronico.";
             return;
         }
 
@@ -61,7 +60,7 @@
             new Dictionary<string, object?> { ["userId"] = userId, ["code"] = code });
         await EmailSender.SendConfirmationLinkAsync(user, Input.Email, HtmlEncoder.Default.Encode(callbackUrl));
 
-        message = "Verification email sent. Please check your email.";
+        message = "Se envio el correo de verificacion. Revise su correo electronico.";
     }
 
     private sealed class InputModel
@@ -71,3 +70,4 @@
         public string Email { get; set; } = "";
     }
 }
+

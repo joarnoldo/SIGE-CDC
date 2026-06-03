@@ -2,16 +2,16 @@
 
 @using System.ComponentModel.DataAnnotations
 @using Microsoft.AspNetCore.Identity
-@using SIGECDC.Web.Data
+@using SIGECDC.Persistence.Identity
 
 @inject SignInManager<ApplicationUser> SignInManager
 @inject UserManager<ApplicationUser> UserManager
 @inject IdentityRedirectManager RedirectManager
 @inject ILogger<LoginWith2fa> Logger
 
-<PageTitle>Two-factor authentication</PageTitle>
+<PageTitle>Autenticacion de dos factores</PageTitle>
 
-<h1>Two-factor authentication</h1>
+<h1>Autenticacion de dos factores</h1>
 <hr />
 <StatusMessage Message="@message" />
 <p>Your login is protected with an authenticator app. Enter your authenticator code below.</p>
@@ -30,11 +30,11 @@
             <div class="checkbox mb-3">
                 <label for="remember-machine" class="form-label">
                     <InputCheckbox @bind-Value="Input.RememberMachine" />
-                    Remember this machine
+                    Recordar este equipo
                 </label>
             </div>
             <div>
-                <button type="submit" class="w-100 btn btn-lg btn-primary">Log in</button>
+                <button type="submit" class="w-100 btn btn-lg btn-primary">Iniciar sesion</button>
             </div>
         </EditForm>
     </div>
@@ -63,7 +63,7 @@
 
         // Ensure the user has gone through the username & password screen first
         user = await SignInManager.GetTwoFactorAuthenticationUserAsync() ??
-            throw new InvalidOperationException("Unable to load two-factor authentication user.");
+            throw new InvalidOperationException("No se pudo cargar el usuario de autenticacion de dos factores.");
     }
 
     private async Task OnValidSubmitAsync()
@@ -74,12 +74,12 @@
 
         if (result.Succeeded)
         {
-            Logger.LogInformation("User with ID '{UserId}' logged in with 2fa.", userId);
+            Logger.LogInformation("El usuario con ID '{UserId}' inicio sesion con 2FA.", userId);
             RedirectManager.RedirectTo(ReturnUrl);
         }
         else if (result.IsLockedOut)
         {
-            Logger.LogWarning("User with ID '{UserId}' account locked out.", userId);
+            Logger.LogWarning("La cuenta del usuario con ID '{UserId}' fue bloqueada.", userId);
             RedirectManager.RedirectTo("Account/Lockout");
         }
         else
@@ -92,12 +92,12 @@
     private sealed class InputModel
     {
         [Required]
-        [StringLength(7, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
+        [StringLength(7, ErrorMessage = "El campo {0} debe tener al menos {2} y como maximo {1} caracteres.", MinimumLength = 6)]
         [DataType(DataType.Text)]
         [Display(Name = "Authenticator code")]
         public string? TwoFactorCode { get; set; }
 
-        [Display(Name = "Remember this machine")]
+        [Display(Name = "Recordar este equipo")]
         public bool RememberMachine { get; set; }
     }
 }

@@ -1,0 +1,137 @@
+@page "/contacto"
+@rendermode InteractiveServer
+@using SIGECDC.Application.SitioPublico
+@inject IConsultaContactoService ConsultaContactoService
+@inject ILogger<Contacto> Logger
+
+<PageTitle>Contacto | Canales y Drenajes del Caribe S.R.L.</PageTitle>
+
+<section class="page-banner">
+    <div class="container page-banner__inner stack--tight">
+        <p class="eyebrow">Contacto</p>
+        <h1>Canales de comunicación para consultas institucionales.</h1>
+        <p class="lead">Para consultas sobre servicios, proyectos o información general, puede comunicarse con Canales y Drenajes del Caribe S.R.L. mediante el siguiente formulario o por medio de los canales oficiales de atención.</p>
+    </div>
+</section>
+
+<section class="section-shell">
+    <div class="container page-grid">
+        <section class="page-main">
+            <EditForm Model="consulta" OnValidSubmit="RegistrarConsultaAsync" OnInvalidSubmit="LimpiarMensajes" class="form-section stack" aria-label="Formulario de contacto">
+                <DataAnnotationsValidator />
+
+                <div>
+                    <p class="eyebrow">Formulario</p>
+                    <h2>Envíe su consulta</h2>
+                    <p class="lead">Si desea más información sobre nuestros servicios o necesita consultar sobre un proyecto, puede completar el siguiente formulario. Nuestro equipo revisará su solicitud y se pondrá en contacto con usted según la información proporcionada.</p>
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(mensajeConfirmacion))
+                {
+                    <div class="alert alert--success" role="status">
+                        <strong>Consulta enviada</strong>
+                        <span>@mensajeConfirmacion</span>
+                    </div>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(mensajeError))
+                {
+                    <div class="alert alert--danger" role="alert">
+                        <strong>No se pudo enviar la consulta</strong>
+                        <span>@mensajeError</span>
+                    </div>
+                }
+
+                <ValidationSummary />
+
+                <div class="form-grid">
+                    <div class="field">
+                        <label for="nombre">Nombre completo</label>
+                        <InputText id="nombre" @bind-Value="consulta.Nombre" autocomplete="name" placeholder="Nombre de contacto" />
+                        <ValidationMessage For="() => consulta.Nombre" />
+                    </div>
+                    <div class="field">
+                        <label for="correo">Correo electrónico</label>
+                        <InputText id="correo" @bind-Value="consulta.CorreoElectronico" type="email" autocomplete="email" placeholder="correo@empresa.com" />
+                        <ValidationMessage For="() => consulta.CorreoElectronico" />
+                    </div>
+                    <div class="field">
+                        <label for="telefono">Teléfono</label>
+                        <InputText id="telefono" @bind-Value="consulta.Telefono" autocomplete="tel" placeholder="+506 0000-0000" />
+                        <ValidationMessage For="() => consulta.Telefono" />
+                    </div>
+                    <div class="field">
+                        <label for="asunto">Asunto</label>
+                        <InputText id="asunto" @bind-Value="consulta.Asunto" placeholder="Motivo de la consulta" />
+                        <ValidationMessage For="() => consulta.Asunto" />
+                    </div>
+                    <div class="field field--span-2">
+                        <label for="mensaje">Mensaje</label>
+                        <InputTextArea id="mensaje" @bind-Value="consulta.Mensaje" placeholder="Detalle de la solicitud" />
+                        <ValidationMessage For="() => consulta.Mensaje" />
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <span class="help-text">La información enviada será utilizada únicamente para atender su consulta.</span>
+                    <button class="btn btn--primary" type="submit" disabled="@enviando">
+                        @(enviando ? "Enviando..." : "Enviar consulta")
+                    </button>
+                </div>
+            </EditForm>
+        </section>
+
+        <aside class="page-aside">
+            <article class="card card--accent stack">
+                <p class="eyebrow">Canales oficiales</p>
+                <h2>Atención disponible</h2>
+                <ul class="detail-list list-unstyled">
+                    <li class="detail-list__item">Teléfono: 2763-4683.</li>
+                    <li class="detail-list__item">Correo: canalesydrenajes@yahoo.com.</li>
+                    <li class="detail-list__item">Horario: lunes a viernes, de 8:00 a.m. a 5:00 p.m.</li>
+                    <li class="detail-list__item">Cobertura: Costa Rica.</li>
+                </ul>
+            </article>
+            <article class="card stack">
+                <h3>Uso de la información</h3>
+                <p>La información enviada mediante este formulario será utilizada únicamente para atender su consulta y dar seguimiento a la solicitud realizada. No se solicitarán datos sensibles por este medio.</p>
+            </article>
+        </aside>
+    </div>
+</section>
+
+@code {
+    private SolicitudConsultaContacto consulta = new();
+    private bool enviando;
+    private string? mensajeConfirmacion;
+    private string? mensajeError;
+
+    private async Task RegistrarConsultaAsync()
+    {
+        enviando = true;
+        mensajeConfirmacion = null;
+        mensajeError = null;
+
+        try
+        {
+            await ConsultaContactoService.RegistrarConsultaAsync(consulta);
+            consulta = new SolicitudConsultaContacto();
+            mensajeConfirmacion = "Hemos recibido su consulta. Nuestro equipo revisará la información enviada y le dará seguimiento.";
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudo registrar la consulta de contacto.");
+            mensajeError = "Ocurrió un inconveniente al registrar la consulta. Intente nuevamente más tarde.";
+        }
+        finally
+        {
+            enviando = false;
+        }
+    }
+
+    private void LimpiarMensajes()
+    {
+        mensajeConfirmacion = null;
+        mensajeError = null;
+    }
+}

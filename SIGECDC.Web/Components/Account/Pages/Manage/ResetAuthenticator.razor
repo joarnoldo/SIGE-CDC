@@ -1,31 +1,31 @@
 ﻿@page "/Account/Manage/ResetAuthenticator"
 
 @using Microsoft.AspNetCore.Identity
-@using SIGECDC.Web.Data
+@using SIGECDC.Persistence.Identity
 
 @inject UserManager<ApplicationUser> UserManager
 @inject SignInManager<ApplicationUser> SignInManager
 @inject IdentityRedirectManager RedirectManager
 @inject ILogger<ResetAuthenticator> Logger
 
-<PageTitle>Reset authenticator key</PageTitle>
+<PageTitle>Restablecer clave de autenticador</PageTitle>
 
 <StatusMessage />
-<h3>Reset authenticator key</h3>
+<h3>Restablecer clave de autenticador</h3>
 <div class="alert alert-warning" role="alert">
     <p>
         <span class="glyphicon glyphicon-warning-sign"></span>
-        <strong>If you reset your authenticator key your authenticator app will not work until you reconfigure it.</strong>
+        <strong>Si restablece la clave del autenticador, la aplicacion autenticadora no funcionara hasta configurarla nuevamente.</strong>
     </p>
     <p>
-        This process disables 2FA until you verify your authenticator app.
-        If you do not complete your authenticator app configuration you may lose access to your account.
+        Este proceso desactiva 2FA hasta que verifique nuevamente la aplicacion autenticadora.
+        Si no completa la configuracion de la aplicacion autenticadora, podria perder acceso a su cuenta.
     </p>
 </div>
 <div>
     <form @formname="reset-authenticator" @onsubmit="OnSubmitAsync" method="post">
         <AntiforgeryToken />
-        <button class="btn btn-danger" type="submit">Reset authenticator key</button>
+        <button class="btn btn-danger" type="submit">Restablecer clave de autenticador</button>
     </form>
 </div>
 
@@ -51,7 +51,7 @@
 
         RedirectManager.RedirectToWithStatus(
             "Account/Manage/EnableAuthenticator",
-            "Your authenticator app key has been reset, you will need to configure your authenticator app using the new key.",
+            "La clave de la aplicacion autenticadora fue restablecida. Debe configurar la aplicacion con la nueva clave.",
             HttpContext);
     }
 }

@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
-using SIGECDC.Web.Data;
+using SIGECDC.Persistence.Identity;
 using System.Security.Claims;
 
 namespace SIGECDC.Web.Components.Account

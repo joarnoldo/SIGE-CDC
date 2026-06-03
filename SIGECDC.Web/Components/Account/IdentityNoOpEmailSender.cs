@@ -1,21 +1,21 @@
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
-using SIGECDC.Web.Data;
+using SIGECDC.Persistence.Identity;
 
 namespace SIGECDC.Web.Components.Account
 {
-    // Remove the "else if (EmailSender is IdentityNoOpEmailSender)" block from RegisterConfirmation.razor after updating with a real implementation.
+    // Cuando se configure un servicio real de correo, se puede retirar el bloque de confirmacion manual usado para desarrollo.
     internal sealed class IdentityNoOpEmailSender : IEmailSender<ApplicationUser>
     {
         private readonly IEmailSender emailSender = new NoOpEmailSender();
 
         public Task SendConfirmationLinkAsync(ApplicationUser user, string email, string confirmationLink) =>
-            emailSender.SendEmailAsync(email, "Confirm your email", $"Please confirm your account by <a href='{confirmationLink}'>clicking here</a>.");
+            emailSender.SendEmailAsync(email, "Confirmar su correo electronico", $"Confirme su cuenta desde <a href='{confirmationLink}'>este enlace</a>.");
 
         public Task SendPasswordResetLinkAsync(ApplicationUser user, string email, string resetLink) =>
-            emailSender.SendEmailAsync(email, "Reset your password", $"Please reset your password by <a href='{resetLink}'>clicking here</a>.");
+            emailSender.SendEmailAsync(email, "Restablecer su contrasena", $"Restablezca su contrasena desde <a href='{resetLink}'>este enlace</a>.");
 
         public Task SendPasswordResetCodeAsync(ApplicationUser user, string email, string resetCode) =>
-            emailSender.SendEmailAsync(email, "Reset your password", $"Please reset your password using the following code: {resetCode}");
+            emailSender.SendEmailAsync(email, "Restablecer su contrasena", $"Restablezca su contrasena usando el siguiente codigo: {resetCode}");
     }
 }

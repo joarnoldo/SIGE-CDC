@@ -1,0 +1,93 @@
+@page "/admin/consultas-contacto"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Administrador")]
+@using SIGECDC.Application.SitioPublico
+@inject IConsultaContactoService ConsultaContactoService
+
+<PageTitle>Consultas de contacto | SIGE-CDC</PageTitle>
+
+<section class="page-banner">
+    <div class="container page-banner__inner stack--tight">
+        <p class="eyebrow">Administración</p>
+        <h1>Consultas de contacto recibidas.</h1>
+        <p class="lead">Revise en modo de solo lectura las solicitudes enviadas desde el formulario público de contacto.</p>
+    </div>
+</section>
+
+<section class="section-shell">
+    <div class="container stack">
+        <article class="table-card">
+            <div class="table-toolbar">
+                <div>
+                    <h2 class="card__title">Bandeja de contacto</h2>
+                    <p class="card__meta">Solicitudes activas ordenadas desde la más reciente.</p>
+                </div>
+                <span class="badge badge--info">@TextoCantidad</span>
+            </div>
+
+            @if (cargando)
+            {
+                <div class="empty-state">
+                    <strong>Cargando consultas</strong>
+                    <p class="text-muted">Estamos recuperando la información registrada.</p>
+                </div>
+            }
+            else if (consultas.Count == 0)
+            {
+                <div class="empty-state">
+                    <strong>No hay consultas registradas</strong>
+                    <p class="text-muted">Cuando el formulario público reciba solicitudes, aparecerán en esta bandeja.</p>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Contacto</th>
+                                <th>Asunto</th>
+                                <th>Mensaje</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var consulta in consultas)
+                            {
+                                <tr>
+                                    <td>@consulta.FechaEnvio.ToString("dd/MM/yyyy HH:mm")</td>
+                                    <td>
+                                        <strong>@consulta.Nombre</strong>
+                                        <p class="card__meta">@consulta.CorreoElectronico</p>
+                                        @if (!string.IsNullOrWhiteSpace(consulta.Telefono))
+                                        {
+                                            <small>@consulta.Telefono</small>
+                                        }
+                                    </td>
+                                    <td>@(string.IsNullOrWhiteSpace(consulta.Asunto) ? "Sin asunto" : consulta.Asunto)</td>
+                                    <td>@consulta.Mensaje</td>
+                                    <td><span class="badge badge--accent">@consulta.EstadoConsulta</span></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </article>
+    </div>
+</section>
+
+@code {
+    private IReadOnlyList<ConsultaContactoResumen> consultas = [];
+    private bool cargando = true;
+
+    private string TextoCantidad => consultas.Count == 1
+        ? "1 consulta"
+        : $"{consultas.Count} consultas";
+
+    protected override async Task OnInitializedAsync()
+    {
+        consultas = await ConsultaContactoService.ObtenerConsultasRecientesAsync();
+        cargando = false;
+    }
+}
