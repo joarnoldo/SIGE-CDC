@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>SIGE_CDC.App</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SIGECDC.Application\SIGECDC.Application.csproj" />
+    <ProjectReference Include="..\SIGECDC.Domain\SIGECDC.Domain.csproj" />
+    <ProjectReference Include="..\SIGECDC.Infrastructure\SIGECDC.Infrastructure.csproj" />
+    <ProjectReference Include="..\SIGECDC.Persistence\SIGECDC.Persistence.csproj" />
+    <ProjectReference Include="..\SIGECDC.Web\SIGECDC.Web.csproj" />
+  </ItemGroup>
+
+</Project>

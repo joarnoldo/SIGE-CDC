@@ -1,0 +1,230 @@
+﻿@page "/admin/puestos"
+@using SIGECDC.Application.RecursosHumanos
+@using Microsoft.AspNetCore.Authorization
+@inject IPuestoService PuestoService
+@rendermode InteractiveServer
+@attribute [Authorize]
+
+<PageTitle>Puestos — SIGE-CDC</PageTitle>
+
+<div class="admin-header">
+    <h1 class="admin-title">Puestos</h1>
+    <button class="btn btn-primary" @onclick="AbrirFormularioNuevo">
+        + Nuevo puesto
+    </button>
+</div>
+
+@if (!string.IsNullOrEmpty(mensajeExito))
+{
+    <div class="alert alert-success d-flex justify-content-between align-items-center">
+        <span>@mensajeExito</span>
+        <button type="button" class="btn-close" @onclick="() => mensajeExito = null"></button>
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(mensajeErrorGlobal))
+{
+    <div class="alert alert-danger d-flex justify-content-between align-items-center">
+        <span>@mensajeErrorGlobal</span>
+        <button type="button" class="btn-close" @onclick="() => mensajeErrorGlobal = null"></button>
+    </div>
+}
+
+@if (cargando)
+{
+    <p>Cargando...</p>
+}
+else if (puestos.Count == 0)
+{
+    <p class="text-muted">No hay puestos registrados.</p>
+}
+else
+{
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>Nombre</th>
+                <th>Descripción</th>
+                <th>Colaboradores activos</th>
+                <th>Estado</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var puesto in puestos)
+            {
+                <tr>
+                    <td>@puesto.Nombre</td>
+                    <td>@(puesto.Descripcion ?? "—")</td>
+                    <td>@puesto.TotalColaboradores</td>
+                    <td>
+                        <span class="badge @(puesto.EstadoRegistro == "Activo" ? "bg-success" : "bg-secondary")">
+                            @puesto.EstadoRegistro
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" @onclick="() => AbrirFormularioEditar(puesto)">
+                            Editar
+                        </button>
+                        @if (puesto.EstadoRegistro == "Activo")
+                        {
+                            <button class="btn btn-sm btn-outline-danger ms-1" @onclick="() => Desactivar(puesto.IdPuesto)">
+                                Desactivar
+                            </button>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@if (mostrarFormulario)
+{
+    <div style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000;display:flex;align-items:center;justify-content:center;">
+        <div class="card p-4 shadow" style="width:480px;">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0">@(esNuevo ? "Nuevo puesto" : "Editar puesto")</h5>
+                <button type="button" class="btn-close" @onclick="CerrarFormulario"></button>
+            </div>
+
+            @if (!string.IsNullOrEmpty(mensajeErrorModal))
+            {
+                <div class="alert alert-danger py-2">@mensajeErrorModal</div>
+            }
+
+            <div class="mb-3">
+                <label class="form-label">Nombre <span class="text-danger">*</span></label>
+                <input class="form-control @(!string.IsNullOrEmpty(mensajeErrorModal) && string.IsNullOrWhiteSpace(formulario.Nombre) ? "is-invalid" : "")"
+                       @bind="formulario.Nombre" maxlength="100" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Descripción</label>
+                <textarea class="form-control" @bind="formulario.Descripcion" rows="3" maxlength="300"></textarea>
+            </div>
+
+            <div class="d-flex gap-2 justify-content-end">
+                <button class="btn btn-secondary" @onclick="CerrarFormulario">Cancelar</button>
+                <button class="btn btn-primary" @onclick="Guardar" disabled="@guardando">
+                    @(guardando ? "Guardando..." : "Guardar")
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<PuestoResumen> puestos = [];
+    private bool cargando = true;
+    private bool mostrarFormulario = false;
+    private bool esNuevo = true;
+    private bool guardando = false;
+    private string? mensajeExito;
+    private string? mensajeErrorGlobal;
+    private string? mensajeErrorModal;
+    private FormularioPuesto formulario = new();
+    private long idEditando = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarPuestos();
+    }
+
+    private async Task CargarPuestos()
+    {
+        cargando = true;
+        puestos = [.. await PuestoService.ObtenerTodosAsync()];
+        cargando = false;
+    }
+
+    private void AbrirFormularioNuevo()
+    {
+        esNuevo = true;
+        formulario = new();
+        idEditando = 0;
+        mensajeErrorModal = null;
+        mostrarFormulario = true;
+    }
+
+    private void AbrirFormularioEditar(PuestoResumen puesto)
+    {
+        esNuevo = false;
+        idEditando = puesto.IdPuesto;
+        formulario = new FormularioPuesto { Nombre = puesto.Nombre, Descripcion = puesto.Descripcion };
+        mensajeErrorModal = null;
+        mostrarFormulario = true;
+    }
+
+    private void CerrarFormulario()
+    {
+        mostrarFormulario = false;
+        mensajeErrorModal = null;
+    }
+
+    private async Task Guardar()
+    {
+        if (string.IsNullOrWhiteSpace(formulario.Nombre))
+        {
+            mensajeErrorModal = "El nombre es obligatorio.";
+            return;
+        }
+
+        guardando = true;
+        mensajeErrorModal = null;
+
+        try
+        {
+            if (esNuevo)
+            {
+                await PuestoService.RegistrarAsync(new SolicitudRegistrarPuesto
+                {
+                    Nombre = formulario.Nombre,
+                    Descripcion = formulario.Descripcion
+                });
+                mensajeExito = "Puesto registrado correctamente.";
+            }
+            else
+            {
+                await PuestoService.ActualizarAsync(new SolicitudActualizarPuesto
+                {
+                    IdPuesto = idEditando,
+                    Nombre = formulario.Nombre,
+                    Descripcion = formulario.Descripcion
+                });
+                mensajeExito = "Puesto actualizado correctamente.";
+            }
+
+            mostrarFormulario = false;
+            await CargarPuestos();
+        }
+        catch (Exception ex)
+        {
+            mensajeErrorModal = ex.Message;
+        }
+        finally
+        {
+            guardando = false;
+        }
+    }
+
+    private async Task Desactivar(long id)
+    {
+        try
+        {
+            await PuestoService.DesactivarAsync(id);
+            mensajeExito = "Puesto desactivado correctamente.";
+            await CargarPuestos();
+        }
+        catch (Exception ex)
+        {
+            mensajeErrorGlobal = ex.Message;
+        }
+    }
+
+    private class FormularioPuesto
+    {
+        public string Nombre { get; set; } = string.Empty;
+        public string? Descripcion { get; set; }
+    }
+}

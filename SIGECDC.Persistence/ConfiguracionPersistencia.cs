@@ -1,8 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using SIGECDC.Application.SitioPublico;
+using SIGECDC.Application.RecursosHumanos;
 using SIGECDC.Persistence.Identity;
 using SIGECDC.Persistence.SitioPublico;
+using SIGECDC.Persistence.RecursosHumanos;
 
 namespace SIGECDC.Persistence;
 
@@ -19,6 +21,9 @@ public static class ConfiguracionPersistencia
             opciones.UseMySQL(cadenaConexion));
 
         servicios.AddScoped<IConsultaContactoService, ConsultaContactoService>();
+        servicios.AddScoped<IDepartamentoService, DepartamentoService>();
+        servicios.AddScoped<IPuestoService, PuestoService>();
+        servicios.AddScoped<IColaboradorService, ColaboradorService>();
 
         return servicios;
     }

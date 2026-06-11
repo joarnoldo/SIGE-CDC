@@ -1,4 +1,5 @@
 <Solution>
+  <Project Path="SIGE-CDC.App/SIGE-CDC.App.csproj" Id="be5b6b43-0447-47ad-83fb-07206258a1b7" />
   <Project Path="SIGECDC.Application/SIGECDC.Application.csproj" />
   <Project Path="SIGECDC.Domain/SIGECDC.Domain.csproj" />
   <Project Path="SIGECDC.Infrastructure/SIGECDC.Infrastructure.csproj" />

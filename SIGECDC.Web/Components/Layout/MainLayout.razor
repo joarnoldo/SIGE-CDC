@@ -24,11 +24,24 @@
         <AuthorizeView>
             <Authorized>
                 <nav class="site-nav" aria-label="Sesion">
+
                     <AuthorizeView Roles="Administrador" Context="adminContext">
                         <Authorized>
                             <NavLink href="admin/consultas-contacto" ActiveClass="is-active">Consultas</NavLink>
+                            <NavLink href="admin/departamentos" ActiveClass="is-active">Departamentos</NavLink>
+                            <NavLink href="admin/puestos" ActiveClass="is-active">Puestos</NavLink>
+                            <NavLink href="admin/colaboradores/asignacion" ActiveClass="is-active">Asignación</NavLink>
                         </Authorized>
                     </AuthorizeView>
+
+                    <AuthorizeView Roles="Recursos Humanos" Context="rrhhContext">
+                        <Authorized>
+                            <NavLink href="admin/departamentos" ActiveClass="is-active">Departamentos</NavLink>
+                            <NavLink href="admin/puestos" ActiveClass="is-active">Puestos</NavLink>
+                            <NavLink href="admin/colaboradores/asignacion" ActiveClass="is-active">Asignación</NavLink>
+                        </Authorized>
+                    </AuthorizeView>
+
                     <NavLink href="Account/Manage" ActiveClass="is-active">Mi cuenta</NavLink>
                     <form action="Account/Logout" method="post">
                         <AntiforgeryToken />
