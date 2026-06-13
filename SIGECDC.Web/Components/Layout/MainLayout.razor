@@ -6,7 +6,7 @@
 <header class="site-header">
     <div class="container site-header__inner">
         <a class="brand" href="">
-            <span class="brand-mark">SC</span>
+            <span class="brand-mark">CDC</span>
             <span class="brand-copy">
                 <strong>Canales y Drenajes del Caribe S.R.L.</strong>
                 <span>Obras civiles e infraestructura</span>
@@ -17,6 +17,7 @@
             <NavLink href="" Match="NavLinkMatch.All" ActiveClass="is-active">Inicio</NavLink>
             <NavLink href="quienes-somos" ActiveClass="is-active">Quienes Somos</NavLink>
             <NavLink href="servicios" ActiveClass="is-active">Servicios</NavLink>
+            <NavLink href="portafolio" ActiveClass="is-active">Portafolio</NavLink>
             <NavLink href="contacto" ActiveClass="is-active">Contacto</NavLink>
             <NavLink href="politicas" ActiveClass="is-active">Politicas</NavLink>
         </nav>
@@ -27,6 +28,13 @@
                     <AuthorizeView Roles="Administrador" Context="adminContext">
                         <Authorized>
                             <NavLink href="admin/consultas-contacto" ActiveClass="is-active">Consultas</NavLink>
+                            <NavLink href="admin/contenido-paginas" ActiveClass="is-active">Contenido</NavLink>
+                            <NavLink href="admin/proyectos-publicados" ActiveClass="is-active">Publicaciones</NavLink>
+                        </Authorized>
+                    </AuthorizeView>
+                    <AuthorizeView Roles="Administrador,Operaciones" Context="operacionesContext">
+                        <Authorized>
+                            <NavLink href="operaciones/proyectos" ActiveClass="is-active">Proyectos</NavLink>
                         </Authorized>
                     </AuthorizeView>
                     <NavLink href="Account/Manage" ActiveClass="is-active">Mi cuenta</NavLink>
@@ -52,7 +60,7 @@
     <div class="container">
         <div class="site-footer__inner">
             <a class="brand" href="">
-                <span class="brand-mark">SC</span>
+                <span class="brand-mark">CDC</span>
                 <span class="brand-copy">
                     <strong>Canales y Drenajes del Caribe S.R.L.</strong>
                     <span>Obras civiles e infraestructura</span>
@@ -71,6 +79,7 @@
                     <li><a href="">Inicio</a></li>
                     <li><a href="quienes-somos">Quienes Somos</a></li>
                     <li><a href="servicios">Servicios</a></li>
+                    <li><a href="portafolio">Portafolio</a></li>
                 </ul>
             </section>
             <section>

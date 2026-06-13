@@ -1,0 +1,219 @@
+@page "/admin/proyectos-publicados"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Administrador")]
+@rendermode InteractiveServer
+@using SIGECDC.Application.Operaciones
+@using SIGECDC.Application.SitioPublico
+@inject IProyectoPublicadoService ProyectoPublicadoService
+@inject IProyectoService ProyectoService
+
+<PageTitle>Proyectos publicados | SIGE-CDC</PageTitle>
+
+<section class="page-banner">
+    <div class="container page-banner__inner stack--tight">
+        <p class="eyebrow">Administracion</p>
+        <h1>Tarjetas publicas de proyectos.</h1>
+        <p class="lead">Controle que proyectos aparecen u ocultan en el portafolio institucional.</p>
+    </div>
+</section>
+
+<section class="section-shell">
+    <div class="container admin-grid">
+        <article class="form-section">
+            <h2>@TituloFormulario</h2>
+
+            @if (!string.IsNullOrWhiteSpace(mensajeFormulario))
+            {
+                <div class="alert alert--info">@mensajeFormulario</div>
+            }
+
+            <EditForm Model="solicitud" OnValidSubmit="GuardarProyectoPublicadoAsync">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <div class="form-grid">
+                    <div class="field field--span-2">
+                        <label for="proyectoBase">Proyecto interno relacionado</label>
+                        <InputSelect id="proyectoBase" class="form-control" @bind-Value="solicitud.IdProyecto">
+                            <option value="">Sin relacion interna</option>
+                            @foreach (var proyecto in proyectosInternos)
+                            {
+                                <option value="@proyecto.IdProyecto">@proyecto.CodigoProyecto - @proyecto.NombreProyecto</option>
+                            }
+                        </InputSelect>
+                    </div>
+
+                    <div class="field">
+                        <label for="titulo">Titulo publico</label>
+                        <InputText id="titulo" class="form-control" @bind-Value="solicitud.Titulo" />
+                    </div>
+
+                    <div class="field">
+                        <label for="estadoVisual">Estado visible</label>
+                        <InputText id="estadoVisual" class="form-control" @bind-Value="solicitud.EstadoVisual" />
+                    </div>
+
+                    <div class="field field--span-2">
+                        <label for="descripcion">Descripcion publica</label>
+                        <InputTextArea id="descripcion" class="form-control" @bind-Value="solicitud.Descripcion" />
+                    </div>
+
+                    <label class="checkbox-card field--span-2">
+                        <InputCheckbox @bind-Value="solicitud.EstaPublicado" />
+                        <span>Visible en el portafolio publico</span>
+                    </label>
+                </div>
+
+                <div class="form-actions mt-3">
+                    <button class="btn btn--primary" type="submit">Guardar tarjeta</button>
+                    <button class="btn btn--secondary" type="button" @onclick="PrepararNuevaTarjeta">Nueva tarjeta</button>
+                </div>
+            </EditForm>
+        </article>
+
+        <article class="table-card">
+            <div class="table-toolbar">
+                <div>
+                    <h2 class="card__title">Tarjetas registradas</h2>
+                    <p class="card__meta">Estado actual de visibilidad publica.</p>
+                </div>
+                <span class="badge badge--info">@proyectosPublicados.Count tarjetas</span>
+            </div>
+
+            @if (cargando)
+            {
+                <div class="empty-state">
+                    <strong>Cargando tarjetas</strong>
+                    <p class="text-muted">Estamos recuperando los proyectos publicables.</p>
+                </div>
+            }
+            else if (proyectosPublicados.Count == 0)
+            {
+                <div class="empty-state">
+                    <strong>No hay tarjetas registradas</strong>
+                    <p class="text-muted">Cree una tarjeta para mostrar proyectos en el portafolio.</p>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Tarjeta</th>
+                                <th>Proyecto interno</th>
+                                <th>Estado visible</th>
+                                <th>Visibilidad</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var proyecto in proyectosPublicados)
+                            {
+                                <tr>
+                                    <td>
+                                        <strong>@proyecto.Titulo</strong>
+                                        <p class="card__meta">@proyecto.Descripcion</p>
+                                    </td>
+                                    <td>@TextoProyectoInterno(proyecto)</td>
+                                    <td>@(string.IsNullOrWhiteSpace(proyecto.EstadoVisual) ? "Sin estado visible" : proyecto.EstadoVisual)</td>
+                                    <td>
+                                        <span class="badge @(proyecto.EstaPublicado ? "badge--accent" : "badge--info")">
+                                            @(proyecto.EstaPublicado ? "Visible" : "Oculto")
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="table-actions">
+                                            <button type="button" @onclick="() => EditarTarjeta(proyecto)">Editar</button>
+                                            <button type="button" @onclick="() => CambiarPublicacionAsync(proyecto)">
+                                                @(proyecto.EstaPublicado ? "Ocultar" : "Publicar")
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </article>
+    </div>
+</section>
+
+@code {
+    private List<ProyectoPublicadoResumen> proyectosPublicados = [];
+    private List<ProyectoResumen> proyectosInternos = [];
+    private SolicitudProyectoPublicado solicitud = new();
+    private bool cargando = true;
+    private string? mensajeFormulario;
+
+    private string TituloFormulario => solicitud.IdProyectoPublicado == 0
+        ? "Nueva tarjeta"
+        : "Editar tarjeta";
+
+    protected override async Task OnInitializedAsync()
+    {
+        proyectosInternos = [.. await ProyectoService.ObtenerProyectosAsync()];
+        await CargarTarjetasAsync();
+    }
+
+    private async Task CargarTarjetasAsync()
+    {
+        cargando = true;
+        proyectosPublicados = [.. await ProyectoPublicadoService.ObtenerProyectosAsync()];
+        cargando = false;
+    }
+
+    private async Task GuardarProyectoPublicadoAsync()
+    {
+        try
+        {
+            await ProyectoPublicadoService.GuardarProyectoPublicadoAsync(solicitud);
+            mensajeFormulario = "Tarjeta guardada correctamente.";
+            PrepararNuevaTarjeta();
+            proyectosInternos = [.. await ProyectoService.ObtenerProyectosAsync()];
+            await CargarTarjetasAsync();
+        }
+        catch (Exception ex)
+        {
+            mensajeFormulario = ex.Message;
+        }
+    }
+
+    private async Task CambiarPublicacionAsync(ProyectoPublicadoResumen proyecto)
+    {
+        await ProyectoPublicadoService.CambiarPublicacionAsync(proyecto.IdProyectoPublicado, !proyecto.EstaPublicado);
+        mensajeFormulario = proyecto.EstaPublicado
+            ? "La tarjeta quedo oculta."
+            : "La tarjeta quedo visible en el portafolio.";
+        await CargarTarjetasAsync();
+    }
+
+    private void EditarTarjeta(ProyectoPublicadoResumen proyecto)
+    {
+        solicitud = new SolicitudProyectoPublicado
+        {
+            IdProyectoPublicado = proyecto.IdProyectoPublicado,
+            IdProyecto = proyecto.IdProyecto,
+            Titulo = proyecto.Titulo,
+            Descripcion = proyecto.Descripcion,
+            EstadoVisual = proyecto.EstadoVisual,
+            EstaPublicado = proyecto.EstaPublicado
+        };
+        mensajeFormulario = null;
+    }
+
+    private void PrepararNuevaTarjeta()
+    {
+        solicitud = new SolicitudProyectoPublicado();
+    }
+
+    private static string TextoProyectoInterno(ProyectoPublicadoResumen proyecto)
+    {
+        if (string.IsNullOrWhiteSpace(proyecto.CodigoProyecto) && string.IsNullOrWhiteSpace(proyecto.NombreProyecto))
+        {
+            return "Sin relacion";
+        }
+
+        return $"{proyecto.CodigoProyecto} - {proyecto.NombreProyecto}";
+    }
+}

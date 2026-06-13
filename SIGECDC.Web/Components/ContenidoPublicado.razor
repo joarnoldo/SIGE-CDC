@@ -1,0 +1,28 @@
+@using SIGECDC.Application.SitioPublico
+@inject IPaginaContenidoService PaginaContenidoService
+
+@if (pagina is not null && !string.IsNullOrWhiteSpace(pagina.Contenido))
+{
+    <section class="section-shell section-shell--compact">
+        <div class="container panel-highlight stack">
+            <p class="eyebrow">Contenido vigente</p>
+            <h2>@pagina.Titulo</h2>
+            <p>@pagina.Contenido</p>
+        </div>
+    </section>
+}
+
+@code {
+    [Parameter]
+    public string CodigoPagina { get; set; } = string.Empty;
+
+    private PaginaContenidoResumen? pagina;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!string.IsNullOrWhiteSpace(CodigoPagina))
+        {
+            pagina = await PaginaContenidoService.ObtenerPaginaPublicadaAsync(CodigoPagina);
+        }
+    }
+}

@@ -1,0 +1,58 @@
+@page "/portafolio"
+@using SIGECDC.Application.SitioPublico
+@inject IProyectoPublicadoService ProyectoPublicadoService
+
+<PageTitle>Portafolio | SIGE-CDC</PageTitle>
+
+<section class="page-banner">
+    <div class="container page-banner__inner stack--tight">
+        <p class="eyebrow">Portafolio institucional</p>
+        <h1>Proyectos visibles.</h1>
+        <p class="lead">Obras y servicios publicados por la administracion para consulta publica.</p>
+    </div>
+</section>
+
+<section class="section-shell">
+    <div class="container">
+        @if (proyectos.Count == 0)
+        {
+            <div class="empty-state">
+                <strong>No hay proyectos publicados</strong>
+                <p class="text-muted">Cuando administracion publique tarjetas, apareceran en este portafolio.</p>
+            </div>
+        }
+        else
+        {
+            <div class="content-grid">
+                @foreach (var proyecto in proyectos)
+                {
+                    <article class="card">
+                        <div class="card__meta">@TextoEstado(proyecto)</div>
+                        <h2 class="card__title">@proyecto.Titulo</h2>
+                        <p>@proyecto.Descripcion</p>
+                        @if (!string.IsNullOrWhiteSpace(proyecto.NombreProyecto))
+                        {
+                            <p class="card__meta">@proyecto.NombreProyecto</p>
+                        }
+                    </article>
+                }
+            </div>
+        }
+    </div>
+</section>
+
+@code {
+    private IReadOnlyList<ProyectoPublicadoResumen> proyectos = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        proyectos = await ProyectoPublicadoService.ObtenerProyectosPublicadosAsync();
+    }
+
+    private static string TextoEstado(ProyectoPublicadoResumen proyecto)
+    {
+        return string.IsNullOrWhiteSpace(proyecto.EstadoVisual)
+            ? "Proyecto publicado"
+            : proyecto.EstadoVisual;
+    }
+}
