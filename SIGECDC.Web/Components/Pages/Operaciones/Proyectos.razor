@@ -1,0 +1,232 @@
+@page "/operaciones/proyectos"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Administrador,Operaciones")]
+@rendermode InteractiveServer
+@using SIGECDC.Application.Operaciones
+@inject IProyectoService ProyectoService
+
+<PageTitle>Proyectos | SIGE-CDC</PageTitle>
+
+<section class="page-banner">
+    <div class="container page-banner__inner stack--tight">
+        <p class="eyebrow">Operaciones</p>
+        <h1>Gestion de proyectos.</h1>
+        <p class="lead">Registre obras con fechas, responsable, estado y observaciones para seguimiento operativo.</p>
+    </div>
+</section>
+
+<section class="section-shell">
+    <div class="container admin-grid">
+        <article class="form-section">
+            <h2>@TituloFormulario</h2>
+
+            @if (!string.IsNullOrWhiteSpace(mensajeFormulario))
+            {
+                <div class="alert alert--info">@mensajeFormulario</div>
+            }
+
+            <EditForm Model="solicitud" OnValidSubmit="GuardarProyectoAsync">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <div class="form-grid">
+                    <div class="field">
+                        <label for="codigoProyecto">Codigo</label>
+                        <InputText id="codigoProyecto" class="form-control" @bind-Value="solicitud.CodigoProyecto" />
+                    </div>
+
+                    <div class="field">
+                        <label for="nombreProyecto">Nombre</label>
+                        <InputText id="nombreProyecto" class="form-control" @bind-Value="solicitud.NombreProyecto" />
+                    </div>
+
+                    <div class="field field--span-2">
+                        <label for="descripcion">Descripcion</label>
+                        <InputTextArea id="descripcion" class="form-control" @bind-Value="solicitud.Descripcion" />
+                    </div>
+
+                    <div class="field">
+                        <label for="fechaInicio">Fecha inicio</label>
+                        <InputDate id="fechaInicio" class="form-control" @bind-Value="solicitud.FechaInicio" />
+                    </div>
+
+                    <div class="field">
+                        <label for="fechaFinEstimada">Fecha fin estimada</label>
+                        <InputDate id="fechaFinEstimada" class="form-control" @bind-Value="solicitud.FechaFinEstimada" />
+                    </div>
+
+                    <div class="field">
+                        <label for="fechaFinReal">Fecha fin real</label>
+                        <InputDate id="fechaFinReal" class="form-control" @bind-Value="solicitud.FechaFinReal" />
+                    </div>
+
+                    <div class="field">
+                        <label for="estadoProyecto">Estado</label>
+                        <InputSelect id="estadoProyecto" class="form-control" @bind-Value="solicitud.IdEstadoProyecto">
+                            <option value="">Planificado al crear</option>
+                            @foreach (var estado in estados)
+                            {
+                                <option value="@estado.IdEstadoProyecto">@estado.Nombre</option>
+                            }
+                        </InputSelect>
+                    </div>
+
+                    <div class="field">
+                        <label for="responsable">Responsable</label>
+                        <InputText id="responsable" class="form-control" @bind-Value="solicitud.Responsable" />
+                    </div>
+
+                    <div class="field">
+                        <label for="ubicacion">Ubicacion</label>
+                        <InputText id="ubicacion" class="form-control" @bind-Value="solicitud.Ubicacion" />
+                    </div>
+
+                    <div class="field field--span-2">
+                        <label for="observaciones">Observaciones</label>
+                        <InputTextArea id="observaciones" class="form-control" @bind-Value="solicitud.Observaciones" />
+                    </div>
+                </div>
+
+                <div class="form-actions mt-3">
+                    <button class="btn btn--primary" type="submit">Guardar proyecto</button>
+                    <button class="btn btn--secondary" type="button" @onclick="PrepararNuevoProyecto">Nuevo proyecto</button>
+                </div>
+            </EditForm>
+        </article>
+
+        <article class="table-card">
+            <div class="table-toolbar">
+                <div>
+                    <h2 class="card__title">Proyectos registrados</h2>
+                    <p class="card__meta">Informacion vigente para seguimiento de obras.</p>
+                </div>
+                <span class="badge badge--info">@proyectos.Count proyectos</span>
+            </div>
+
+            @if (cargando)
+            {
+                <div class="empty-state">
+                    <strong>Cargando proyectos</strong>
+                    <p class="text-muted">Estamos recuperando los registros operativos.</p>
+                </div>
+            }
+            else if (proyectos.Count == 0)
+            {
+                <div class="empty-state">
+                    <strong>No hay proyectos registrados</strong>
+                    <p class="text-muted">Registre el primer proyecto desde el formulario.</p>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Codigo</th>
+                                <th>Proyecto</th>
+                                <th>Fechas</th>
+                                <th>Responsable</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var proyecto in proyectos)
+                            {
+                                <tr>
+                                    <td>@proyecto.CodigoProyecto</td>
+                                    <td>
+                                        <strong>@proyecto.NombreProyecto</strong>
+                                        <p class="card__meta">@proyecto.Ubicacion</p>
+                                        <small>@proyecto.Descripcion</small>
+                                    </td>
+                                    <td>
+                                        <small>Inicio: @TextoFecha(proyecto.FechaInicio)</small><br />
+                                        <small>Estimada: @TextoFecha(proyecto.FechaFinEstimada)</small><br />
+                                        <small>Real: @TextoFecha(proyecto.FechaFinReal)</small>
+                                    </td>
+                                    <td>@(string.IsNullOrWhiteSpace(proyecto.Responsable) ? "Sin responsable" : proyecto.Responsable)</td>
+                                    <td><span class="badge badge--accent">@proyecto.EstadoProyecto</span></td>
+                                    <td>
+                                        <div class="table-actions">
+                                            <button type="button" @onclick="() => EditarProyecto(proyecto)">Editar</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </article>
+    </div>
+</section>
+
+@code {
+    private List<ProyectoResumen> proyectos = [];
+    private List<EstadoProyectoOpcion> estados = [];
+    private SolicitudProyecto solicitud = new();
+    private bool cargando = true;
+    private string? mensajeFormulario;
+
+    private string TituloFormulario => solicitud.IdProyecto == 0
+        ? "Nuevo proyecto"
+        : "Editar proyecto";
+
+    protected override async Task OnInitializedAsync()
+    {
+        estados = [.. await ProyectoService.ObtenerEstadosAsync()];
+        await CargarProyectosAsync();
+    }
+
+    private async Task CargarProyectosAsync()
+    {
+        cargando = true;
+        proyectos = [.. await ProyectoService.ObtenerProyectosAsync()];
+        cargando = false;
+    }
+
+    private async Task GuardarProyectoAsync()
+    {
+        try
+        {
+            await ProyectoService.GuardarProyectoAsync(solicitud);
+            mensajeFormulario = "Proyecto guardado correctamente.";
+            PrepararNuevoProyecto();
+            await CargarProyectosAsync();
+        }
+        catch (Exception ex)
+        {
+            mensajeFormulario = ex.Message;
+        }
+    }
+
+    private void EditarProyecto(ProyectoResumen proyecto)
+    {
+        solicitud = new SolicitudProyecto
+        {
+            IdProyecto = proyecto.IdProyecto,
+            CodigoProyecto = proyecto.CodigoProyecto,
+            NombreProyecto = proyecto.NombreProyecto,
+            Descripcion = proyecto.Descripcion,
+            FechaInicio = proyecto.FechaInicio,
+            FechaFinEstimada = proyecto.FechaFinEstimada,
+            FechaFinReal = proyecto.FechaFinReal,
+            Responsable = proyecto.Responsable,
+            Ubicacion = proyecto.Ubicacion,
+            IdEstadoProyecto = proyecto.IdEstadoProyecto,
+            Observaciones = proyecto.Observaciones
+        };
+        mensajeFormulario = null;
+    }
+
+    private void PrepararNuevoProyecto()
+    {
+        solicitud = new SolicitudProyecto();
+    }
+
+    private static string TextoFecha(DateTime? fecha)
+    {
+        return fecha?.ToString("dd/MM/yyyy") ?? "Sin fecha";
+    }
+}
