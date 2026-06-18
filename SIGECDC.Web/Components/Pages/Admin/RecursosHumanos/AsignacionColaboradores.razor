@@ -9,92 +9,100 @@
 
 <PageTitle>Asignación de colaboradores — SIGE-CDC</PageTitle>
 
-<div class="admin-header">
-    <h1 class="admin-title">Asignación de puestos y departamentos</h1>
-</div>
-
-@if (!string.IsNullOrEmpty(mensajeExito))
-{
-    <div class="alert alert-success d-flex justify-content-between align-items-center">
-        <span>@mensajeExito</span>
-        <button type="button" class="btn-close" @onclick="() => mensajeExito = null"></button>
+<div class="page-frame">
+    <div class="page-header">
+        <h1>Asignación de puestos y departamentos</h1>
     </div>
-}
 
-@if (!string.IsNullOrEmpty(mensajeErrorGlobal))
-{
-    <div class="alert alert-danger d-flex justify-content-between align-items-center">
-        <span>@mensajeErrorGlobal</span>
-        <button type="button" class="btn-close" @onclick="() => mensajeErrorGlobal = null"></button>
-    </div>
-}
+    @if (!string.IsNullOrEmpty(mensajeExito))
+    {
+        <div class="alert alert--success" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+            <span>@mensajeExito</span>
+            <button type="button" class="btn-close" @onclick="() => mensajeExito = null"></button>
+        </div>
+    }
 
-@if (cargando)
-{
-    <p>Cargando...</p>
-}
-else if (colaboradores.Count == 0)
-{
-    <p class="text-muted">No hay colaboradores registrados.</p>
-}
-else
-{
-    <table class="table table-hover">
-        <thead>
-            <tr>
-                <th>Colaborador</th>
-                <th>Correo electrónico</th>
-                <th>Departamento actual</th>
-                <th>Puesto actual</th>
-                <th>Estado</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var col in colaboradores)
-            {
-                <tr>
-                    <td>@col.NombreCompleto</td>
-                    <td>@col.CorreoElectronico</td>
-                    <td>@(col.Departamento ?? "Sin asignar")</td>
-                    <td>@(col.Puesto ?? "Sin asignar")</td>
-                    <td>
-                        <span class="badge @(col.EstadoRegistro == "Activo" ? "bg-success" : "bg-secondary")">
-                            @col.EstadoRegistro
-                        </span>
-                    </td>
-                    <td>
-                        @if (col.EstadoRegistro == "Activo")
+    @if (!string.IsNullOrEmpty(mensajeErrorGlobal))
+    {
+        <div class="alert alert--danger" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+            <span>@mensajeErrorGlobal</span>
+            <button type="button" class="btn-close" @onclick="() => mensajeErrorGlobal = null"></button>
+        </div>
+    }
+
+    @if (cargando)
+    {
+        <p>Cargando...</p>
+    }
+    else if (colaboradores.Count == 0)
+    {
+        <div class="empty-state">
+            <p>No hay colaboradores registrados.</p>
+        </div>
+    }
+    else
+    {
+        <div class="table-card">
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Colaborador</th>
+                            <th>Correo electrónico</th>
+                            <th>Departamento actual</th>
+                            <th>Puesto actual</th>
+                            <th>Estado</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var col in colaboradores)
                         {
-                            <button class="btn btn-sm btn-outline-primary" @onclick="() => AbrirAsignacion(col)">
-                                Asignar
-                            </button>
+                            <tr>
+                                <td>@col.NombreCompleto</td>
+                                <td>@col.CorreoElectronico</td>
+                                <td>@(col.Departamento ?? "Sin asignar")</td>
+                                <td>@(col.Puesto ?? "Sin asignar")</td>
+                                <td>
+                                    <span class="badge @(col.EstadoRegistro == "Activo" ? "badge--success" : "badge--ink")">
+                                        @col.EstadoRegistro
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="table-actions">
+                                        @if (col.EstadoRegistro == "Activo")
+                                        {
+                                            <button @onclick="() => AbrirAsignacion(col)">Asignar</button>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
                         }
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
-}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>
 
 @if (mostrarFormulario && colaboradorSeleccionado is not null)
 {
     <div style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000;display:flex;align-items:center;justify-content:center;">
-        <div class="card p-4 shadow" style="width:480px;">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h5 class="mb-0">Asignar puesto y departamento</h5>
+        <div class="card" style="width:480px;">
+            <div class="card__header">
+                <h5 class="card__title">Asignar puesto y departamento</h5>
                 <button type="button" class="btn-close" @onclick="CerrarFormulario"></button>
             </div>
 
-            <p class="text-muted mb-3">Colaborador: <strong>@colaboradorSeleccionado.NombreCompleto</strong></p>
+            <p class="card__meta">Colaborador: <strong>@colaboradorSeleccionado.NombreCompleto</strong></p>
 
             @if (!string.IsNullOrEmpty(mensajeErrorModal))
             {
-                <div class="alert alert-danger py-2">@mensajeErrorModal</div>
+                <div class="alert alert--danger" style="margin-bottom:1rem;">@mensajeErrorModal</div>
             }
 
-            <div class="mb-3">
-                <label class="form-label">Departamento <span class="text-danger">*</span></label>
+            <div style="margin-bottom:1rem;">
+                <label class="form-label">Departamento <span style="color:var(--color-danger)">*</span></label>
                 <select class="form-select @(mensajeErrorModal != null && idDepartamentoSeleccionado == 0 ? "is-invalid" : "")"
                         @bind="idDepartamentoSeleccionado">
                     <option value="0">— Seleccione —</option>
@@ -105,8 +113,8 @@ else
                 </select>
             </div>
 
-            <div class="mb-3">
-                <label class="form-label">Puesto <span class="text-danger">*</span></label>
+            <div style="margin-bottom:1rem;">
+                <label class="form-label">Puesto <span style="color:var(--color-danger)">*</span></label>
                 <select class="form-select @(mensajeErrorModal != null && idPuestoSeleccionado == 0 ? "is-invalid" : "")"
                         @bind="idPuestoSeleccionado">
                     <option value="0">— Seleccione —</option>
@@ -117,9 +125,9 @@ else
                 </select>
             </div>
 
-            <div class="d-flex gap-2 justify-content-end">
-                <button class="btn btn-secondary" @onclick="CerrarFormulario">Cancelar</button>
-                <button class="btn btn-primary" @onclick="GuardarAsignacion" disabled="@guardando">
+            <div style="display:flex;gap:0.75rem;justify-content:flex-end;margin-top:1rem;">
+                <button class="btn btn--secondary" @onclick="CerrarFormulario">Cancelar</button>
+                <button class="btn btn--primary" @onclick="GuardarAsignacion" disabled="@guardando">
                     @(guardando ? "Guardando..." : "Guardar asignación")
                 </button>
             </div>

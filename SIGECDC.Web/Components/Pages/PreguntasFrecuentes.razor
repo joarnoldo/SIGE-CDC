@@ -1,0 +1,125 @@
+﻿@page "/preguntas-frecuentes"
+@using SIGECDC.Application.SitioPublico
+@inject IFaqService FaqService
+@rendermode InteractiveServer
+
+<PageTitle>Preguntas Frecuentes — Canales y Drenajes del Caribe S.R.L.</PageTitle>
+
+<section class="public-section">
+    <div class="container">
+        <h1 class="section-title">Preguntas Frecuentes</h1>
+        <p class="section-subtitle">Encuentra respuestas a las consultas más comunes sobre nuestros servicios.</p>
+
+        @if (cargando)
+        {
+            <p>Cargando...</p>
+        }
+        else if (faqs.Count == 0)
+        {
+            <p class="text-muted">No hay preguntas frecuentes disponibles en este momento.</p>
+        }
+        else
+        {
+            <div class="faq-lista">
+                @foreach (var faq in faqs)
+                {
+                    <div class="faq-item">
+                        <button class="faq-pregunta" @onclick="() => ToggleFaq(faq.IdFAQ)">
+                            <span>@faq.Pregunta</span>
+                            <span class="faq-icono">@(abiertos.Contains(faq.IdFAQ) ? "−" : "+")</span>
+                        </button>
+                        @if (abiertos.Contains(faq.IdFAQ))
+                        {
+                            <div class="faq-respuesta">
+                                <p>@faq.Respuesta</p>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+
+            <div class="faq-contacto mt-5">
+                <p>¿No encontraste respuesta a tu consulta? <a href="/contacto">Contáctanos</a> y te ayudamos.</p>
+            </div>
+        }
+    </div>
+</section>
+
+<style>
+    .faq-lista {
+        max-width: 800px;
+        margin: 2rem auto;
+    }
+
+    .faq-item {
+        border-bottom: 1px solid #e5e7eb;
+        padding: 0.25rem 0;
+    }
+
+    .faq-pregunta {
+        width: 100%;
+        background: none;
+        border: none;
+        padding: 1rem 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 1rem;
+        font-weight: 600;
+        color: #1e3a5f;
+        cursor: pointer;
+        text-align: left;
+        gap: 1rem;
+    }
+
+        .faq-pregunta:hover {
+            color: #2563eb;
+        }
+
+    .faq-icono {
+        font-size: 1.4rem;
+        font-weight: 300;
+        flex-shrink: 0;
+    }
+
+    .faq-respuesta {
+        padding: 0.5rem 0 1rem 0;
+        color: #4b5563;
+        line-height: 1.7;
+    }
+
+    .faq-contacto {
+        text-align: center;
+        color: #6b7280;
+    }
+</style>
+
+@code {
+    private List<FaqResumen> faqs = [];
+    private HashSet<long> abiertos = [];
+    private bool cargando = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            faqs = [.. await FaqService.ObtenerPublicadasAsync()];
+        }
+        catch
+        {
+            faqs = [];
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private void ToggleFaq(long id)
+    {
+        if (abiertos.Contains(id))
+            abiertos.Remove(id);
+        else
+            abiertos.Add(id);
+    }
+}

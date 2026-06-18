@@ -10,6 +10,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     : IdentityDbContext<ApplicationUser, IdentityRole, string>(options)
 {
     public DbSet<ConsultaContacto> ConsultasContacto => Set<ConsultaContacto>();
+    public DbSet<FAQ> FAQs => Set<FAQ>();
     public DbSet<Departamento> Departamentos => Set<Departamento>();
     public DbSet<Puesto> Puestos => Set<Puesto>();
     public DbSet<Colaborador> Colaboradores => Set<Colaborador>();
@@ -21,55 +22,43 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         builder.Entity<ConsultaContacto>(entidad =>
         {
             entidad.ToTable("ConsultaContacto");
-
             entidad.HasKey(consulta => consulta.IdConsultaContacto);
-
-            entidad.Property(consulta => consulta.IdConsultaContacto)
-                .ValueGeneratedOnAdd();
-
-            entidad.Property(consulta => consulta.Nombre)
-                .HasMaxLength(150)
-                .IsRequired();
-
-            entidad.Property(consulta => consulta.CorreoElectronico)
-                .HasMaxLength(150)
-                .IsRequired();
-
-            entidad.Property(consulta => consulta.Telefono)
-                .HasMaxLength(30);
-
-            entidad.Property(consulta => consulta.Asunto)
-                .HasMaxLength(200);
-
-            entidad.Property(consulta => consulta.Mensaje)
-                .HasColumnType("text")
-                .IsRequired();
-
-            entidad.Property(consulta => consulta.FechaEnvio)
-                .HasDefaultValueSql("CURRENT_TIMESTAMP")
-                .IsRequired();
-
+            entidad.Property(consulta => consulta.IdConsultaContacto).ValueGeneratedOnAdd();
+            entidad.Property(consulta => consulta.Nombre).HasMaxLength(150).IsRequired();
+            entidad.Property(consulta => consulta.CorreoElectronico).HasMaxLength(150).IsRequired();
+            entidad.Property(consulta => consulta.Telefono).HasMaxLength(30);
+            entidad.Property(consulta => consulta.Asunto).HasMaxLength(200);
+            entidad.Property(consulta => consulta.Mensaje).HasColumnType("text").IsRequired();
+            entidad.Property(consulta => consulta.FechaEnvio).HasDefaultValueSql("CURRENT_TIMESTAMP").IsRequired();
             entidad.Property(consulta => consulta.EstadoConsulta)
                 .HasColumnType("enum('Nueva','EnRevision','Atendida','Descartada')")
                 .HasDefaultValue(EstadosConsultaContacto.Nueva)
                 .IsRequired();
-
-            entidad.Property(consulta => consulta.ObservacionesInternas)
-                .HasMaxLength(500);
-
+            entidad.Property(consulta => consulta.ObservacionesInternas).HasMaxLength(500);
             entidad.Property(consulta => consulta.EstadoRegistro)
                 .HasColumnType("enum('Activo','Inactivo')")
                 .HasDefaultValue(EstadosRegistro.Activo)
                 .IsRequired();
+            entidad.HasIndex(consulta => consulta.FechaEnvio).HasDatabaseName("IX_ConsultaContacto_FechaEnvio");
+            entidad.HasIndex(consulta => consulta.EstadoConsulta).HasDatabaseName("IX_ConsultaContacto_EstadoConsulta");
+            entidad.HasIndex(consulta => consulta.CorreoElectronico).HasDatabaseName("IX_ConsultaContacto_CorreoElectronico");
+        });
 
-            entidad.HasIndex(consulta => consulta.FechaEnvio)
-                .HasDatabaseName("IX_ConsultaContacto_FechaEnvio");
-
-            entidad.HasIndex(consulta => consulta.EstadoConsulta)
-                .HasDatabaseName("IX_ConsultaContacto_EstadoConsulta");
-
-            entidad.HasIndex(consulta => consulta.CorreoElectronico)
-                .HasDatabaseName("IX_ConsultaContacto_CorreoElectronico");
+        builder.Entity<FAQ>(entidad =>
+        {
+            entidad.ToTable("FAQ");
+            entidad.HasKey(f => f.IdFAQ);
+            entidad.Property(f => f.IdFAQ).ValueGeneratedOnAdd();
+            entidad.Property(f => f.Pregunta).HasMaxLength(300).IsRequired();
+            entidad.Property(f => f.Respuesta).HasColumnType("text").IsRequired();
+            entidad.Property(f => f.Orden).HasDefaultValue(0).IsRequired();
+            entidad.Property(f => f.EstaPublicado).HasDefaultValue(false).IsRequired();
+            entidad.Property(f => f.EstadoRegistro)
+                .HasColumnType("enum('Activo','Inactivo')")
+                .HasDefaultValue("Activo")
+                .IsRequired();
+            entidad.HasIndex(f => f.EstaPublicado).HasDatabaseName("IX_FAQ_EstaPublicado");
+            entidad.HasIndex(f => f.Orden).HasDatabaseName("IX_FAQ_Orden");
         });
 
         builder.Entity<Departamento>(entidad =>
@@ -83,8 +72,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                 .HasColumnType("enum('Activo','Inactivo')")
                 .HasDefaultValue("Activo")
                 .IsRequired();
-            entidad.HasIndex(d => d.Nombre).IsUnique()
-                .HasDatabaseName("UX_Departamento_Nombre");
+            entidad.HasIndex(d => d.Nombre).IsUnique().HasDatabaseName("UX_Departamento_Nombre");
         });
 
         builder.Entity<Puesto>(entidad =>
@@ -98,8 +86,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                 .HasColumnType("enum('Activo','Inactivo')")
                 .HasDefaultValue("Activo")
                 .IsRequired();
-            entidad.HasIndex(p => p.Nombre).IsUnique()
-                .HasDatabaseName("UX_Puesto_Nombre");
+            entidad.HasIndex(p => p.Nombre).IsUnique().HasDatabaseName("UX_Puesto_Nombre");
             entidad.HasOne(p => p.Departamento)
                 .WithMany(d => d.Puestos)
                 .HasForeignKey(p => p.IdDepartamento)
@@ -133,14 +120,10 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                 .WithMany(p => p.Colaboradores)
                 .HasForeignKey(c => c.IdPuesto)
                 .OnDelete(DeleteBehavior.Restrict);
-            entidad.HasIndex(c => c.CodigoColaborador).IsUnique()
-                .HasDatabaseName("UX_Colaborador_Codigo");
-            entidad.HasIndex(c => c.Identificacion).IsUnique()
-                .HasDatabaseName("UX_Colaborador_Identificacion");
-            entidad.HasIndex(c => c.IdDepartamento)
-                .HasDatabaseName("IX_Colaborador_IdDepartamento");
-            entidad.HasIndex(c => c.IdPuesto)
-                .HasDatabaseName("IX_Colaborador_IdPuesto");
+            entidad.HasIndex(c => c.CodigoColaborador).IsUnique().HasDatabaseName("UX_Colaborador_Codigo");
+            entidad.HasIndex(c => c.Identificacion).IsUnique().HasDatabaseName("UX_Colaborador_Identificacion");
+            entidad.HasIndex(c => c.IdDepartamento).HasDatabaseName("IX_Colaborador_IdDepartamento");
+            entidad.HasIndex(c => c.IdPuesto).HasDatabaseName("IX_Colaborador_IdPuesto");
         });
     }
 }

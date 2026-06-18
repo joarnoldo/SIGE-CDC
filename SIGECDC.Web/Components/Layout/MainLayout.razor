@@ -19,6 +19,7 @@
             <NavLink href="servicios" ActiveClass="is-active">Servicios</NavLink>
             <NavLink href="contacto" ActiveClass="is-active">Contacto</NavLink>
             <NavLink href="politicas" ActiveClass="is-active">Politicas</NavLink>
+            <NavLink href="preguntas-frecuentes" ActiveClass="is-active">Preguntas Frecuentes</NavLink>
         </nav>
 
         <AuthorizeView>
@@ -28,6 +29,7 @@
                     <AuthorizeView Roles="Administrador" Context="adminContext">
                         <Authorized>
                             <NavLink href="admin/consultas-contacto" ActiveClass="is-active">Consultas</NavLink>
+                            <NavLink href="admin/faqs" ActiveClass="is-active">FAQs</NavLink>
                             <NavLink href="admin/departamentos" ActiveClass="is-active">Departamentos</NavLink>
                             <NavLink href="admin/puestos" ActiveClass="is-active">Puestos</NavLink>
                             <NavLink href="admin/colaboradores/asignacion" ActiveClass="is-active">Asignación</NavLink>
@@ -84,6 +86,7 @@
                     <li><a href="">Inicio</a></li>
                     <li><a href="quienes-somos">Quienes Somos</a></li>
                     <li><a href="servicios">Servicios</a></li>
+                    <li><a href="preguntas-frecuentes">Preguntas Frecuentes</a></li>
                 </ul>
             </section>
             <section>
