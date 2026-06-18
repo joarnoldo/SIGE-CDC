@@ -33,6 +33,17 @@ public sealed class DepartamentoService(ApplicationDbContext contexto) : IDepart
         await contexto.SaveChangesAsync(cancellationToken);
     }
 
+    public async Task ActivarAsync(long idDepartamento, CancellationToken cancellationToken = default)
+    {
+        var departamento = await contexto.Departamentos
+            .FirstOrDefaultAsync(d => d.IdDepartamento == idDepartamento, cancellationToken)
+            ?? throw new InvalidOperationException($"No se encontró el departamento con Id {idDepartamento}.");
+
+        departamento.EstadoRegistro = EstadosRegistro.Activo;
+
+        await contexto.SaveChangesAsync(cancellationToken);
+    }
+
     public async Task DesactivarAsync(long idDepartamento, CancellationToken cancellationToken = default)
     {
         var departamento = await contexto.Departamentos

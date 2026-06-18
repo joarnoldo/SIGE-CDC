@@ -6,6 +6,8 @@ public interface IPuestoService
 
     Task ActualizarAsync(SolicitudActualizarPuesto solicitud, CancellationToken cancellationToken = default);
 
+    Task ActivarAsync(long idPuesto, CancellationToken cancellationToken = default);
+
     Task DesactivarAsync(long idPuesto, CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<PuestoResumen>> ObtenerTodosAsync(CancellationToken cancellationToken = default);

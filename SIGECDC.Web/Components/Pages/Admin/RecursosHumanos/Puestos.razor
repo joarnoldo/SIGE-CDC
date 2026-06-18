@@ -77,6 +77,10 @@
                                         {
                                             <button @onclick="() => Desactivar(puesto.IdPuesto)">Desactivar</button>
                                         }
+                                        else
+                                        {
+                                            <button @onclick="() => Activar(puesto.IdPuesto)">Activar</button>
+                                        }
                                     </div>
                                 </td>
                             </tr>
@@ -223,6 +227,20 @@
         {
             await PuestoService.DesactivarAsync(id);
             mensajeExito = "Puesto desactivado correctamente.";
+            await CargarPuestos();
+        }
+        catch (Exception ex)
+        {
+            mensajeErrorGlobal = ex.Message;
+        }
+    }
+
+    private async Task Activar(long id)
+    {
+        try
+        {
+            await PuestoService.ActivarAsync(id);
+            mensajeExito = "Puesto activado correctamente.";
             await CargarPuestos();
         }
         catch (Exception ex)

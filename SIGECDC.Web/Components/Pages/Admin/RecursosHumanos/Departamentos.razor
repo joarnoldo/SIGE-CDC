@@ -77,6 +77,10 @@
                                         {
                                             <button @onclick="() => Desactivar(dep.IdDepartamento)">Desactivar</button>
                                         }
+                                        else
+                                        {
+                                            <button @onclick="() => Activar(dep.IdDepartamento)">Activar</button>
+                                        }
                                     </div>
                                 </td>
                             </tr>
@@ -223,6 +227,20 @@
         {
             await DepartamentoService.DesactivarAsync(id);
             mensajeExito = "Departamento desactivado correctamente.";
+            await CargarDepartamentos();
+        }
+        catch (Exception ex)
+        {
+            mensajeErrorGlobal = ex.Message;
+        }
+    }
+
+    private async Task Activar(long id)
+    {
+        try
+        {
+            await DepartamentoService.ActivarAsync(id);
+            mensajeExito = "Departamento activado correctamente.";
             await CargarDepartamentos();
         }
         catch (Exception ex)

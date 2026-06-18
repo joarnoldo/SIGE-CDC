@@ -33,6 +33,17 @@ public sealed class PuestoService(ApplicationDbContext contexto) : IPuestoServic
         await contexto.SaveChangesAsync(cancellationToken);
     }
 
+    public async Task ActivarAsync(long idPuesto, CancellationToken cancellationToken = default)
+    {
+        var puesto = await contexto.Puestos
+            .FirstOrDefaultAsync(p => p.IdPuesto == idPuesto, cancellationToken)
+            ?? throw new InvalidOperationException($"No se encontró el puesto con Id {idPuesto}.");
+
+        puesto.EstadoRegistro = EstadosRegistro.Activo;
+
+        await contexto.SaveChangesAsync(cancellationToken);
+    }
+
     public async Task DesactivarAsync(long idPuesto, CancellationToken cancellationToken = default)
     {
         var puesto = await contexto.Puestos

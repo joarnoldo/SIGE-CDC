@@ -6,6 +6,8 @@ public interface IDepartamentoService
 
     Task ActualizarAsync(SolicitudActualizarDepartamento solicitud, CancellationToken cancellationToken = default);
 
+    Task ActivarAsync(long idDepartamento, CancellationToken cancellationToken = default);
+
     Task DesactivarAsync(long idDepartamento, CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<DepartamentoResumen>> ObtenerTodosAsync(CancellationToken cancellationToken = default);
