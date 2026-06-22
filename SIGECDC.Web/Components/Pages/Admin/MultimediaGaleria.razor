@@ -1,0 +1,151 @@
+﻿@page "/admin/galeria"
+
+@rendermode InteractiveServer
+@using SIGECDC.Application
+@using Microsoft.AspNetCore.Components.Forms
+@inject IMultimediaService _multimediaService
+
+<div class="container mt-4">
+    <h2>Galería Multimedia (HU-INFO-006)</h2>
+    <hr />
+
+    <!-- FORMULARIO INTERACTIVO PARA SUBIR ARCHIVOS -->
+    <div class="card p-3 my-3 bg-light">
+        <h5>Subir Nuevo Archivo a la Galería</h5>
+        <div class="mb-3">
+            <label class="form-label">Título descriptivo</label>
+            <input type="text" @bind="tituloArchivo" class="form-control" placeholder="Ej. Avance de obra en canal de drenaje..." />
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Seleccionar Archivo (Imagen o Video)</label>
+            <InputFile OnChange="CargarArchivoTemporal" class="form-control" accept="image/*,video/*" />
+        </div>
+        <button class="btn btn-primary" @onclick="SubirAAlmacenamiento" disabled="@(archivoSeleccionado == null || string.IsNullOrEmpty(tituloArchivo))">
+            Subir a Galería
+        </button>
+    </div>
+
+    <!-- VISTA DE CUADRÍCULA -->
+    <div class="row row-cols-1 row-cols-md-3 g-4 mt-3">
+        @if (itemsMultimedia == null)
+        {
+            <div class="col-12 text-center">
+                <p>Cargando archivos multimedia desde MySQL...</p>
+            </div>
+        }
+        else if (!itemsMultimedia.Any())
+        {
+            <div class="col-12 text-center">
+                <p class="text-muted">No hay archivos multimedia registrados aún.</p>
+            </div>
+        }
+        else
+        {
+            @foreach (var item in itemsMultimedia)
+            {
+                <div class="col">
+                    <div class="card h-100 shadow-sm align-middle">
+                        <div class="card-body text-center">
+                            @if (item.TipoMedia == "Imagen" || item.TipoMedia == "imagen")
+                            {
+                                <img src="@item.UrlMedia" class="img-fluid rounded mb-2" style="max-height: 150px; object-fit: cover; width: 100%;" />
+                            }
+                            else
+                            {
+                                <div class="bg-dark text-white p-4 rounded mb-2 d-flex flex-column align-items-center justify-content-center" style="height: 150px;">
+                                    <i class="bi bi-play-btn-fill fs-1 text-danger"></i>
+                                    <span class="small mt-1">Video Registrado</span>
+                                </div>
+                            }
+                            <h6 class="card-title mt-2">@item.Titulo</h6>
+                            <small class="text-muted d-block">Subido el: @(item.FechaCreacion.HasValue ? item.FechaCreacion.Value.ToString("dd/MM/yyyy") : "Sin fecha")</small>
+                            <button class="btn btn-sm btn-outline-danger mt-3 w-100" @onclick="() => EliminarItem(item.IdMultimedia)">Eliminar</button>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+</div>
+@code {
+    private string tituloArchivo = "";
+    private IBrowserFile? archivoSeleccionado;
+    private List<SolicitudMultimedia> itemsMultimedia = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await ListarGaleria();
+    }
+
+    private async Task ListarGaleria()
+    {
+        var datosCrudos = await _multimediaService.ObtenerGaleriaAsync();
+
+        if (datosCrudos != null)
+        {
+            itemsMultimedia = datosCrudos.Select(item =>
+            {
+                var m = (SIGECDC.Application.Models.Multimedia)item;
+                return new SolicitudMultimedia
+                {
+                    IdMultimedia = m.IdMultimedia,
+                    Titulo = m.Titulo,
+                    UrlMedia = m.UrlMedia,
+                    TipoMedia = m.TipoMedia,
+                    FechaCreacion = m.FechaCreacion
+                };
+            }).ToList();
+        }
+    }
+
+    private void CargarArchivoTemporal(InputFileChangeEventArgs e)
+    {
+        archivoSeleccionado = e.File;
+    }
+
+    private async Task SubirAAlmacenamiento()
+    {
+        if (archivoSeleccionado != null)
+        {
+            try
+            {
+                string carpetaUploads = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
+                if (!Directory.Exists(carpetaUploads)) Directory.CreateDirectory(carpetaUploads);
+
+                string nombreUnico = Guid.NewGuid().ToString() + Path.GetExtension(archivoSeleccionado.Name);
+                string rutaCompleta = Path.Combine(carpetaUploads, nombreUnico);
+
+                using (var stream = archivoSeleccionado.OpenReadStream(maxAllowedSize: 1024 * 1024 * 15))
+                {
+                    using (var fs = new FileStream(rutaCompleta, FileMode.Create))
+                    {
+                        await stream.CopyToAsync(fs);
+                    }
+                }
+
+                await _multimediaService.CrearMultimediaAsync(new SIGECDC.Application.Models.Multimedia
+                {
+                    Titulo = tituloArchivo,
+                    UrlMedia = $"/uploads/{nombreUnico}",
+                    TipoMedia = archivoSeleccionado.ContentType.StartsWith("image/") ? "Imagen" : "Video",
+                    FechaCreacion = DateTime.Now,
+                    EstadoRegistro = "Activo"
+                });
+
+                tituloArchivo = "";
+                archivoSeleccionado = null;
+                await ListarGaleria();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error al subir archivo a la galería: {ex.Message}");
+            }
+        }
+    }
+
+    private async Task EliminarItem(long id)
+    {
+        await _multimediaService.EliminarMultimediaAsync(id);
+        await ListarGaleria();
+    }
+}

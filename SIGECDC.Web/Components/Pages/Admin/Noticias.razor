@@ -1,0 +1,180 @@
+﻿@page "/admin/noticias"
+@rendermode InteractiveServer
+@using SIGECDC.Application
+@using SIGECDC.Application.Models
+@using Microsoft.AspNetCore.Components.Forms
+@inject INoticiaService NoticiaService
+
+<div class="container mt-4">
+    <h2>Administración de Noticias </h2>
+    <hr />
+
+    <!-- FORMULARIO INTERACTIVO PARA CREAR O EDITAR -->
+    <div class="card my-4 p-3 bg-light">
+        <h4>@(noticiaForm.Id == 0 ? "Agregar Nueva Noticia" : "Modificar Noticia")</h4>
+        <EditForm Model="noticiaForm" OnValidSubmit="GuardarNoticia" FormName="FormularioNoticias">
+            <DataAnnotationsValidator />
+
+            <div class="mb-3">
+                <label class="form-label">Título</label>
+                <InputText @bind-Value="noticiaForm.Titulo" name="noticiaForm.Titulo" class="form-control" placeholder="Escribe el titular..." />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Contenido</label>
+                <InputTextArea @bind-Value="noticiaForm.Contenido" name="noticiaForm.Contenido" class="form-control" rows="4" placeholder="Cuerpo de la noticia..." />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Imagen (.jpg, .png)</label>
+                <InputFile OnChange="OnInputFileChange" class="form-control" accept="image/*" />
+            </div>
+
+            <button type="submit" class="btn btn-success">Guardar Datos</button>
+            @if (noticiaForm.Id != 0)
+            {
+                <button type="button" class="btn btn-secondary ms-2" @onclick="LimpiarFormulario">Cancelar</button>
+            }
+        </EditForm>
+    </div>
+
+    <!-- TABLA DE DATOS DESDE MYSQL -->
+    <table class="table table-striped border align-middle">
+        <thead class="table-dark">
+            <tr>
+                <th>Imagen</th>
+                <th>Título</th>
+                <th>Publicación</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (listaNoticias == null)
+            {
+                <tr><td colspan="4" class="text-center">Cargando noticias desde MySQL...</td></tr>
+            }
+            else if (!listaNoticias.Any())
+            {
+                <tr><td colspan="4" class="text-center">No hay registros cargados.</td></tr>
+            }
+            else
+            {
+                @foreach (var item in listaNoticias)
+                {
+                    <tr>
+                        <td>
+                            @if (!string.IsNullOrEmpty(item.ImagenUrl))
+                            {
+                                <img src="@item.ImagenUrl" alt="Foto" style="width:60px; height:auto; border-radius:4px;" />
+                            }
+                            else
+                            {
+                                <span class="text-muted">Sin foto</span>
+                            }
+                        </td>
+                        <td>@item.Titulo</td>
+                        <td>@item.FechaPublicacion?.ToString("dd/MM/yyyy")</td>
+                        <td>
+                            <button class="btn btn-sm btn-primary me-2" @onclick="() => CargarParaEditar(item)">Editar</button>
+                            <button class="btn btn-sm btn-danger" @onclick="() => Eliminar(item.Id)">Eliminar</button>
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+@code {
+    private List<Noticia> listaNoticias = new();
+
+    [SupplyParameterFromForm]
+    private Noticia noticiaForm { get; set; } = new();
+
+    // DECLARACIÓN ÚNICA CORREGIDA
+    private IBrowserFile? archivoImagen;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (noticiaForm == null)
+        {
+            noticiaForm = new Noticia();
+        }
+        await CargarDatos();
+    }
+
+    private async Task CargarDatos()
+    {
+        listaNoticias = await NoticiaService.ObtenerTodasAsync();
+    }
+
+    private void CargarParaEditar(Noticia modelo)
+    {
+        noticiaForm = new Noticia
+        {
+            Id = modelo.Id,
+            Titulo = modelo.Titulo,
+            Contenido = modelo.Contenido,
+            ImagenUrl = modelo.ImagenUrl,
+            FechaPublicacion = modelo.FechaPublicacion
+        };
+    }
+
+    private async Task GuardarNoticia()
+    {
+        if (archivoImagen != null)
+        {
+            try
+            {
+                string carpetaUploads = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
+                if (!Directory.Exists(carpetaUploads)) Directory.CreateDirectory(carpetaUploads);
+
+                string nombreUnico = Guid.NewGuid().ToString() + Path.GetExtension(archivoImagen.Name);
+                string rutaCompleta = Path.Combine(carpetaUploads, nombreUnico);
+
+                using (var stream = archivoImagen.OpenReadStream(maxAllowedSize: 1024 * 1024 * 5))
+                {
+                    using (var fs = new FileStream(rutaCompleta, FileMode.Create))
+                    {
+                        await stream.CopyToAsync(fs);
+                    }
+                }
+
+                noticiaForm.ImagenUrl = $"/uploads/{nombreUnico}";
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error al procesar la imagen: {ex.Message}");
+            }
+        }
+
+        if (noticiaForm.Id == 0)
+        {
+            await NoticiaService.CrearAsync(noticiaForm);
+        }
+        else
+        {
+            await NoticiaService.EditarAsync(noticiaForm);
+        }
+
+        LimpiarFormulario();
+        await CargarDatos();
+    }
+
+    private async Task Eliminar(int id)
+    {
+        await NoticiaService.EliminarAsync(id);
+        await CargarDatos();
+    }
+
+    private void LimpiarFormulario()
+    {
+        noticiaForm = new Noticia();
+        archivoImagen = null;
+    }
+
+    private void OnInputFileChange(InputFileChangeEventArgs e)
+    {
+        archivoImagen = e.File;
+    }
+}

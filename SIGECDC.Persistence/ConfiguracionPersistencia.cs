@@ -5,6 +5,7 @@ using SIGECDC.Application.SitioPublico;
 using SIGECDC.Persistence.Identity;
 using SIGECDC.Persistence.Operaciones;
 using SIGECDC.Persistence.SitioPublico;
+using SIGECDC.Application.Models;
 
 namespace SIGECDC.Persistence;
 
@@ -17,10 +18,14 @@ public static class ConfiguracionPersistencia
             throw new InvalidOperationException("No se encontro la cadena de conexion 'DefaultConnection'.");
         }
 
-        servicios.AddDbContext<ApplicationDbContext>(opciones =>
-            opciones.UseMySQL(cadenaConexion));
+		servicios.AddDbContext<SigeCdcDbContext>(opciones =>
+	opciones.UseMySql(cadenaConexion, new MySqlServerVersion(new Version(8, 0, 46))));
 
-        servicios.AddScoped<IConsultaContactoService, ConsultaContactoService>();
+		servicios.AddDbContext<ApplicationDbContext>(opciones =>
+	opciones.UseMySql(cadenaConexion, new MySqlServerVersion(new Version(8, 0, 46))));
+
+
+		servicios.AddScoped<IConsultaContactoService, ConsultaContactoService>();
         servicios.AddScoped<IPaginaContenidoService, PaginaContenidoService>();
         servicios.AddScoped<IProyectoService, ProyectoService>();
         servicios.AddScoped<IProyectoPublicadoService, ProyectoPublicadoService>();
