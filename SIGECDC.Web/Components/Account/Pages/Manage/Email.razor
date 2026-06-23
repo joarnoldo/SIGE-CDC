@@ -12,9 +12,9 @@
 @inject NavigationManager NavigationManager
 @inject IdentityRedirectManager RedirectManager
 
-<PageTitle>Gestionar correo electronico</PageTitle>
+<PageTitle>Gestionar correo electrónico</PageTitle>
 
-<h3>Gestionar correo electronico</h3>
+<h3>Gestionar correo electrónico</h3>
 
 <StatusMessage Message="@message"/>
 <div class="row">
@@ -28,27 +28,27 @@
             @if (isEmailConfirmed)
             {
                 <div class="form-floating mb-3 input-group">
-                    <input type="text" value="@email" id="email" class="form-control" placeholder="Correo electronico" disabled />
+                    <input type="text" value="@email" id="email" class="form-control" placeholder="Correo electrónico" disabled />
                     <div class="input-group-append">
                         <span class="h-100 input-group-text text-success font-weight-bold">✓</span>
                     </div>
-                    <label for="email" class="form-label">Correo electronico</label>
+                    <label for="email" class="form-label">Correo electrónico</label>
                 </div>
             }
             else
             {
                 <div class="form-floating mb-3">
-                    <input type="text" value="@email" id="email" class="form-control" placeholder="Correo electronico" disabled />
-                    <label for="email" class="form-label">Correo electronico</label>
-                    <button type="submit" class="btn btn-link" form="send-verification-form">Enviar correo de verificacion</button>
+                    <input type="text" value="@email" id="email" class="form-control" placeholder="Correo electrónico" disabled />
+                    <label for="email" class="form-label">Correo electrónico</label>
+                    <button type="submit" class="btn btn-link" form="send-verification-form">Enviar correo de verificación</button>
                 </div>
             }
             <div class="form-floating mb-3">
-                <InputText @bind-Value="Input.NewEmail" id="Input.NewEmail" class="form-control" autocomplete="email" aria-required="true" placeholder="Nuevo correo electronico" />
-                <label for="Input.NewEmail" class="form-label">Nuevo correo electronico</label>
+                <InputText @bind-Value="Input.NewEmail" id="Input.NewEmail" class="form-control" autocomplete="email" aria-required="true" placeholder="Nuevo correo electrónico" />
+                <label for="Input.NewEmail" class="form-label">Nuevo correo electrónico</label>
                 <ValidationMessage For="() => Input.NewEmail" class="text-danger" />
             </div>
-            <button type="submit" class="w-100 btn btn-lg btn-primary">Cambiar correo electronico</button>
+            <button type="submit" class="w-100 btn btn-lg btn-primary">Cambiar correo electrónico</button>
         </EditForm>
     </div>
 </div>
@@ -86,7 +86,7 @@
     {
         if (Input.NewEmail is null || Input.NewEmail == email)
         {
-            message = "El correo electronico no cambio.";
+            message = "El correo electrónico no cambió.";
             return;
         }
 
@@ -105,7 +105,7 @@
 
         await EmailSender.SendConfirmationLinkAsync(user, Input.NewEmail, HtmlEncoder.Default.Encode(callbackUrl));
 
-        message = "Se envio el enlace de confirmacion para cambiar el correo. Revise su correo electronico.";
+        message = "Se envió el enlace de confirmación para cambiar el correo. Revise su correo electrónico.";
     }
 
     private async Task OnSendEmailVerificationAsync()
@@ -130,14 +130,14 @@
 
         await EmailSender.SendConfirmationLinkAsync(user, email, HtmlEncoder.Default.Encode(callbackUrl));
 
-        message = "Se envio el correo de verificacion. Revise su correo electronico.";
+        message = "Se envió el correo de verificación. Revise su correo electrónico.";
     }
 
     private sealed class InputModel
     {
         [Required]
         [EmailAddress]
-        [Display(Name = "Nuevo correo electronico")]
+        [Display(Name = "Nuevo correo electrónico")]
         public string? NewEmail { get; set; }
     }
 }

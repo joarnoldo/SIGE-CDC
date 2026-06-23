@@ -7,7 +7,7 @@ using System.Security.Claims;
 
 namespace SIGECDC.Web.Components.Account
 {
-    // This is a server-side AuthenticationStateProvider that revalidates the security stamp for the connected user
+    // Revalida periódicamente el sello de seguridad del usuario conectado en el servidor.
     // every 30 minutes an interactive circuit is connected.
     internal sealed class IdentityRevalidatingAuthenticationStateProvider(
             ILoggerFactory loggerFactory,

@@ -1,0 +1,299 @@
+@page "/rrhh/parametros-planilla"
+@rendermode InteractiveServer
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Recursos Humanos")]
+@using SIGECDC.Application.Planillas
+@inject IParametroPlanillaService ParametroPlanillaService
+@inject AuthenticationStateProvider Autenticacion
+@inject ILogger<ParametrosPlanilla> Logger
+
+<PageTitle>Parámetros de planilla | SIGE-CDC</PageTitle>
+
+<section class="page-banner">
+    <div class="container page-banner__inner stack--tight">
+        <p class="eyebrow">Recursos Humanos / Planillas</p>
+        <h1>Parámetros de planilla.</h1>
+        <p class="lead">Configure deducciones, beneficios y valores de referencia para los procesos de planilla.</p>
+    </div>
+</section>
+
+<section class="section-shell">
+    <div class="container stack">
+        @if (!string.IsNullOrWhiteSpace(mensajeEstado))
+        {
+            <div class="alert alert--@(mensajeEsError ? "danger" : "success")" role="alert">
+                <strong>@(mensajeEsError ? "No se pudo completar la acción" : "Acción completada")</strong>
+                <span>@mensajeEstado</span>
+            </div>
+        }
+
+        <div class="page-header">
+            <div>
+                <p class="eyebrow">Configuración laboral</p>
+                <h2>Parámetros registrados</h2>
+            </div>
+            <div class="page-actions">
+                <a class="btn btn--primary" href="rrhh/parametros-planilla/nuevo">Nuevo parámetro</a>
+            </div>
+        </div>
+
+        <section class="toolbar" aria-label="Filtros de parámetros de planilla">
+            <div class="toolbar__group">
+                <label class="field">
+                    <span>Buscar</span>
+                    <input type="search"
+                           @bind="busqueda"
+                           placeholder="Código, nombre o descripción" />
+                </label>
+                <label class="field">
+                    <span>Tipo</span>
+                    <select @bind="tipoParametroFiltro">
+                        <option value="">Todos</option>
+                        @foreach (var tipo in tiposParametro)
+                        {
+                            <option value="@tipo.Nombre">@tipo.Nombre</option>
+                        }
+                    </select>
+                </label>
+                <label class="field">
+                    <span>Estado</span>
+                    <select @bind="estadoRegistroFiltro">
+                        <option value="">Todos</option>
+                        <option value="Activo">Activo</option>
+                        <option value="Inactivo">Inactivo</option>
+                    </select>
+                </label>
+            </div>
+            <div class="toolbar__group">
+                <button class="btn btn--secondary" type="button" @onclick="LimpiarFiltrosAsync">Limpiar</button>
+                <button class="btn btn--primary" type="button" @onclick="CargarParametrosAsync">Buscar</button>
+            </div>
+        </section>
+
+        <section class="kpi-grid">
+            <article class="stat-card">
+                <span class="stat-label">Total visibles</span>
+                <strong class="stat-value">@parametros.Count</strong>
+                <span class="stat-delta">Según filtros actuales</span>
+            </article>
+            <article class="stat-card">
+                <span class="stat-label">Activos</span>
+                <strong class="stat-value">@CantidadPorEstado("Activo")</strong>
+                <span class="stat-delta">Disponibles para uso</span>
+            </article>
+            <article class="stat-card">
+                <span class="stat-label">Inactivos</span>
+                <strong class="stat-value">@CantidadPorEstado("Inactivo")</strong>
+                <span class="stat-delta">Conservados para trazabilidad</span>
+            </article>
+            <article class="stat-card">
+                <span class="stat-label">No editables</span>
+                <strong class="stat-value">@parametros.Count(parametro => !parametro.EsEditable)</strong>
+                <span class="stat-delta">Protegidos por configuración</span>
+            </article>
+        </section>
+
+        <article class="table-card">
+            <div class="table-toolbar">
+                <div>
+                    <h2 class="card__title">Parámetros</h2>
+                    <p class="card__meta">Valores globales registrados para planilla.</p>
+                </div>
+                <span class="badge badge--info">@TextoCantidad</span>
+            </div>
+
+            @if (cargando)
+            {
+                <div class="empty-state">
+                    <strong>Cargando parámetros</strong>
+                    <p class="text-muted">Estamos recuperando la configuración disponible.</p>
+                </div>
+            }
+            else if (parametros.Count == 0)
+            {
+                <div class="empty-state">
+                    <strong>No hay parámetros para mostrar</strong>
+                    <p class="text-muted">Registre un parámetro o ajuste los filtros de búsqueda.</p>
+                    <a class="btn btn--primary" href="rrhh/parametros-planilla/nuevo">Nuevo parámetro</a>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Código</th>
+                                <th>Parámetro</th>
+                                <th>Tipo</th>
+                                <th>Valor</th>
+                                <th>Vigencia</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var parametro in parametros)
+                            {
+                                <tr>
+                                    <td><strong>@parametro.Codigo</strong></td>
+                                    <td>
+                                        @parametro.Nombre
+                                        @if (!string.IsNullOrWhiteSpace(parametro.Descripcion))
+                                        {
+                                            <p class="card__meta">@parametro.Descripcion</p>
+                                        }
+                                    </td>
+                                    <td>@parametro.TipoParametro</td>
+                                    <td>@TextoValor(parametro)</td>
+                                    <td>@TextoVigencia(parametro)</td>
+                                    <td>
+                                        <span class="badge @ClaseEstado(parametro.EstadoRegistro)">@parametro.EstadoRegistro</span>
+                                        @if (!parametro.EsEditable)
+                                        {
+                                            <span class="badge badge--warning">Protegido</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <div class="table-actions">
+                                            <a href="@($"rrhh/parametros-planilla/{parametro.IdParametroPlanilla}")">Editar</a>
+                                            <button type="button"
+                                                    disabled="@NoPuedeDesactivar(parametro)"
+                                                    @onclick="() => DesactivarAsync(parametro)">
+                                                Desactivar
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </article>
+    </div>
+</section>
+
+@code {
+    private IReadOnlyList<ParametroPlanillaResumen> parametros = [];
+    private IReadOnlyList<TipoParametroPlanillaOpcion> tiposParametro = [];
+    private bool cargando = true;
+    private bool desactivando;
+    private bool mensajeEsError;
+    private string? busqueda;
+    private string? tipoParametroFiltro;
+    private string? estadoRegistroFiltro;
+    private string? mensajeEstado;
+
+    private string TextoCantidad => parametros.Count == 1
+        ? "1 parámetro"
+        : $"{parametros.Count} parámetros";
+
+    protected override async Task OnInitializedAsync()
+    {
+        tiposParametro = await ParametroPlanillaService.ObtenerTiposParametroAsync();
+        await CargarParametrosAsync();
+    }
+
+    private async Task CargarParametrosAsync()
+    {
+        cargando = true;
+        mensajeEstado = null;
+        mensajeEsError = false;
+
+        try
+        {
+            parametros = await ParametroPlanillaService.ObtenerParametrosAsync(
+                busqueda,
+                string.IsNullOrWhiteSpace(tipoParametroFiltro) ? null : tipoParametroFiltro,
+                string.IsNullOrWhiteSpace(estadoRegistroFiltro) ? null : estadoRegistroFiltro);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudo cargar la lista de parámetros de planilla.");
+            mensajeEsError = true;
+            mensajeEstado = "No se pudo cargar la lista de parámetros de planilla.";
+            parametros = [];
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private async Task LimpiarFiltrosAsync()
+    {
+        busqueda = null;
+        tipoParametroFiltro = null;
+        estadoRegistroFiltro = null;
+        await CargarParametrosAsync();
+    }
+
+    private async Task DesactivarAsync(ParametroPlanillaResumen parametro)
+    {
+        desactivando = true;
+        mensajeEstado = null;
+        mensajeEsError = false;
+
+        try
+        {
+            var idUsuarioActual = await ObtenerIdUsuarioActualAsync();
+            await ParametroPlanillaService.DesactivarParametroAsync(parametro.IdParametroPlanilla, idUsuarioActual);
+            mensajeEstado = $"El parámetro {parametro.Codigo} fue marcado como Inactivo.";
+            await CargarParametrosAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudo desactivar el parámetro {IdParametroPlanilla}.", parametro.IdParametroPlanilla);
+            mensajeEsError = true;
+            mensajeEstado = ex.Message;
+        }
+        finally
+        {
+            desactivando = false;
+        }
+    }
+
+    private int CantidadPorEstado(string estado)
+    {
+        return parametros.Count(parametro => string.Equals(parametro.EstadoRegistro, estado, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private bool NoPuedeDesactivar(ParametroPlanillaResumen parametro)
+    {
+        return desactivando
+            || !parametro.EsEditable
+            || string.Equals(parametro.EstadoRegistro, "Inactivo", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string TextoValor(ParametroPlanillaResumen parametro)
+    {
+        return string.Equals(parametro.TipoParametro, "Texto", StringComparison.OrdinalIgnoreCase)
+            ? parametro.ValorTexto ?? "-"
+            : parametro.ValorDecimal?.ToString("N4") ?? "-";
+    }
+
+    private static string TextoVigencia(ParametroPlanillaResumen parametro)
+    {
+        if (parametro.FechaVigenciaInicio is null && parametro.FechaVigenciaFin is null)
+        {
+            return "Sin rango";
+        }
+
+        var desde = parametro.FechaVigenciaInicio?.ToString("dd/MM/yyyy") ?? "Sin inicio";
+        var hasta = parametro.FechaVigenciaFin?.ToString("dd/MM/yyyy") ?? "Sin fin";
+        return $"{desde} - {hasta}";
+    }
+
+    private static string ClaseEstado(string estado)
+    {
+        return string.Equals(estado, "Activo", StringComparison.OrdinalIgnoreCase)
+            ? "badge--success"
+            : "badge--danger";
+    }
+
+    private async Task<string?> ObtenerIdUsuarioActualAsync()
+    {
+        var estadoAutenticacion = await Autenticacion.GetAuthenticationStateAsync();
+        return estadoAutenticacion.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+    }
+}

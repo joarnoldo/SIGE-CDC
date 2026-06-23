@@ -35,7 +35,7 @@
         if (UserId is null || Email is null || Code is null)
         {
             RedirectManager.RedirectToWithStatus(
-                "Account/Login", "Error: el enlace de confirmacion de cambio de correo no es valido.", HttpContext);
+                "Account/Login", "Error: el enlace de confirmación de cambio de correo no es válido.", HttpContext);
             return;
         }
 
@@ -50,12 +50,12 @@
         var result = await UserManager.ChangeEmailAsync(user, Email, code);
         if (!result.Succeeded)
         {
-            message = "Error al cambiar el correo electronico.";
+            message = "Error al cambiar el correo electrónico.";
             return;
         }
 
         // En esta interfaz el correo y el nombre de usuario son el mismo valor; al actualizar el correo
-        // tambien se actualiza el nombre de usuario.
+        // también se actualiza el nombre de usuario.
         var setUserNameResult = await UserManager.SetUserNameAsync(user, Email);
         if (!setUserNameResult.Succeeded)
         {
@@ -64,6 +64,6 @@
         }
 
         await SignInManager.RefreshSignInAsync(user);
-        message = "Gracias por confirmar el cambio de correo electronico.";
+        message = "Gracias por confirmar el cambio de correo electrónico.";
     }
 }

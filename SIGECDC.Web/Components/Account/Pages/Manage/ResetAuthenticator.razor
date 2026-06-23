@@ -15,11 +15,11 @@
 <div class="alert alert-warning" role="alert">
     <p>
         <span class="glyphicon glyphicon-warning-sign"></span>
-        <strong>Si restablece la clave del autenticador, la aplicacion autenticadora no funcionara hasta configurarla nuevamente.</strong>
+        <strong>Si restablece la clave del autenticador, la aplicación autenticadora no funcionará hasta configurarla nuevamente.</strong>
     </p>
     <p>
-        Este proceso desactiva 2FA hasta que verifique nuevamente la aplicacion autenticadora.
-        Si no completa la configuracion de la aplicacion autenticadora, podria perder acceso a su cuenta.
+        Este proceso desactiva 2FA hasta que verifique nuevamente la aplicación autenticadora.
+        Si no completa la configuración de la aplicación autenticadora, podría perder acceso a su cuenta.
     </p>
 </div>
 <div>
@@ -45,13 +45,13 @@
         await UserManager.SetTwoFactorEnabledAsync(user, false);
         await UserManager.ResetAuthenticatorKeyAsync(user);
         var userId = await UserManager.GetUserIdAsync(user);
-        Logger.LogInformation("User with ID '{UserId}' has reset their authentication app key.", userId);
+        Logger.LogInformation("El usuario con ID '{UserId}' restableció la clave de la aplicación autenticadora.", userId);
 
         await SignInManager.RefreshSignInAsync(user);
 
         RedirectManager.RedirectToWithStatus(
             "Account/Manage/EnableAuthenticator",
-            "La clave de la aplicacion autenticadora fue restablecida. Debe configurar la aplicacion con la nueva clave.",
+            "La clave de la aplicación autenticadora fue restablecida. Debe configurar la aplicación con la nueva clave.",
             HttpContext);
     }
 }

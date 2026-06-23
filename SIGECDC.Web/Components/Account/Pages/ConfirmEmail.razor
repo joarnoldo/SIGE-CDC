@@ -8,9 +8,9 @@
 @inject UserManager<ApplicationUser> UserManager
 @inject IdentityRedirectManager RedirectManager
 
-<PageTitle>Confirmar correo electronico</PageTitle>
+<PageTitle>Confirmar correo electrónico</PageTitle>
 
-<h1>Confirmar correo electronico</h1>
+<h1>Confirmar correo electrónico</h1>
 <StatusMessage Message="@statusMessage" />
 
 @code {
@@ -43,7 +43,7 @@
         {
             var code = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(Code));
             var result = await UserManager.ConfirmEmailAsync(user, code);
-            statusMessage = result.Succeeded ? "Gracias por confirmar su correo electronico." : "Error al confirmar el correo electronico.";
+            statusMessage = result.Succeeded ? "Gracias por confirmar su correo electrónico." : "Error al confirmar el correo electrónico.";
         }
     }
 }

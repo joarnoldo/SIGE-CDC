@@ -1,3 +1,6 @@
+using SIGECDC.Application.Archivos;
+using SIGECDC.Application.RecursosHumanos;
+using SIGECDC.Infrastructure.Archivos;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using SIGECDC.Persistence;
@@ -25,6 +28,8 @@ builder.Services.AddAuthentication(options =>
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+builder.Services.AddSingleton<IAlmacenamientoArchivosService>(_ =>
+    new AlmacenamientoArchivosLocal(builder.Configuration["AlmacenamientoArchivos:RutaBase"] ?? string.Empty));
 builder.Services.AgregarPersistencia(connectionString);
 
 builder.Services.AddIdentityCore<ApplicationUser>(options =>
@@ -53,12 +58,26 @@ if (!app.Environment.IsDevelopment())
 }
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
 app.UseHttpsRedirection();
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.UseAntiforgery();
 
 app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
+
+app.MapGet(
+        "/rrhh/documentos/{idDocumentoArchivo:long}/descargar",
+        async (long idDocumentoArchivo, IContratoDocumentoService contratoDocumentoService, CancellationToken cancellationToken) =>
+        {
+            var archivo = await contratoDocumentoService.AbrirDocumentoAsync(idDocumentoArchivo, cancellationToken);
+
+            return archivo is null
+                ? Results.NotFound()
+                : Results.File(archivo.Contenido, archivo.MimeType, archivo.NombreOriginal);
+        })
+    .RequireAuthorization(policy => policy.RequireRole("Recursos Humanos"));
 
 // Add additional endpoints required by the Identity /Account Razor components.
 app.MapAdditionalIdentityEndpoints();

@@ -9,12 +9,12 @@
 @inject IUserStore<ApplicationUser> UserStore
 @inject IdentityRedirectManager RedirectManager
 
-<PageTitle>Manage your external logins</PageTitle>
+<PageTitle>Gestionar accesos externos</PageTitle>
 
 <StatusMessage />
 @if (currentLogins?.Count > 0)
 {
-    <h3>Registrared Logins</h3>
+    <h3>Accesos registrados</h3>
     <table class="table">
         <tbody>
             @foreach (var login in currentLogins)
@@ -45,7 +45,7 @@
 }
 @if (otherLogins?.Count > 0)
 {
-    <h4>Add another service to log in.</h4>
+    <h4>Agregar otro servicio de acceso.</h4>
     <hr />
     <form class="form-horizontal" action="Account/Manage/LinkExternalLogin" method="post">
         <AntiforgeryToken />
@@ -53,7 +53,7 @@
             <p>
                 @foreach (var provider in otherLogins)
                 {
-                    <button type="submit" class="btn btn-primary" name="Provider" value="@provider.Name" title="Iniciar sesion con la cuenta de @provider.DisplayName">
+                    <button type="submit" class="btn btn-primary" name="Provider" value="@provider.Name" title="Iniciar sesión con la cuenta de @provider.DisplayName">
                         @provider.DisplayName
                     </button>
                 }
@@ -142,14 +142,14 @@
         var info = await SignInManager.GetExternalLoginInfoAsync(userId);
         if (info is null)
         {
-            RedirectManager.RedirectToCurrentPageWithStatus("Error: no se pudo cargar la informacion del acceso externo.", HttpContext);
+            RedirectManager.RedirectToCurrentPageWithStatus("Error: no se pudo cargar la información del acceso externo.", HttpContext);
             return;
         }
 
         var result = await UserManager.AddLoginAsync(user, info);
         if (result.Succeeded)
         {
-            // Clear the existing external cookie to ensure a clean login process
+            // Se limpia la cookie externa para evitar datos residuales del proveedor anterior.
             await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
 
             RedirectManager.RedirectToCurrentPageWithStatus("El acceso externo fue agregado.", HttpContext);

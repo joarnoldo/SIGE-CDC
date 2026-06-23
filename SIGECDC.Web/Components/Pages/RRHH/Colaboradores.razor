@@ -1,0 +1,289 @@
+@page "/rrhh/colaboradores"
+@rendermode InteractiveServer
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Recursos Humanos")]
+@using SIGECDC.Application.RecursosHumanos
+@inject IColaboradorService ColaboradorService
+@inject AuthenticationStateProvider Autenticacion
+@inject ILogger<Colaboradores> Logger
+
+<PageTitle>Colaboradores | SIGE-CDC</PageTitle>
+
+<section class="page-banner">
+    <div class="container page-banner__inner stack--tight">
+        <p class="eyebrow">Recursos Humanos / Colaboradores</p>
+        <h1>Gestión de colaboradores.</h1>
+        <p class="lead">Registro, consulta, actualización y desactivación del expediente básico del personal.</p>
+    </div>
+</section>
+
+<section class="section-shell">
+    <div class="container stack">
+        @if (!string.IsNullOrWhiteSpace(mensajeEstado))
+        {
+            <div class="alert alert--@(mensajeEsError ? "danger" : "success")" role="alert">
+                <strong>@(mensajeEsError ? "No se pudo completar la acción" : "Acción completada")</strong>
+                <span>@mensajeEstado</span>
+            </div>
+        }
+
+        <div class="page-header">
+            <div>
+                <p class="eyebrow">Expediente laboral</p>
+                <h2>Colaboradores registrados</h2>
+            </div>
+            <div class="page-actions">
+                <a class="btn btn--primary" href="rrhh/colaboradores/nuevo">Nuevo colaborador</a>
+            </div>
+        </div>
+
+        <section class="toolbar" aria-label="Filtros de colaboradores">
+            <div class="toolbar__group">
+                <label class="field">
+                    <span>Buscar</span>
+                    <input type="search"
+                           @bind="busqueda"
+                           placeholder="Código, identificación, nombre, departamento o puesto" />
+                </label>
+                <label class="field">
+                    <span>Estado laboral</span>
+                    <select @bind="idEstadoLaboralFiltro">
+                        <option value="0">Todos</option>
+                        @foreach (var estado in estadosLaborales)
+                        {
+                            <option value="@estado.Id">@estado.Nombre</option>
+                        }
+                    </select>
+                </label>
+                <label class="field">
+                    <span>Departamento</span>
+                    <select @bind="idDepartamentoFiltro">
+                        <option value="0">Todos</option>
+                        @foreach (var departamento in departamentos)
+                        {
+                            <option value="@departamento.Id">@departamento.Nombre</option>
+                        }
+                    </select>
+                </label>
+            </div>
+            <div class="toolbar__group">
+                <button class="btn btn--secondary" type="button" @onclick="LimpiarFiltrosAsync">Limpiar</button>
+                <button class="btn btn--primary" type="button" @onclick="CargarColaboradoresAsync">Buscar</button>
+            </div>
+        </section>
+
+        <section class="kpi-grid">
+            <article class="stat-card">
+                <span class="stat-label">Total visibles</span>
+                <strong class="stat-value">@colaboradores.Count</strong>
+                <span class="stat-delta">Expedientes activos en sistema</span>
+            </article>
+            <article class="stat-card">
+                <span class="stat-label">Laboral activo</span>
+                <strong class="stat-value">@CantidadPorEstado("Activo")</strong>
+                <span class="stat-delta">Disponibles para procesos RRHH</span>
+            </article>
+            <article class="stat-card">
+                <span class="stat-label">Inactivos</span>
+                <strong class="stat-value">@CantidadPorEstado("Inactivo")</strong>
+                <span class="stat-delta">Con historial conservado</span>
+            </article>
+            <article class="stat-card">
+                <span class="stat-label">Departamentos</span>
+                <strong class="stat-value">@colaboradores.Select(c => c.IdDepartamento).Distinct().Count()</strong>
+                <span class="stat-delta">Según filtro actual</span>
+            </article>
+        </section>
+
+        <article class="table-card">
+            <div class="table-toolbar">
+                <div>
+                    <h2 class="card__title">Expedientes</h2>
+                    <p class="card__meta">Resultados ordenados por apellidos y nombre.</p>
+                </div>
+                <span class="badge badge--info">@TextoCantidad</span>
+            </div>
+
+            @if (cargando)
+            {
+                <div class="empty-state">
+                    <strong>Cargando colaboradores</strong>
+                    <p class="text-muted">Estamos recuperando los expedientes registrados.</p>
+                </div>
+            }
+            else if (colaboradores.Count == 0)
+            {
+                <div class="empty-state">
+                    <strong>No hay colaboradores para mostrar</strong>
+                    <p class="text-muted">Registre un colaborador o ajuste los filtros de búsqueda.</p>
+                    <a class="btn btn--primary" href="rrhh/colaboradores/nuevo">Nuevo colaborador</a>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Código</th>
+                                <th>Colaborador</th>
+                                <th>Contacto</th>
+                                <th>Departamento</th>
+                                <th>Puesto</th>
+                                <th>Ingreso</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var colaborador in colaboradores)
+                            {
+                                <tr>
+                                    <td>
+                                        <strong>@colaborador.CodigoColaborador</strong>
+                                        <p class="card__meta">@colaborador.Identificacion</p>
+                                    </td>
+                                    <td>@colaborador.NombreCompleto</td>
+                                    <td>
+                                        @(string.IsNullOrWhiteSpace(colaborador.CorreoElectronico) ? "Sin correo" : colaborador.CorreoElectronico)
+                                        @if (!string.IsNullOrWhiteSpace(colaborador.Telefono))
+                                        {
+                                            <p class="card__meta">@colaborador.Telefono</p>
+                                        }
+                                    </td>
+                                    <td>@colaborador.Departamento</td>
+                                    <td>@colaborador.Puesto</td>
+                                    <td>@colaborador.FechaIngreso.ToString("dd/MM/yyyy")</td>
+                                    <td>
+                                        <span class="badge @ClaseEstado(colaborador.EstadoLaboral)">@colaborador.EstadoLaboral</span>
+                                    </td>
+                                    <td>
+                                            <div class="table-actions">
+                                                <a href="@($"rrhh/colaboradores/{colaborador.IdColaborador}")">Editar</a>
+                                                <a href="@($"rrhh/colaboradores/{colaborador.IdColaborador}/documentos")">Documentos</a>
+                                                <button type="button"
+                                                        disabled="@NoPuedeDesactivar(colaborador)"
+                                                    @onclick="() => DesactivarAsync(colaborador)">
+                                                Desactivar
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </article>
+    </div>
+</section>
+
+@code {
+    private IReadOnlyList<ColaboradorResumen> colaboradores = [];
+    private IReadOnlyList<OpcionCatalogo> estadosLaborales = [];
+    private IReadOnlyList<OpcionCatalogo> departamentos = [];
+    private bool cargando = true;
+    private bool mensajeEsError;
+    private bool desactivando;
+    private string? busqueda;
+    private string? mensajeEstado;
+    private int idEstadoLaboralFiltro;
+    private int idDepartamentoFiltro;
+
+    private string TextoCantidad => colaboradores.Count == 1
+        ? "1 colaborador"
+        : $"{colaboradores.Count} colaboradores";
+
+    protected override async Task OnInitializedAsync()
+    {
+        estadosLaborales = await ColaboradorService.ObtenerEstadosLaboralesAsync();
+        departamentos = await ColaboradorService.ObtenerDepartamentosAsync();
+        await CargarColaboradoresAsync();
+    }
+
+    private async Task CargarColaboradoresAsync()
+    {
+        cargando = true;
+        mensajeEstado = null;
+        mensajeEsError = false;
+
+        try
+        {
+            colaboradores = await ColaboradorService.ObtenerColaboradoresAsync(
+                busqueda,
+                idEstadoLaboralFiltro > 0 ? idEstadoLaboralFiltro : null,
+                idDepartamentoFiltro > 0 ? idDepartamentoFiltro : null);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudo cargar la lista de colaboradores.");
+            mensajeEsError = true;
+            mensajeEstado = "No se pudo cargar la lista de colaboradores.";
+            colaboradores = [];
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private async Task LimpiarFiltrosAsync()
+    {
+        busqueda = null;
+        idEstadoLaboralFiltro = 0;
+        idDepartamentoFiltro = 0;
+        await CargarColaboradoresAsync();
+    }
+
+    private async Task DesactivarAsync(ColaboradorResumen colaborador)
+    {
+        mensajeEstado = null;
+        mensajeEsError = false;
+        desactivando = true;
+
+        try
+        {
+            var idUsuarioActual = await ObtenerIdUsuarioActualAsync();
+            await ColaboradorService.DesactivarColaboradorAsync(colaborador.IdColaborador, idUsuarioActual);
+            mensajeEstado = $"El colaborador {colaborador.NombreCompleto} fue marcado como Inactivo.";
+            await CargarColaboradoresAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudo desactivar el colaborador {IdColaborador}.", colaborador.IdColaborador);
+            mensajeEsError = true;
+            mensajeEstado = ex.Message;
+        }
+        finally
+        {
+            desactivando = false;
+        }
+    }
+
+    private int CantidadPorEstado(string estado)
+    {
+        return colaboradores.Count(colaborador => string.Equals(colaborador.EstadoLaboral, estado, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private bool NoPuedeDesactivar(ColaboradorResumen colaborador)
+    {
+        return desactivando || string.Equals(colaborador.EstadoLaboral, "Inactivo", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string ClaseEstado(string estado)
+    {
+        return estado switch
+        {
+            "Activo" => "badge--success",
+            "Suspendido" => "badge--warning",
+            "Inactivo" => "badge--danger",
+            "Finalizado" => "badge--danger",
+            _ => "badge--info"
+        };
+    }
+
+    private async Task<string?> ObtenerIdUsuarioActualAsync()
+    {
+        var estadoAutenticacion = await Autenticacion.GetAuthenticationStateAsync();
+        return estadoAutenticacion.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+    }
+}

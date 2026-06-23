@@ -1,0 +1,326 @@
+@page "/admin/historial"
+@rendermode InteractiveServer
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Administrador")]
+@using SIGECDC.Application.Auditoria
+@using SIGECDC.Application.SitioPublico
+@inject IHistorialSistemaService HistorialSistemaService
+@inject IConsultaContactoService ConsultaContactoService
+@inject ILogger<HistorialSistema> Logger
+
+<PageTitle>Historial | SIGE-CDC</PageTitle>
+
+<section class="page-banner">
+    <div class="container page-banner__inner stack--tight">
+        <p class="eyebrow">Administración / Historial</p>
+        <h1>Historial de accesos y formularios.</h1>
+        <p class="lead">Consulte eventos recientes de acceso interno y solicitudes recibidas desde el sitio público.</p>
+    </div>
+</section>
+
+<section class="section-shell">
+    <div class="container stack">
+        @if (!string.IsNullOrWhiteSpace(mensajeEstado))
+        {
+            <div class="alert alert--danger" role="alert">
+                <strong>No se pudo cargar el historial</strong>
+                <span>@mensajeEstado</span>
+            </div>
+        }
+
+        <section class="toolbar" aria-label="Filtros del historial">
+            <div class="toolbar__group">
+                <label class="field">
+                    <span>Desde</span>
+                    <InputDate @bind-Value="fechaDesde" />
+                </label>
+                <label class="field">
+                    <span>Hasta</span>
+                    <InputDate @bind-Value="fechaHasta" />
+                </label>
+                <label class="field">
+                    <span>Buscar</span>
+                    <input type="search"
+                           @bind="busqueda"
+                           placeholder="Usuario, correo, IP, contacto o mensaje" />
+                </label>
+                <label class="field">
+                    <span>Acción</span>
+                    <select @bind="accionFiltro">
+                        <option value="">Todas</option>
+                        <option value="Acceso exitoso">Acceso exitoso</option>
+                        <option value="Acceso fallido">Acceso fallido</option>
+                        <option value="Acceso bloqueado">Acceso bloqueado</option>
+                        <option value="Acceso requiere verificacion">Requiere verificación</option>
+                    </select>
+                </label>
+                <label class="field">
+                    <span>Estado formulario</span>
+                    <select @bind="estadoFormularioFiltro">
+                        <option value="">Todos</option>
+                        @foreach (var estado in estadosFormulario)
+                        {
+                            <option value="@estado.Valor">@estado.Etiqueta</option>
+                        }
+                    </select>
+                </label>
+            </div>
+            <div class="toolbar__group">
+                <button class="btn btn--secondary" type="button" @onclick="LimpiarFiltrosAsync">Limpiar</button>
+                <button class="btn btn--primary" type="button" @onclick="CargarHistorialAsync">Buscar</button>
+            </div>
+        </section>
+
+        <section class="kpi-grid">
+            <article class="stat-card">
+                <span class="stat-label">Accesos visibles</span>
+                <strong class="stat-value">@accesos.Count</strong>
+                <span class="stat-delta">Eventos internos</span>
+            </article>
+            <article class="stat-card">
+                <span class="stat-label">Accesos exitosos</span>
+                <strong class="stat-value">@CantidadAccesos("Acceso exitoso")</strong>
+                <span class="stat-delta">Ingreso completado</span>
+            </article>
+            <article class="stat-card">
+                <span class="stat-label">Formularios visibles</span>
+                <strong class="stat-value">@formularios.Count</strong>
+                <span class="stat-delta">Solicitudes recibidas</span>
+            </article>
+            <article class="stat-card">
+                <span class="stat-label">Pendientes</span>
+                <strong class="stat-value">@formularios.Count(formulario => formulario.EstadoConsulta == "Nueva")</strong>
+                <span class="stat-delta">Consultas nuevas</span>
+            </article>
+        </section>
+
+        <article class="table-card">
+            <div class="table-toolbar">
+                <div>
+                    <h2 class="card__title">Accesos internos</h2>
+                    <p class="card__meta">Eventos registrados desde el inicio de sesión.</p>
+                </div>
+                <span class="badge badge--info">@TextoCantidadAccesos</span>
+            </div>
+
+            @if (cargando)
+            {
+                <div class="empty-state">
+                    <strong>Cargando accesos</strong>
+                    <p class="text-muted">Estamos recuperando los eventos recientes.</p>
+                </div>
+            }
+            else if (accesos.Count == 0)
+            {
+                <div class="empty-state">
+                    <strong>No hay accesos para mostrar</strong>
+                    <p class="text-muted">Los accesos se registrarán a partir de los nuevos ingresos al sistema.</p>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Acción</th>
+                                <th>Usuario</th>
+                                <th>IP</th>
+                                <th>Observación</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var acceso in accesos)
+                            {
+                                <tr>
+                                    <td>@acceso.FechaHora.ToString("dd/MM/yyyy HH:mm")</td>
+                                    <td><span class="badge @ClaseAcceso(acceso.Accion)">@ObtenerEtiquetaAcceso(acceso.Accion)</span></td>
+                                    <td>
+                                        @(string.IsNullOrWhiteSpace(acceso.Usuario) ? "No asociado" : acceso.Usuario)
+                                        @if (!string.IsNullOrWhiteSpace(acceso.CorreoElectronico))
+                                        {
+                                            <p class="card__meta">@acceso.CorreoElectronico</p>
+                                        }
+                                    </td>
+                                    <td>@(string.IsNullOrWhiteSpace(acceso.DireccionIP) ? "-" : acceso.DireccionIP)</td>
+                                    <td>@ObtenerTextoObservacion(acceso.Observacion)</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </article>
+
+        <article class="table-card">
+            <div class="table-toolbar">
+                <div>
+                    <h2 class="card__title">Formularios de contacto</h2>
+                    <p class="card__meta">Solicitudes públicas consultadas en modo de solo lectura.</p>
+                </div>
+                <span class="badge badge--info">@TextoCantidadFormularios</span>
+            </div>
+
+            @if (cargando)
+            {
+                <div class="empty-state">
+                    <strong>Cargando formularios</strong>
+                    <p class="text-muted">Estamos recuperando las solicitudes registradas.</p>
+                </div>
+            }
+            else if (formularios.Count == 0)
+            {
+                <div class="empty-state">
+                    <strong>No hay formularios para mostrar</strong>
+                    <p class="text-muted">Cuando existan solicitudes del sitio público, aparecerán en este historial.</p>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Contacto</th>
+                                <th>Asunto</th>
+                                <th>Mensaje</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var formulario in formularios)
+                            {
+                                <tr>
+                                    <td>@formulario.FechaEnvio.ToString("dd/MM/yyyy HH:mm")</td>
+                                    <td>
+                                        <strong>@formulario.Nombre</strong>
+                                        <p class="card__meta">@formulario.CorreoElectronico</p>
+                                        @if (!string.IsNullOrWhiteSpace(formulario.Telefono))
+                                        {
+                                            <small>@formulario.Telefono</small>
+                                        }
+                                    </td>
+                                    <td>@(string.IsNullOrWhiteSpace(formulario.Asunto) ? "Sin asunto" : formulario.Asunto)</td>
+                                    <td>@formulario.Mensaje</td>
+                                    <td><span class="badge badge--accent">@ObtenerEtiquetaEstadoFormulario(formulario.EstadoConsulta)</span></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </article>
+    </div>
+</section>
+
+@code {
+    private IReadOnlyList<AccesoHistorialResumen> accesos = [];
+    private IReadOnlyList<FormularioContactoHistorialResumen> formularios = [];
+    private IReadOnlyList<EstadoConsultaContactoOpcion> estadosFormulario = [];
+    private bool cargando = true;
+    private string? mensajeEstado;
+    private DateTime? fechaDesde;
+    private DateTime? fechaHasta;
+    private string? busqueda;
+    private string? accionFiltro;
+    private string? estadoFormularioFiltro;
+
+    private string TextoCantidadAccesos => accesos.Count == 1 ? "1 acceso" : $"{accesos.Count} accesos";
+
+    private string TextoCantidadFormularios => formularios.Count == 1 ? "1 formulario" : $"{formularios.Count} formularios";
+
+    protected override async Task OnInitializedAsync()
+    {
+        estadosFormulario = ConsultaContactoService.ObtenerEstadosConsulta();
+        await CargarHistorialAsync();
+    }
+
+    private async Task CargarHistorialAsync()
+    {
+        cargando = true;
+        mensajeEstado = null;
+
+        try
+        {
+            accesos = await HistorialSistemaService.ObtenerAccesosAsync(
+                fechaDesde,
+                fechaHasta,
+                string.IsNullOrWhiteSpace(accionFiltro) ? null : accionFiltro,
+                busqueda);
+
+            formularios = await HistorialSistemaService.ObtenerFormulariosContactoAsync(
+                fechaDesde,
+                fechaHasta,
+                string.IsNullOrWhiteSpace(estadoFormularioFiltro) ? null : estadoFormularioFiltro,
+                busqueda);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudo cargar el historial administrativo.");
+            mensajeEstado = "No se pudo cargar el historial administrativo.";
+            accesos = [];
+            formularios = [];
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private async Task LimpiarFiltrosAsync()
+    {
+        fechaDesde = null;
+        fechaHasta = null;
+        busqueda = null;
+        accionFiltro = null;
+        estadoFormularioFiltro = null;
+        await CargarHistorialAsync();
+    }
+
+    private int CantidadAccesos(string accion)
+    {
+        return accesos.Count(acceso => string.Equals(acceso.Accion, accion, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private string ObtenerEtiquetaEstadoFormulario(string estadoConsulta)
+    {
+        return estadosFormulario.FirstOrDefault(estado => estado.Valor == estadoConsulta)?.Etiqueta
+            ?? estadoConsulta;
+    }
+
+    private static string ObtenerEtiquetaAcceso(string accion)
+    {
+        return accion switch
+        {
+            "Acceso requiere verificacion" => "Acceso requiere verificación",
+            _ => accion
+        };
+    }
+
+    private static string ObtenerTextoObservacion(string? observacion)
+    {
+        if (string.IsNullOrWhiteSpace(observacion))
+        {
+            return "-";
+        }
+
+        return observacion switch
+        {
+            "El ingreso requiere verificacion adicional." => "El ingreso requiere verificación adicional.",
+            "Credenciales invalidas." => "Credenciales inválidas.",
+            _ => observacion
+        };
+    }
+
+    private static string ClaseAcceso(string accion)
+    {
+        return accion switch
+        {
+            "Acceso exitoso" => "badge--success",
+            "Acceso fallido" => "badge--danger",
+            "Acceso bloqueado" => "badge--warning",
+            _ => "badge--info"
+        };
+    }
+}

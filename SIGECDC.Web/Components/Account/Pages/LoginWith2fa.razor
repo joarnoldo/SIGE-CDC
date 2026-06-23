@@ -9,12 +9,12 @@
 @inject IdentityRedirectManager RedirectManager
 @inject ILogger<LoginWith2fa> Logger
 
-<PageTitle>Autenticacion de dos factores</PageTitle>
+<PageTitle>Autenticación de dos factores</PageTitle>
 
-<h1>Autenticacion de dos factores</h1>
+<h1>Autenticación de dos factores</h1>
 <hr />
 <StatusMessage Message="@message" />
-<p>Your login is protected with an authenticator app. Enter your authenticator code below.</p>
+<p>El inicio de sesión está protegido con una aplicación autenticadora. Ingrese el código de autenticación.</p>
 <div class="row">
     <div class="col-md-4">
         <EditForm Model="Input" FormName="login-with-2fa" OnValidSubmit="OnValidSubmitAsync" method="post">
@@ -24,7 +24,7 @@
             <ValidationSummary class="text-danger" role="alert" />
             <div class="form-floating mb-3">
                 <InputText @bind-Value="Input.TwoFactorCode" id="Input.TwoFactorCode" class="form-control" autocomplete="off" />
-                <label for="Input.TwoFactorCode" class="form-label">Authenticator code</label>
+                <label for="Input.TwoFactorCode" class="form-label">Código de autenticación</label>
                 <ValidationMessage For="() => Input.TwoFactorCode" class="text-danger" />
             </div>
             <div class="checkbox mb-3">
@@ -34,14 +34,14 @@
                 </label>
             </div>
             <div>
-                <button type="submit" class="w-100 btn btn-lg btn-primary">Iniciar sesion</button>
+                <button type="submit" class="w-100 btn btn-lg btn-primary">Iniciar sesión</button>
             </div>
         </EditForm>
     </div>
 </div>
 <p>
-    Don't have access to your authenticator device? You can
-    <a href="Account/LoginWithRecoveryCode?ReturnUrl=@ReturnUrl">log in with a recovery code</a>.
+    ¿No tiene acceso a su dispositivo autenticador? Puede
+    <a href="Account/LoginWithRecoveryCode?ReturnUrl=@ReturnUrl">iniciar sesión con un código de recuperación</a>.
 </p>
 
 @code {
@@ -61,9 +61,9 @@
     {
         Input ??= new();
 
-        // Ensure the user has gone through the username & password screen first
+        // Verifica que el usuario haya pasado primero por la pantalla de usuario y contraseña.
         user = await SignInManager.GetTwoFactorAuthenticationUserAsync() ??
-            throw new InvalidOperationException("No se pudo cargar el usuario de autenticacion de dos factores.");
+            throw new InvalidOperationException("No se pudo cargar el usuario de autenticación de dos factores.");
     }
 
     private async Task OnValidSubmitAsync()
@@ -74,7 +74,7 @@
 
         if (result.Succeeded)
         {
-            Logger.LogInformation("El usuario con ID '{UserId}' inicio sesion con 2FA.", userId);
+            Logger.LogInformation("El usuario con ID '{UserId}' inició sesión con 2FA.", userId);
             RedirectManager.RedirectTo(ReturnUrl);
         }
         else if (result.IsLockedOut)
@@ -84,17 +84,17 @@
         }
         else
         {
-            Logger.LogWarning("Invalid authenticator code entered for user with ID '{UserId}'.", userId);
-            message = "Error: Invalid authenticator code.";
+            Logger.LogWarning("Código de autenticación inválido para el usuario con ID '{UserId}'.", userId);
+            message = "Error: el código de autenticación no es válido.";
         }
     }
 
     private sealed class InputModel
     {
         [Required]
-        [StringLength(7, ErrorMessage = "El campo {0} debe tener al menos {2} y como maximo {1} caracteres.", MinimumLength = 6)]
+        [StringLength(7, ErrorMessage = "El campo {0} debe tener al menos {2} y como máximo {1} caracteres.", MinimumLength = 6)]
         [DataType(DataType.Text)]
-        [Display(Name = "Authenticator code")]
+        [Display(Name = "Código de autenticación")]
         public string? TwoFactorCode { get; set; }
 
         [Display(Name = "Recordar este equipo")]

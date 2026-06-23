@@ -17,7 +17,7 @@
 
 <div class="alert alert-warning" role="alert">
     <p>
-        <strong>Al eliminar estos datos, la cuenta se cerrara de forma permanente y no podra recuperarse.</strong>
+        <strong>Al eliminar estos datos, la cuenta se cerrará de forma permanente y no podrá recuperarse.</strong>
     </p>
 </div>
 
@@ -28,8 +28,8 @@
         @if (requirePassword)
         {
             <div class="form-floating mb-3">
-                <InputText type="password" @bind-Value="Input.Password" id="Input.Password" class="form-control" autocomplete="current-password" aria-required="true" placeholder="Ingrese su contrasena." />
-                <label for="Input.Password" class="form-label">Contrasena</label>
+                <InputText type="password" @bind-Value="Input.Password" id="Input.Password" class="form-control" autocomplete="current-password" aria-required="true" placeholder="Ingrese su contraseña." />
+                <label for="Input.Password" class="form-label">Contraseña</label>
                 <ValidationMessage For="() => Input.Password" class="text-danger" />
             </div>
         }
@@ -71,20 +71,20 @@
 
         if (requirePassword && !await UserManager.CheckPasswordAsync(user, Input.Password))
         {
-            message = "Error: la contrasena no es correcta.";
+            message = "Error: la contraseña no es correcta.";
             return;
         }
 
         var result = await UserManager.DeleteAsync(user);
         if (!result.Succeeded)
         {
-            throw new InvalidOperationException("Ocurrio un error inesperado al eliminar el usuario.");
+            throw new InvalidOperationException("Ocurrió un error inesperado al eliminar el usuario.");
         }
 
         await SignInManager.SignOutAsync();
 
         var userId = await UserManager.GetUserIdAsync(user);
-        Logger.LogInformation("El usuario con ID '{UserId}' elimino su cuenta.", userId);
+        Logger.LogInformation("El usuario con ID '{UserId}' eliminó su cuenta.", userId);
 
         RedirectManager.RedirectToCurrentPage();
     }
