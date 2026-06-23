@@ -1,0 +1,246 @@
+@page "/admin/galeria"
+@using Microsoft.AspNetCore.Authorization
+@using SIGECDC.Application.SitioPublico
+@inject IGaleriaService GaleriaService
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "Administrador")]
+
+<PageTitle>Galeria - SIGE-CDC</PageTitle>
+
+<div class="page-frame">
+    <div class="page-header">
+        <h1>Galeria</h1>
+        <div class="page-actions">
+            <button class="btn btn--primary" @onclick="AbrirFormularioNuevo">Nueva galeria</button>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(mensajeExito))
+    {
+        <div class="alert alert--success" role="status">@mensajeExito</div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(mensajeErrorGlobal))
+    {
+        <div class="alert alert--danger" role="alert">@mensajeErrorGlobal</div>
+    }
+
+    @if (cargando)
+    {
+        <p>Cargando...</p>
+    }
+    else if (galerias.Count == 0)
+    {
+        <div class="empty-state">
+            <p>No hay galerias registradas.</p>
+            <button class="btn btn--primary" @onclick="AbrirFormularioNuevo">Nueva galeria</button>
+        </div>
+    }
+    else
+    {
+        <div class="table-card">
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Descripcion</th>
+                            <th>Imagenes</th>
+                            <th>Estado</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var galeria in galerias)
+                        {
+                            <tr>
+                                <td>@galeria.Nombre</td>
+                                <td>@(galeria.Descripcion ?? "-")</td>
+                                <td>@galeria.TotalImagenes</td>
+                                <td>
+                                    <span class="badge @(galeria.EstaPublicado ? "badge--success" : "badge--ink")">
+                                        @(galeria.EstaPublicado ? "Publicada" : "No publicada")
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="table-actions">
+                                        <button @onclick="() => AbrirFormularioEditar(galeria)">Editar</button>
+                                        @if (galeria.EstaPublicado)
+                                        {
+                                            <button @onclick="() => Despublicar(galeria.IdGaleria)">Ocultar</button>
+                                        }
+                                        else
+                                        {
+                                            <button @onclick="() => Publicar(galeria.IdGaleria)">Publicar</button>
+                                        }
+                                        <button @onclick="() => Desactivar(galeria.IdGaleria)">Desactivar</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>
+
+@if (mostrarFormulario)
+{
+    <div class="modal-backdrop-sige">
+        <div class="card modal-card-sige">
+            <div class="card__header">
+                <h5 class="card__title">@(idEditando == 0 ? "Nueva galeria" : "Editar galeria")</h5>
+                <button type="button" class="btn-close" @onclick="CerrarFormulario"></button>
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(mensajeErrorModal))
+            {
+                <div class="alert alert--danger" role="alert">@mensajeErrorModal</div>
+            }
+
+            <div class="form-group">
+                <label class="form-label">Nombre</label>
+                <input class="form-control" @bind="formulario.Nombre" maxlength="150" />
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Descripcion</label>
+                <textarea class="form-control" @bind="formulario.Descripcion" rows="4" maxlength="500"></textarea>
+            </div>
+
+            <div class="form-actions">
+                <button class="btn btn--secondary" @onclick="CerrarFormulario">Cancelar</button>
+                <button class="btn btn--primary" @onclick="Guardar" disabled="@guardando">
+                    @(guardando ? "Guardando..." : "Guardar")
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<GaleriaResumen> galerias = [];
+    private bool cargando = true;
+    private bool mostrarFormulario;
+    private bool guardando;
+    private string? mensajeExito;
+    private string? mensajeErrorGlobal;
+    private string? mensajeErrorModal;
+    private SolicitudGaleria formulario = new();
+    private long idEditando;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarGalerias();
+    }
+
+    private async Task CargarGalerias()
+    {
+        cargando = true;
+        try
+        {
+            galerias = [.. await GaleriaService.ObtenerTodasAdminAsync()];
+        }
+        catch (Exception ex)
+        {
+            mensajeErrorGlobal = $"Error al cargar galerias: {ex.Message}";
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private void AbrirFormularioNuevo()
+    {
+        idEditando = 0;
+        formulario = new();
+        mensajeErrorModal = null;
+        mostrarFormulario = true;
+    }
+
+    private void AbrirFormularioEditar(GaleriaResumen galeria)
+    {
+        idEditando = galeria.IdGaleria;
+        formulario = new SolicitudGaleria
+        {
+            Nombre = galeria.Nombre,
+            Descripcion = galeria.Descripcion
+        };
+        mensajeErrorModal = null;
+        mostrarFormulario = true;
+    }
+
+    private void CerrarFormulario()
+    {
+        mostrarFormulario = false;
+        mensajeErrorModal = null;
+    }
+
+    private async Task Guardar()
+    {
+        if (string.IsNullOrWhiteSpace(formulario.Nombre))
+        {
+            mensajeErrorModal = "El nombre es obligatorio.";
+            return;
+        }
+
+        guardando = true;
+        mensajeErrorModal = null;
+
+        try
+        {
+            if (idEditando == 0)
+            {
+                await GaleriaService.RegistrarAsync(formulario);
+                mensajeExito = "Galeria registrada correctamente.";
+            }
+            else
+            {
+                await GaleriaService.ActualizarAsync(idEditando, formulario);
+                mensajeExito = "Galeria actualizada correctamente.";
+            }
+
+            mostrarFormulario = false;
+            await CargarGalerias();
+        }
+        catch (Exception ex)
+        {
+            mensajeErrorModal = ex.Message;
+        }
+        finally
+        {
+            guardando = false;
+        }
+    }
+
+    private async Task Publicar(long idGaleria)
+    {
+        await EjecutarAccionAsync(() => GaleriaService.PublicarAsync(idGaleria), "Galeria publicada correctamente.");
+    }
+
+    private async Task Despublicar(long idGaleria)
+    {
+        await EjecutarAccionAsync(() => GaleriaService.DespublicarAsync(idGaleria), "Galeria ocultada correctamente.");
+    }
+
+    private async Task Desactivar(long idGaleria)
+    {
+        await EjecutarAccionAsync(() => GaleriaService.DesactivarAsync(idGaleria), "Galeria desactivada correctamente.");
+    }
+
+    private async Task EjecutarAccionAsync(Func<Task> accion, string mensaje)
+    {
+        try
+        {
+            await accion();
+            mensajeExito = mensaje;
+            await CargarGalerias();
+        }
+        catch (Exception ex)
+        {
+            mensajeErrorGlobal = ex.Message;
+        }
+    }
+}

@@ -1,0 +1,252 @@
+@page "/admin/noticias"
+@using Microsoft.AspNetCore.Authorization
+@using SIGECDC.Application.SitioPublico
+@inject INoticiaService NoticiaService
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "Administrador")]
+
+<PageTitle>Noticias - SIGE-CDC</PageTitle>
+
+<div class="page-frame">
+    <div class="page-header">
+        <h1>Noticias</h1>
+        <div class="page-actions">
+            <button class="btn btn--primary" @onclick="AbrirFormularioNuevo">Nueva noticia</button>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(mensajeExito))
+    {
+        <div class="alert alert--success" role="status">@mensajeExito</div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(mensajeErrorGlobal))
+    {
+        <div class="alert alert--danger" role="alert">@mensajeErrorGlobal</div>
+    }
+
+    @if (cargando)
+    {
+        <p>Cargando...</p>
+    }
+    else if (noticias.Count == 0)
+    {
+        <div class="empty-state">
+            <p>No hay noticias registradas.</p>
+            <button class="btn btn--primary" @onclick="AbrirFormularioNuevo">Nueva noticia</button>
+        </div>
+    }
+    else
+    {
+        <div class="table-card">
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Titulo</th>
+                            <th>Resumen</th>
+                            <th>Publicacion</th>
+                            <th>Estado</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var noticia in noticias)
+                        {
+                            <tr>
+                                <td>@noticia.Titulo</td>
+                                <td>@(noticia.Resumen ?? "-")</td>
+                                <td>@(noticia.FechaPublicacion?.ToString("dd/MM/yyyy") ?? "Sin publicar")</td>
+                                <td>
+                                    <span class="badge @(noticia.EstaPublicado ? "badge--success" : "badge--ink")">
+                                        @(noticia.EstaPublicado ? "Publicada" : "No publicada")
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="table-actions">
+                                        <button @onclick="() => AbrirFormularioEditar(noticia)">Editar</button>
+                                        @if (noticia.EstaPublicado)
+                                        {
+                                            <button @onclick="() => Despublicar(noticia.IdNoticia)">Ocultar</button>
+                                        }
+                                        else
+                                        {
+                                            <button @onclick="() => Publicar(noticia.IdNoticia)">Publicar</button>
+                                        }
+                                        <button @onclick="() => Desactivar(noticia.IdNoticia)">Desactivar</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>
+
+@if (mostrarFormulario)
+{
+    <div class="modal-backdrop-sige">
+        <div class="card modal-card-sige">
+            <div class="card__header">
+                <h5 class="card__title">@(idEditando == 0 ? "Nueva noticia" : "Editar noticia")</h5>
+                <button type="button" class="btn-close" @onclick="CerrarFormulario"></button>
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(mensajeErrorModal))
+            {
+                <div class="alert alert--danger" role="alert">@mensajeErrorModal</div>
+            }
+
+            <div class="form-group">
+                <label class="form-label">Titulo</label>
+                <input class="form-control" @bind="formulario.Titulo" maxlength="200" />
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Resumen</label>
+                <textarea class="form-control" @bind="formulario.Resumen" rows="3" maxlength="500"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Contenido</label>
+                <textarea class="form-control" @bind="formulario.Contenido" rows="7"></textarea>
+            </div>
+
+            <div class="form-actions">
+                <button class="btn btn--secondary" @onclick="CerrarFormulario">Cancelar</button>
+                <button class="btn btn--primary" @onclick="Guardar" disabled="@guardando">
+                    @(guardando ? "Guardando..." : "Guardar")
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<NoticiaResumen> noticias = [];
+    private bool cargando = true;
+    private bool mostrarFormulario;
+    private bool guardando;
+    private string? mensajeExito;
+    private string? mensajeErrorGlobal;
+    private string? mensajeErrorModal;
+    private SolicitudNoticia formulario = new();
+    private long idEditando;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarNoticias();
+    }
+
+    private async Task CargarNoticias()
+    {
+        cargando = true;
+        try
+        {
+            noticias = [.. await NoticiaService.ObtenerTodasAdminAsync()];
+        }
+        catch (Exception ex)
+        {
+            mensajeErrorGlobal = $"Error al cargar noticias: {ex.Message}";
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private void AbrirFormularioNuevo()
+    {
+        idEditando = 0;
+        formulario = new();
+        mensajeErrorModal = null;
+        mostrarFormulario = true;
+    }
+
+    private void AbrirFormularioEditar(NoticiaResumen noticia)
+    {
+        idEditando = noticia.IdNoticia;
+        formulario = new SolicitudNoticia
+        {
+            Titulo = noticia.Titulo,
+            Resumen = noticia.Resumen,
+            Contenido = noticia.Contenido
+        };
+        mensajeErrorModal = null;
+        mostrarFormulario = true;
+    }
+
+    private void CerrarFormulario()
+    {
+        mostrarFormulario = false;
+        mensajeErrorModal = null;
+    }
+
+    private async Task Guardar()
+    {
+        if (string.IsNullOrWhiteSpace(formulario.Titulo))
+        {
+            mensajeErrorModal = "El titulo es obligatorio.";
+            return;
+        }
+
+        guardando = true;
+        mensajeErrorModal = null;
+
+        try
+        {
+            if (idEditando == 0)
+            {
+                await NoticiaService.RegistrarAsync(formulario);
+                mensajeExito = "Noticia registrada correctamente.";
+            }
+            else
+            {
+                await NoticiaService.ActualizarAsync(idEditando, formulario);
+                mensajeExito = "Noticia actualizada correctamente.";
+            }
+
+            mostrarFormulario = false;
+            await CargarNoticias();
+        }
+        catch (Exception ex)
+        {
+            mensajeErrorModal = ex.Message;
+        }
+        finally
+        {
+            guardando = false;
+        }
+    }
+
+    private async Task Publicar(long idNoticia)
+    {
+        await EjecutarAccionAsync(() => NoticiaService.PublicarAsync(idNoticia), "Noticia publicada correctamente.");
+    }
+
+    private async Task Despublicar(long idNoticia)
+    {
+        await EjecutarAccionAsync(() => NoticiaService.DespublicarAsync(idNoticia), "Noticia ocultada correctamente.");
+    }
+
+    private async Task Desactivar(long idNoticia)
+    {
+        await EjecutarAccionAsync(() => NoticiaService.DesactivarAsync(idNoticia), "Noticia desactivada correctamente.");
+    }
+
+    private async Task EjecutarAccionAsync(Func<Task> accion, string mensaje)
+    {
+        try
+        {
+            await accion();
+            mensajeExito = mensaje;
+            await CargarNoticias();
+        }
+        catch (Exception ex)
+        {
+            mensajeErrorGlobal = ex.Message;
+        }
+    }
+}

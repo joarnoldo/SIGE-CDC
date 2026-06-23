@@ -28,6 +28,8 @@ public static class ConfiguracionPersistencia
 
         servicios.AddScoped<IConsultaContactoService, ConsultaContactoService>();
         servicios.AddScoped<IFaqService, FaqService>();
+        servicios.AddScoped<INoticiaService, NoticiaService>();
+        servicios.AddScoped<IGaleriaService, GaleriaService>();
         servicios.AddScoped<IPaginaContenidoService, PaginaContenidoService>();
         servicios.AddScoped<IProyectoService, ProyectoService>();
         servicios.AddScoped<IProyectoPublicadoService, ProyectoPublicadoService>();

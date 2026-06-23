@@ -14,6 +14,9 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
 {
     public DbSet<ConsultaContacto> ConsultasContacto => Set<ConsultaContacto>();
     public DbSet<FAQ> FAQs => Set<FAQ>();
+    public DbSet<Noticia> Noticias => Set<Noticia>();
+    public DbSet<Galeria> Galerias => Set<Galeria>();
+    public DbSet<ImagenGaleria> ImagenesGaleria => Set<ImagenGaleria>();
     public DbSet<EstadoLaboral> EstadosLaborales => Set<EstadoLaboral>();
     public DbSet<Departamento> Departamentos => Set<Departamento>();
     public DbSet<Puesto> Puestos => Set<Puesto>();
@@ -163,6 +166,157 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                 .HasForeignKey(faq => faq.ModificadoPor)
                 .OnDelete(DeleteBehavior.SetNull)
                 .HasConstraintName("FK_FAQ_ModificadoPor");
+        });
+
+        builder.Entity<Noticia>(entidad =>
+        {
+            entidad.ToTable("Noticia");
+
+            entidad.HasKey(noticia => noticia.IdNoticia);
+
+            entidad.Property(noticia => noticia.IdNoticia)
+                .ValueGeneratedOnAdd();
+
+            entidad.Property(noticia => noticia.Titulo)
+                .HasMaxLength(200)
+                .IsRequired();
+
+            entidad.Property(noticia => noticia.Resumen)
+                .HasMaxLength(500);
+
+            entidad.Property(noticia => noticia.Contenido)
+                .HasColumnType("mediumtext");
+
+            entidad.Property(noticia => noticia.EstaPublicado)
+                .HasDefaultValue(false)
+                .IsRequired();
+
+            entidad.Property(noticia => noticia.FechaCreacion)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .IsRequired();
+
+            entidad.Property(noticia => noticia.CreadoPor)
+                .HasMaxLength(255);
+
+            entidad.Property(noticia => noticia.ModificadoPor)
+                .HasMaxLength(255);
+
+            entidad.Property(noticia => noticia.EstadoRegistro)
+                .HasColumnType("enum('Activo','Inactivo')")
+                .HasDefaultValue(EstadosRegistro.Activo)
+                .IsRequired();
+
+            entidad.HasIndex(noticia => noticia.EstaPublicado)
+                .HasDatabaseName("IX_Noticia_EstaPublicado");
+
+            entidad.HasIndex(noticia => noticia.FechaPublicacion)
+                .HasDatabaseName("IX_Noticia_FechaPublicacion");
+
+            entidad.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(noticia => noticia.CreadoPor)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_Noticia_CreadoPor");
+
+            entidad.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(noticia => noticia.ModificadoPor)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_Noticia_ModificadoPor");
+        });
+
+        builder.Entity<Galeria>(entidad =>
+        {
+            entidad.ToTable("Galeria");
+
+            entidad.HasKey(galeria => galeria.IdGaleria);
+
+            entidad.Property(galeria => galeria.IdGaleria)
+                .ValueGeneratedOnAdd();
+
+            entidad.Property(galeria => galeria.Nombre)
+                .HasMaxLength(150)
+                .IsRequired();
+
+            entidad.Property(galeria => galeria.Descripcion)
+                .HasMaxLength(500);
+
+            entidad.Property(galeria => galeria.EstaPublicado)
+                .HasDefaultValue(false)
+                .IsRequired();
+
+            entidad.Property(galeria => galeria.FechaCreacion)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .IsRequired();
+
+            entidad.Property(galeria => galeria.CreadoPor)
+                .HasMaxLength(255);
+
+            entidad.Property(galeria => galeria.ModificadoPor)
+                .HasMaxLength(255);
+
+            entidad.Property(galeria => galeria.EstadoRegistro)
+                .HasColumnType("enum('Activo','Inactivo')")
+                .HasDefaultValue(EstadosRegistro.Activo)
+                .IsRequired();
+
+            entidad.HasIndex(galeria => galeria.EstaPublicado)
+                .HasDatabaseName("IX_Galeria_EstaPublicado");
+
+            entidad.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(galeria => galeria.CreadoPor)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_Galeria_CreadoPor");
+
+            entidad.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(galeria => galeria.ModificadoPor)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_Galeria_ModificadoPor");
+        });
+
+        builder.Entity<ImagenGaleria>(entidad =>
+        {
+            entidad.ToTable("ImagenGaleria");
+
+            entidad.HasKey(imagen => imagen.IdImagenGaleria);
+
+            entidad.Property(imagen => imagen.IdImagenGaleria)
+                .ValueGeneratedOnAdd();
+
+            entidad.Property(imagen => imagen.Titulo)
+                .HasMaxLength(150);
+
+            entidad.Property(imagen => imagen.Descripcion)
+                .HasMaxLength(300);
+
+            entidad.Property(imagen => imagen.Orden)
+                .HasDefaultValue(0)
+                .IsRequired();
+
+            entidad.Property(imagen => imagen.EstadoRegistro)
+                .HasColumnType("enum('Activo','Inactivo')")
+                .HasDefaultValue(EstadosRegistro.Activo)
+                .IsRequired();
+
+            entidad.HasIndex(imagen => imagen.IdGaleria)
+                .HasDatabaseName("IX_ImagenGaleria_IdGaleria");
+
+            entidad.HasIndex(imagen => imagen.IdDocumentoArchivo)
+                .HasDatabaseName("IX_ImagenGaleria_IdDocumentoArchivo");
+
+            entidad.HasOne(imagen => imagen.Galeria)
+                .WithMany(galeria => galeria.Imagenes)
+                .HasForeignKey(imagen => imagen.IdGaleria)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_ImagenGaleria_Galeria");
+
+            entidad.HasOne(imagen => imagen.DocumentoArchivo)
+                .WithMany()
+                .HasForeignKey(imagen => imagen.IdDocumentoArchivo)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_ImagenGaleria_DocumentoArchivo");
         });
         builder.Entity<EstadoLaboral>(entidad =>
         {
