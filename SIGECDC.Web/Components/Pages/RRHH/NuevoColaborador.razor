@@ -1,0 +1,151 @@
+@page "/rrhh/colaboradores/nuevo"
+@rendermode InteractiveServer
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Recursos Humanos")]
+@using SIGECDC.Application.RecursosHumanos
+@inject IColaboradorService ColaboradorService
+@inject AuthenticationStateProvider Autenticacion
+@inject NavigationManager Navegacion
+@inject ILogger<NuevoColaborador> Logger
+
+<PageTitle>Nuevo colaborador | SIGE-CDC</PageTitle>
+
+<section class="page-banner">
+    <div class="container page-banner__inner stack--tight">
+        <p class="eyebrow">RRHH / Colaboradores</p>
+        <h1>Nuevo colaborador.</h1>
+        <p class="lead">Complete los datos básicos del expediente laboral del colaborador.</p>
+    </div>
+</section>
+
+<section class="section-shell">
+    <div class="container page-grid">
+        <section class="page-main">
+            @if (!string.IsNullOrWhiteSpace(mensajeError))
+            {
+                <div class="alert alert--danger" role="alert">
+                    <strong>No se pudo registrar el colaborador</strong>
+                    <span>@mensajeError</span>
+                </div>
+            }
+
+            @if (cargando)
+            {
+                <div class="empty-state">
+                    <strong>Cargando formulario</strong>
+                    <p class="text-muted">Estamos preparando los catálogos de Recursos Humanos.</p>
+                </div>
+            }
+            else
+            {
+                <EditForm Model="solicitud" OnValidSubmit="GuardarAsync" OnInvalidSubmit="LimpiarMensaje" class="stack">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
+
+                    <ColaboradorFormularioCampos Solicitud="solicitud"
+                                                 EstadosLaborales="estadosLaborales"
+                                                 Departamentos="departamentos"
+                                                 Puestos="puestos"
+                                                 DepartamentoCambiado="CambiarDepartamentoAsync" />
+
+                    <div class="form-actions">
+                        <a class="btn btn--secondary" href="rrhh/colaboradores">Volver</a>
+                        <button class="btn btn--primary" type="submit" disabled="@guardando">
+                            @(guardando ? "Guardando..." : "Registrar colaborador")
+                        </button>
+                    </div>
+                </EditForm>
+            }
+        </section>
+
+        <aside class="page-aside">
+            <article class="card card--accent stack">
+                <p class="eyebrow">Expediente laboral</p>
+                <h2>Expediente base</h2>
+                <p>Este registro conserva los datos personales y laborales básicos del colaborador para la gestión interna de Recursos Humanos.</p>
+            </article>
+            <article class="card stack">
+                <h3>Código manual</h3>
+                <p>El código de colaborador se digita manualmente y debe ser único para identificar el expediente dentro del sistema.</p>
+            </article>
+        </aside>
+    </div>
+</section>
+
+@code {
+    private SolicitudColaborador solicitud = new();
+    private IReadOnlyList<OpcionCatalogo> estadosLaborales = [];
+    private IReadOnlyList<OpcionCatalogo> departamentos = [];
+    private IReadOnlyList<OpcionCatalogo> puestos = [];
+    private bool cargando = true;
+    private bool guardando;
+    private string? mensajeError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarCatalogosAsync();
+        cargando = false;
+    }
+
+    private async Task CargarCatalogosAsync()
+    {
+        estadosLaborales = await ColaboradorService.ObtenerEstadosLaboralesAsync();
+        departamentos = await ColaboradorService.ObtenerDepartamentosAsync();
+
+        solicitud.IdEstadoLaboral = estadosLaborales.FirstOrDefault(estado => estado.Nombre == "Activo")?.Id
+            ?? estadosLaborales.FirstOrDefault()?.Id
+            ?? 0;
+
+        solicitud.IdDepartamento = departamentos.FirstOrDefault()?.Id ?? 0;
+        await CargarPuestosAsync(solicitud.IdDepartamento);
+        solicitud.IdPuesto = puestos.FirstOrDefault()?.Id ?? 0;
+    }
+
+    private async Task CambiarDepartamentoAsync(int idDepartamento)
+    {
+        solicitud.IdDepartamento = idDepartamento;
+        await CargarPuestosAsync(idDepartamento);
+
+        if (!puestos.Any(puesto => puesto.Id == solicitud.IdPuesto))
+        {
+            solicitud.IdPuesto = puestos.FirstOrDefault()?.Id ?? 0;
+        }
+    }
+
+    private async Task CargarPuestosAsync(int idDepartamento)
+    {
+        puestos = await ColaboradorService.ObtenerPuestosAsync(idDepartamento > 0 ? idDepartamento : null);
+    }
+
+    private async Task GuardarAsync()
+    {
+        guardando = true;
+        mensajeError = null;
+
+        try
+        {
+            var idUsuarioActual = await ObtenerIdUsuarioActualAsync();
+            var idColaborador = await ColaboradorService.RegistrarColaboradorAsync(solicitud, idUsuarioActual);
+            Navegacion.NavigateTo($"rrhh/colaboradores/{idColaborador}");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudo registrar el colaborador.");
+            mensajeError = ex.Message;
+        }
+        finally
+        {
+            guardando = false;
+        }
+    }
+
+    private void LimpiarMensaje()
+    {
+        mensajeError = null;
+    }
+
+    private async Task<string?> ObtenerIdUsuarioActualAsync()
+    {
+        var estadoAutenticacion = await Autenticacion.GetAuthenticationStateAsync();
+        return estadoAutenticacion.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+    }
+}

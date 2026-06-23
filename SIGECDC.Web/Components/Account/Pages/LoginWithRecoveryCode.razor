@@ -9,14 +9,14 @@
 @inject IdentityRedirectManager RedirectManager
 @inject ILogger<LoginWithRecoveryCode> Logger
 
-<PageTitle>Verificacion con codigo de recuperacion</PageTitle>
+<PageTitle>Verificación con código de recuperación</PageTitle>
 
-<h1>Verificacion con codigo de recuperacion</h1>
+<h1>Verificación con código de recuperación</h1>
 <hr />
 <StatusMessage Message="@message" />
 <p>
-    You have requested to log in with a recovery code. This login will not be remembered until you provide
-    an authenticator app code at log in or disable 2FA and log in again.
+    Solicitó iniciar sesión con un código de recuperación. Este inicio de sesión no será recordado hasta que use
+    un código de la aplicación autenticadora o desactive 2FA e inicie sesión nuevamente.
 </p>
 <div class="row">
     <div class="col-md-4">
@@ -24,11 +24,11 @@
             <DataAnnotationsValidator />
             <ValidationSummary class="text-danger" role="alert" />
             <div class="form-floating mb-3">
-                <InputText @bind-Value="Input.RecoveryCode" id="Input.RecoveryCode" class="form-control" autocomplete="off" placeholder="Codigo de recuperacion" />
-                <label for="Input.RecoveryCode" class="form-label">Codigo de recuperacion</label>
+                <InputText @bind-Value="Input.RecoveryCode" id="Input.RecoveryCode" class="form-control" autocomplete="off" placeholder="Código de recuperación" />
+                <label for="Input.RecoveryCode" class="form-label">Código de recuperación</label>
                 <ValidationMessage For="() => Input.RecoveryCode" class="text-danger" />
             </div>
-            <button type="submit" class="w-100 btn btn-lg btn-primary">Iniciar sesion</button>
+            <button type="submit" class="w-100 btn btn-lg btn-primary">Iniciar sesión</button>
         </EditForm>
     </div>
 </div>
@@ -47,9 +47,9 @@
     {
         Input ??= new();
 
-        // Ensure the user has gone through the username & password screen first
+        // Verifica que el usuario haya pasado primero por la pantalla de usuario y contraseña.
         user = await SignInManager.GetTwoFactorAuthenticationUserAsync() ??
-            throw new InvalidOperationException("No se pudo cargar el usuario de autenticacion de dos factores.");
+            throw new InvalidOperationException("No se pudo cargar el usuario de autenticación de dos factores.");
     }
 
     private async Task OnValidSubmitAsync()
@@ -62,7 +62,7 @@
 
         if (result.Succeeded)
         {
-            Logger.LogInformation("El usuario con ID '{UserId}' inicio sesion con codigo de recuperacion.", userId);
+            Logger.LogInformation("El usuario con ID '{UserId}' inició sesión con código de recuperación.", userId);
             RedirectManager.RedirectTo(ReturnUrl);
         }
         else if (result.IsLockedOut)
@@ -72,8 +72,8 @@
         }
         else
         {
-            Logger.LogWarning("Codigo de recuperacion invalido para el usuario con ID '{UserId}' ", userId);
-            message = "Error: el codigo de recuperacion no es valido.";
+            Logger.LogWarning("Código de recuperación inválido para el usuario con ID '{UserId}' ", userId);
+            message = "Error: el código de recuperación no es válido.";
         }
     }
 
@@ -81,7 +81,7 @@
     {
         [Required]
         [DataType(DataType.Text)]
-        [Display(Name = "Codigo de recuperacion")]
+        [Display(Name = "Código de recuperación")]
         public string RecoveryCode { get; set; } = "";
     }
 }

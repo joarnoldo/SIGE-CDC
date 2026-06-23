@@ -1,7 +1,9 @@
 @page "/admin/consultas-contacto"
+@rendermode InteractiveServer
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Administrador")]
 @using SIGECDC.Application.SitioPublico
 @inject IConsultaContactoService ConsultaContactoService
+@inject ILogger<ConsultasContacto> Logger
 
 <PageTitle>Consultas de contacto | SIGE-CDC</PageTitle>
 
@@ -9,12 +11,19 @@
     <div class="container page-banner__inner stack--tight">
         <p class="eyebrow">Administración</p>
         <h1>Consultas de contacto recibidas.</h1>
-        <p class="lead">Revise en modo de solo lectura las solicitudes enviadas desde el formulario público de contacto.</p>
+        <p class="lead">Revise, clasifique y dé seguimiento a las solicitudes enviadas desde el formulario público de contacto.</p>
     </div>
 </section>
 
 <section class="section-shell">
     <div class="container stack">
+        @if (!string.IsNullOrWhiteSpace(mensajeEstado))
+        {
+            <div class="alert alert-@(mensajeEsError ? "danger" : "success")" role="alert">
+                @mensajeEstado
+            </div>
+        }
+
         <article class="table-card">
             <div class="table-toolbar">
                 <div>
@@ -49,6 +58,7 @@
                                 <th>Asunto</th>
                                 <th>Mensaje</th>
                                 <th>Estado</th>
+                                <th>Acción</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -66,7 +76,27 @@
                                     </td>
                                     <td>@(string.IsNullOrWhiteSpace(consulta.Asunto) ? "Sin asunto" : consulta.Asunto)</td>
                                     <td>@consulta.Mensaje</td>
-                                    <td><span class="badge badge--accent">@consulta.EstadoConsulta</span></td>
+                                    <td>
+                                        <div class="stack--tight">
+                                            <span class="badge badge--accent">@ObtenerEtiquetaEstado(consulta.EstadoConsulta)</span>
+                                            <select class="form-select"
+                                                    value="@ObtenerEstadoSeleccionado(consulta.IdConsultaContacto)"
+                                                    @onchange="evento => CambiarEstadoSeleccionado(consulta.IdConsultaContacto, evento)">
+                                                @foreach (var estado in estadosConsulta)
+                                                {
+                                                    <option value="@estado.Valor">@estado.Etiqueta</option>
+                                                }
+                                            </select>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn--secondary"
+                                                type="button"
+                                                disabled="@NoPuedeGuardarEstado(consulta)"
+                                                @onclick="() => GuardarEstadoAsync(consulta)">
+                                            @(consultaGuardando == consulta.IdConsultaContacto ? "Guardando" : "Guardar")
+                                        </button>
+                                    </td>
                                 </tr>
                             }
                         </tbody>
@@ -79,7 +109,12 @@
 
 @code {
     private IReadOnlyList<ConsultaContactoResumen> consultas = [];
+    private IReadOnlyList<EstadoConsultaContactoOpcion> estadosConsulta = [];
+    private Dictionary<long, string> estadosSeleccionados = [];
     private bool cargando = true;
+    private bool mensajeEsError;
+    private long? consultaGuardando;
+    private string? mensajeEstado;
 
     private string TextoCantidad => consultas.Count == 1
         ? "1 consulta"
@@ -87,7 +122,80 @@
 
     protected override async Task OnInitializedAsync()
     {
+        estadosConsulta = ConsultaContactoService.ObtenerEstadosConsulta();
+        await CargarConsultasAsync();
+    }
+
+    private async Task CargarConsultasAsync()
+    {
+        cargando = true;
         consultas = await ConsultaContactoService.ObtenerConsultasRecientesAsync();
+        estadosSeleccionados = consultas.ToDictionary(
+            consulta => consulta.IdConsultaContacto,
+            consulta => consulta.EstadoConsulta);
         cargando = false;
+    }
+
+    private string ObtenerEstadoSeleccionado(long idConsultaContacto)
+    {
+        return estadosSeleccionados.TryGetValue(idConsultaContacto, out var estado)
+            ? estado
+            : string.Empty;
+    }
+
+    private string ObtenerEtiquetaEstado(string estadoConsulta)
+    {
+        return estadosConsulta.FirstOrDefault(estado => estado.Valor == estadoConsulta)?.Etiqueta
+            ?? estadoConsulta;
+    }
+
+    private void CambiarEstadoSeleccionado(long idConsultaContacto, ChangeEventArgs evento)
+    {
+        var nuevoEstado = evento.Value?.ToString();
+
+        if (!string.IsNullOrWhiteSpace(nuevoEstado))
+        {
+            estadosSeleccionados[idConsultaContacto] = nuevoEstado;
+        }
+    }
+
+    private bool NoPuedeGuardarEstado(ConsultaContactoResumen consulta)
+    {
+        if (consultaGuardando is not null)
+        {
+            return true;
+        }
+
+        return !estadosSeleccionados.TryGetValue(consulta.IdConsultaContacto, out var estadoSeleccionado)
+            || estadoSeleccionado == consulta.EstadoConsulta;
+    }
+
+    private async Task GuardarEstadoAsync(ConsultaContactoResumen consulta)
+    {
+        if (!estadosSeleccionados.TryGetValue(consulta.IdConsultaContacto, out var estadoSeleccionado))
+        {
+            return;
+        }
+
+        mensajeEstado = null;
+        mensajeEsError = false;
+        consultaGuardando = consulta.IdConsultaContacto;
+
+        try
+        {
+            await ConsultaContactoService.ActualizarEstadoConsultaAsync(consulta.IdConsultaContacto, estadoSeleccionado);
+            mensajeEstado = $"El estado de la consulta de {consulta.Nombre} fue actualizado a {ObtenerEtiquetaEstado(estadoSeleccionado)}.";
+            await CargarConsultasAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudo actualizar el estado de la consulta de contacto {IdConsultaContacto}.", consulta.IdConsultaContacto);
+            mensajeEsError = true;
+            mensajeEstado = "No se pudo actualizar el estado de la consulta. Intente nuevamente.";
+        }
+        finally
+        {
+            consultaGuardando = null;
+        }
     }
 }

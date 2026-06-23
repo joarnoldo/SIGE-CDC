@@ -11,10 +11,10 @@
 @inject NavigationManager NavigationManager
 @inject IdentityRedirectManager RedirectManager
 
-<PageTitle>Reenviar confirmacion de correo</PageTitle>
+<PageTitle>Reenviar confirmación de correo</PageTitle>
 
-<h1>Reenviar confirmacion de correo</h1>
-<h2>Ingrese su correo electronico.</h2>
+<h1>Reenviar confirmación de correo</h1>
+<h2>Ingrese su correo electrónico.</h2>
 <hr />
 <StatusMessage Message="@message" />
 <div class="row">
@@ -24,7 +24,7 @@
             <ValidationSummary class="text-danger" role="alert" />
             <div class="form-floating mb-3">
                 <InputText @bind-Value="Input.Email" id="Input.Email" class="form-control" aria-required="true" placeholder="name@example.com" />
-                <label for="Input.Email" class="form-label">Correo electronico</label>
+                <label for="Input.Email" class="form-label">Correo electrónico</label>
                 <ValidationMessage For="() => Input.Email" class="text-danger" />
             </div>
             <button type="submit" class="w-100 btn btn-lg btn-primary">Reenviar</button>
@@ -48,7 +48,7 @@
         var user = await UserManager.FindByEmailAsync(Input.Email!);
         if (user is null)
         {
-            message = "Se envio el correo de verificacion. Revise su correo electronico.";
+            message = "Se envió el correo de verificación. Revise su correo electrónico.";
             return;
         }
 
@@ -60,7 +60,7 @@
             new Dictionary<string, object?> { ["userId"] = userId, ["code"] = code });
         await EmailSender.SendConfirmationLinkAsync(user, Input.Email, HtmlEncoder.Default.Encode(callbackUrl));
 
-        message = "Se envio el correo de verificacion. Revise su correo electronico.";
+        message = "Se envió el correo de verificación. Revise su correo electrónico.";
     }
 
     private sealed class InputModel

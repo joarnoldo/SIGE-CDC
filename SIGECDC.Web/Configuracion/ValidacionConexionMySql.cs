@@ -31,15 +31,15 @@ public static class ValidacionConexionMySql
         {
             await conexion.OpenAsync();
             await ValidarTablasIdentityAsync(conexion);
-            logger.LogInformation("Conexion de desarrollo a MySQL validada correctamente.");
+            logger.LogInformation("Conexión de desarrollo a MySQL validada correctamente.");
         }
         catch (Exception ex)
         {
             throw new InvalidOperationException(
-                "No se pudo abrir o validar la conexion local a MySQL con ConnectionStrings:DefaultConnection. " +
-                "Verifique que MySQL este iniciado, que localhost:3306 acepte el usuario configurado, que la contrasena guardada en User Secrets sea correcta, " +
+                "No se pudo abrir o validar la conexión local a MySQL con ConnectionStrings:DefaultConnection. " +
+                "Verifique que MySQL esté iniciado, que localhost:3306 acepte el usuario configurado, que la contraseña guardada en User Secrets sea correcta, " +
                 "que la base SIGE_CDC_DB exista, que existan las tablas Identity requeridas y que la cadena incluya AllowPublicKeyRetrieval=True;SslMode=Disabled. " +
-                "La contrasena no se muestra por seguridad.",
+                "La contraseña no se muestra por seguridad.",
                 ex);
         }
         finally

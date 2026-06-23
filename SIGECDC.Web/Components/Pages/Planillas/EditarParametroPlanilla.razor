@@ -1,0 +1,209 @@
+@page "/rrhh/parametros-planilla/{IdParametroPlanilla:int}"
+@rendermode InteractiveServer
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Recursos Humanos")]
+@using SIGECDC.Application.Planillas
+@inject IParametroPlanillaService ParametroPlanillaService
+@inject AuthenticationStateProvider Autenticacion
+@inject ILogger<EditarParametroPlanilla> Logger
+
+<PageTitle>Editar parámetro de planilla | SIGE-CDC</PageTitle>
+
+<section class="page-banner">
+    <div class="container page-banner__inner stack--tight">
+        <p class="eyebrow">Recursos Humanos / Planillas</p>
+        <h1>Ficha de parámetro.</h1>
+        <p class="lead">Consulte y actualice los valores configurables de planilla.</p>
+    </div>
+</section>
+
+<section class="section-shell">
+    <div class="container page-grid">
+        <section class="page-main">
+            @if (!string.IsNullOrWhiteSpace(mensajeEstado))
+            {
+                <div class="alert alert--@(mensajeEsError ? "danger" : "success")" role="alert">
+                    <strong>@(mensajeEsError ? "No se pudo completar la acción" : "Acción completada")</strong>
+                    <span>@mensajeEstado</span>
+                </div>
+            }
+
+            @if (cargando)
+            {
+                <div class="empty-state">
+                    <strong>Cargando parámetro</strong>
+                    <p class="text-muted">Estamos recuperando la configuración solicitada.</p>
+                </div>
+            }
+            else if (parametro is null)
+            {
+                <div class="empty-state">
+                    <strong>Parámetro no encontrado</strong>
+                    <p class="text-muted">El parámetro solicitado no existe en el sistema.</p>
+                    <a class="btn btn--secondary" href="rrhh/parametros-planilla">Volver al listado</a>
+                </div>
+            }
+            else if (!parametro.EsEditable)
+            {
+                <div class="empty-state">
+                    <strong>Parámetro protegido</strong>
+                    <p class="text-muted">Este parámetro está disponible para consulta, pero no permite cambios desde esta pantalla.</p>
+                    <a class="btn btn--secondary" href="rrhh/parametros-planilla">Volver al listado</a>
+                </div>
+            }
+            else
+            {
+                <EditForm Model="solicitud" OnValidSubmit="GuardarAsync" OnInvalidSubmit="LimpiarMensaje" class="stack">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
+
+                    <ParametroPlanillaFormularioCampos Solicitud="solicitud" TiposParametro="tiposParametro" />
+
+                    <div class="form-actions">
+                        <a class="btn btn--secondary" href="rrhh/parametros-planilla">Volver</a>
+                        <div class="page-actions">
+                            <button class="btn btn--danger"
+                                    type="button"
+                                    disabled="@NoPuedeDesactivar"
+                                    @onclick="DesactivarAsync">
+                                Desactivar
+                            </button>
+                            <button class="btn btn--primary" type="submit" disabled="@guardando">
+                                @(guardando ? "Guardando..." : "Guardar cambios")
+                            </button>
+                        </div>
+                    </div>
+                </EditForm>
+            }
+        </section>
+
+        <aside class="page-aside">
+            <article class="card card--accent stack">
+                <p class="eyebrow">Resumen</p>
+                <h2>@(parametro?.Codigo ?? "Parámetro")</h2>
+                <div class="metric-list">
+                    <div class="metric-row"><span>Nombre</span><strong>@(parametro?.Nombre ?? "-")</strong></div>
+                    <div class="metric-row"><span>Tipo</span><strong>@(parametro?.TipoParametro ?? "-")</strong></div>
+                    <div class="metric-row"><span>Estado</span><strong>@(parametro?.EstadoRegistro ?? "-")</strong></div>
+                    <div class="metric-row"><span>Editable</span><strong>@TextoEditable</strong></div>
+                </div>
+            </article>
+            <article class="card stack">
+                <h3>Desactivación</h3>
+                <p>La desactivación conserva el registro y evita usarlo como parámetro vigente.</p>
+            </article>
+        </aside>
+    </div>
+</section>
+
+@code {
+    [Parameter]
+    public int IdParametroPlanilla { get; set; }
+
+    private SolicitudParametroPlanilla solicitud = new();
+    private ParametroPlanillaDetalle? parametro;
+    private IReadOnlyList<TipoParametroPlanillaOpcion> tiposParametro = [];
+    private bool cargando = true;
+    private bool guardando;
+    private bool desactivando;
+    private bool mensajeEsError;
+    private string? mensajeEstado;
+
+    private bool NoPuedeDesactivar => desactivando
+        || parametro is null
+        || !parametro.EsEditable
+        || string.Equals(parametro.EstadoRegistro, "Inactivo", StringComparison.OrdinalIgnoreCase);
+
+    private string TextoEditable => parametro?.EsEditable == true ? "Sí" : "No";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await CargarAsync();
+    }
+
+    private async Task CargarAsync()
+    {
+        cargando = true;
+
+        tiposParametro = await ParametroPlanillaService.ObtenerTiposParametroAsync();
+        parametro = await ParametroPlanillaService.ObtenerParametroPorIdAsync(IdParametroPlanilla);
+
+        if (parametro is not null)
+        {
+            solicitud = new SolicitudParametroPlanilla
+            {
+                Codigo = parametro.Codigo,
+                Nombre = parametro.Nombre,
+                Descripcion = parametro.Descripcion,
+                TipoParametro = parametro.TipoParametro,
+                ValorDecimal = parametro.ValorDecimal,
+                ValorTexto = parametro.ValorTexto,
+                FechaVigenciaInicio = parametro.FechaVigenciaInicio,
+                FechaVigenciaFin = parametro.FechaVigenciaFin
+            };
+        }
+
+        cargando = false;
+    }
+
+    private async Task GuardarAsync()
+    {
+        guardando = true;
+        mensajeEstado = null;
+        mensajeEsError = false;
+
+        try
+        {
+            var idUsuarioActual = await ObtenerIdUsuarioActualAsync();
+            await ParametroPlanillaService.ActualizarParametroAsync(IdParametroPlanilla, solicitud, idUsuarioActual);
+            mensajeEstado = "El parámetro de planilla fue actualizado.";
+            await CargarAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudo actualizar el parámetro {IdParametroPlanilla}.", IdParametroPlanilla);
+            mensajeEsError = true;
+            mensajeEstado = ex.Message;
+        }
+        finally
+        {
+            guardando = false;
+        }
+    }
+
+    private async Task DesactivarAsync()
+    {
+        desactivando = true;
+        mensajeEstado = null;
+        mensajeEsError = false;
+
+        try
+        {
+            var idUsuarioActual = await ObtenerIdUsuarioActualAsync();
+            await ParametroPlanillaService.DesactivarParametroAsync(IdParametroPlanilla, idUsuarioActual);
+            mensajeEstado = "El parámetro fue marcado como Inactivo.";
+            await CargarAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudo desactivar el parámetro {IdParametroPlanilla}.", IdParametroPlanilla);
+            mensajeEsError = true;
+            mensajeEstado = ex.Message;
+        }
+        finally
+        {
+            desactivando = false;
+        }
+    }
+
+    private void LimpiarMensaje()
+    {
+        mensajeEstado = null;
+        mensajeEsError = false;
+    }
+
+    private async Task<string?> ObtenerIdUsuarioActualAsync()
+    {
+        var estadoAutenticacion = await Autenticacion.GetAuthenticationStateAsync();
+        return estadoAutenticacion.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+    }
+}

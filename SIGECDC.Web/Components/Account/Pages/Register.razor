@@ -27,17 +27,17 @@
             <ValidationSummary class="text-danger" role="alert" />
             <div class="form-floating mb-3">
                 <InputText @bind-Value="Input.Email" id="Input.Email" class="form-control" autocomplete="username" aria-required="true" placeholder="name@example.com" />
-                <label for="Input.Email">Correo electronico</label>
+                <label for="Input.Email">Correo electrónico</label>
                 <ValidationMessage For="() => Input.Email" class="text-danger" />
             </div>
             <div class="form-floating mb-3">
-                <InputText type="password" @bind-Value="Input.Password" id="Input.Password" class="form-control" autocomplete="new-password" aria-required="true" placeholder="password" />
-                <label for="Input.Password">Contrasena</label>
+                <InputText type="password" @bind-Value="Input.Password" id="Input.Password" class="form-control" autocomplete="new-password" aria-required="true" placeholder="Contraseña" />
+                <label for="Input.Password">Contraseña</label>
                 <ValidationMessage For="() => Input.Password" class="text-danger" />
             </div>
             <div class="form-floating mb-3">
-                <InputText type="password" @bind-Value="Input.ConfirmPassword" id="Input.ConfirmPassword" class="form-control" autocomplete="new-password" aria-required="true" placeholder="password" />
-                <label for="Input.ConfirmPassword">Confirmar contrasena</label>
+                <InputText type="password" @bind-Value="Input.ConfirmPassword" id="Input.ConfirmPassword" class="form-control" autocomplete="new-password" aria-required="true" placeholder="Contraseña" />
+                <label for="Input.ConfirmPassword">Confirmar contraseña</label>
                 <ValidationMessage For="() => Input.ConfirmPassword" class="text-danger" />
             </div>
             <button type="submit" class="w-100 btn btn-lg btn-primary">Registrar</button>
@@ -83,7 +83,7 @@
             return;
         }
 
-        Logger.LogInformation("Usuario creado con contrasena.");
+        Logger.LogInformation("Usuario creado con contraseña.");
 
         var userId = await UserManager.GetUserIdAsync(user);
         var code = await UserManager.GenerateEmailConfirmationTokenAsync(user);
@@ -115,8 +115,8 @@
         }
         catch
         {
-            throw new InvalidOperationException($"Can't create an instance of '{nameof(ApplicationUser)}'. " +
-                $"Ensure that '{nameof(ApplicationUser)}' is not an abstract class and has a parameterless constructor.");
+            throw new InvalidOperationException($"No se pudo crear una instancia de '{nameof(ApplicationUser)}'. " +
+                $"Verifique que '{nameof(ApplicationUser)}' no sea una clase abstracta y tenga un constructor sin parámetros.");
         }
     }
 
@@ -124,7 +124,7 @@
     {
         if (!UserManager.SupportsUserEmail)
         {
-            throw new NotSupportedException("La interfaz de Identity requiere un almacen de usuarios con soporte de correo electronico.");
+            throw new NotSupportedException("La interfaz de Identity requiere un almacén de usuarios con soporte de correo electrónico.");
         }
         return (IUserEmailStore<ApplicationUser>)UserStore;
     }
@@ -133,18 +133,18 @@
     {
         [Required]
         [EmailAddress]
-        [Display(Name = "Correo electronico")]
+        [Display(Name = "Correo electrónico")]
         public string Email { get; set; } = "";
 
         [Required]
-        [StringLength(100, ErrorMessage = "El campo {0} debe tener al menos {2} y como maximo {1} caracteres.", MinimumLength = 6)]
+        [StringLength(100, ErrorMessage = "El campo {0} debe tener al menos {2} y como máximo {1} caracteres.", MinimumLength = 6)]
         [DataType(DataType.Password)]
-        [Display(Name = "Contrasena")]
+        [Display(Name = "Contraseña")]
         public string Password { get; set; } = "";
 
         [DataType(DataType.Password)]
-        [Display(Name = "Confirmar contrasena")]
-        [Compare("Password", ErrorMessage = "La contrasena y su confirmacion no coinciden.")]
+        [Display(Name = "Confirmar contraseña")]
+        [Compare("Password", ErrorMessage = "La contraseña y su confirmación no coinciden.")]
         public string ConfirmPassword { get; set; } = "";
     }
 }

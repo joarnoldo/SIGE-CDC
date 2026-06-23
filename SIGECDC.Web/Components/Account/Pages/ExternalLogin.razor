@@ -24,8 +24,8 @@
 <hr />
 
 <div  class="alert alert-info">
-    Se autentico correctamente con <strong>@ProviderDisplayName</strong>.
-    Ingrese un correo electronico para completar
+    Se autenticó correctamente con <strong>@ProviderDisplayName</strong>.
+    Ingrese un correo electrónico para completar
     el acceso.
 </div>
 
@@ -35,8 +35,8 @@
             <DataAnnotationsValidator />
             <ValidationSummary class="text-danger" role="alert" />
             <div class="form-floating mb-3">
-                <InputText @bind-Value="Input.Email" id="Input.Email" class="form-control" autocomplete="email" placeholder="Ingrese su correo electronico." />
-                <label for="Input.Email" class="form-label">Correo electronico</label>
+                <InputText @bind-Value="Input.Email" id="Input.Email" class="form-control" autocomplete="email" placeholder="Ingrese su correo electrónico." />
+                <label for="Input.Email" class="form-label">Correo electrónico</label>
                 <ValidationMessage For="() => Input.Email" />
             </div>
             <button type="submit" class="w-100 btn btn-lg btn-primary">Registrar</button>
@@ -80,7 +80,7 @@
         var info = await SignInManager.GetExternalLoginInfoAsync();
         if (info is null)
         {
-            RedirectManager.RedirectToWithStatus("Account/Login", "Error al cargar la informacion del acceso externo.", HttpContext);
+            RedirectManager.RedirectToWithStatus("Account/Login", "Error al cargar la información del acceso externo.", HttpContext);
             return;
         }
 
@@ -94,8 +94,8 @@
                 return;
             }
 
-            // We should only reach this page via the login callback, so redirect back to
-            // the login page if we get here some other way.
+            // Esta página solo debería abrirse desde el retorno del proveedor externo.
+            // Si se llega por otra vía, se redirige al login.
             RedirectManager.RedirectTo("Account/Login");
         }
     }
@@ -104,11 +104,11 @@
     {
         if (externalLoginInfo is null)
         {
-            RedirectManager.RedirectToWithStatus("Account/Login", "Error al cargar la informacion del acceso externo.", HttpContext);
+            RedirectManager.RedirectToWithStatus("Account/Login", "Error al cargar la información del acceso externo.", HttpContext);
             return;
         }
 
-        // Inicia sesion con el proveedor externo si el usuario ya tiene un acceso asociado.
+        // Inicia sesión con el proveedor externo si el usuario ya tiene un acceso asociado.
         var result = await SignInManager.ExternalLoginSignInAsync(
             externalLoginInfo.LoginProvider,
             externalLoginInfo.ProviderKey,
@@ -118,7 +118,7 @@
         if (result.Succeeded)
         {
             Logger.LogInformation(
-                "{Name} inicio sesion con el proveedor {LoginProvider}.",
+                "{Name} inició sesión con el proveedor {LoginProvider}.",
                 externalLoginInfo.Principal.Identity?.Name,
                 externalLoginInfo.LoginProvider);
             RedirectManager.RedirectTo(ReturnUrl);
@@ -141,7 +141,7 @@
     {
         if (externalLoginInfo is null)
         {
-            RedirectManager.RedirectToWithStatus("Account/Login", "Error al cargar la informacion del acceso externo durante la confirmacion.", HttpContext);
+            RedirectManager.RedirectToWithStatus("Account/Login", "Error al cargar la información del acceso externo durante la confirmación.", HttpContext);
             return;
         }
 
@@ -168,7 +168,7 @@
                     new Dictionary<string, object?> { ["userId"] = userId, ["code"] = code });
                 await EmailSender.SendConfirmationLinkAsync(user, Input.Email, HtmlEncoder.Default.Encode(callbackUrl));
 
-                // Si la confirmacion es obligatoria y no hay correo real, se muestra el enlace de desarrollo.
+                // Si la confirmación es obligatoria y no hay correo real, se muestra el enlace de desarrollo.
                 if (UserManager.Options.SignIn.RequireConfirmedAccount)
                 {
                     RedirectManager.RedirectTo("Account/RegisterConfirmation", new() { ["email"] = Input.Email });
@@ -194,8 +194,8 @@
         }
         catch
         {
-            throw new InvalidOperationException($"Can't create an instance of '{nameof(ApplicationUser)}'. " +
-                $"Ensure that '{nameof(ApplicationUser)}' is not an abstract class and has a parameterless constructor");
+            throw new InvalidOperationException($"No se pudo crear una instancia de '{nameof(ApplicationUser)}'. " +
+                $"Verifique que '{nameof(ApplicationUser)}' no sea una clase abstracta y tenga un constructor sin parámetros.");
         }
     }
 
@@ -203,7 +203,7 @@
     {
         if (!UserManager.SupportsUserEmail)
         {
-            throw new NotSupportedException("La interfaz de Identity requiere un almacen de usuarios con soporte de correo electronico.");
+            throw new NotSupportedException("La interfaz de Identity requiere un almacén de usuarios con soporte de correo electrónico.");
         }
         return (IUserEmailStore<ApplicationUser>)UserStore;
     }

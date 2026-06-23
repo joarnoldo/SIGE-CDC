@@ -9,22 +9,22 @@
 @inject NavigationManager NavigationManager
 @inject IdentityRedirectManager RedirectManager
 
-<PageTitle>Confirmacion de registro</PageTitle>
+<PageTitle>Confirmación de registro</PageTitle>
 
-<h1>Confirmacion de registro</h1>
+<h1>Confirmación de registro</h1>
 
 <StatusMessage Message="@statusMessage" />
 
 @if (emailConfirmationLink is not null)
 {
     <p>
-        La aplicacion no tiene configurado un servicio real de correo.
+        La aplicación no tiene configurado un servicio real de correo.
         Para desarrollo, puede confirmar la cuenta desde este enlace: <a href="@emailConfirmationLink">Confirmar cuenta</a>
     </p>
 }
 else
 {
-    <p role="alert">Revise su correo electronico para confirmar la cuenta.</p>
+    <p role="alert">Revise su correo electrónico para confirmar la cuenta.</p>
 }
 
 @code {
@@ -52,11 +52,11 @@ else
         if (user is null)
         {
             HttpContext.Response.StatusCode = StatusCodes.Status404NotFound;
-            statusMessage = "Error: no se encontro un usuario para el correo indicado.";
+            statusMessage = "Error: no se encontró un usuario para el correo indicado.";
         }
         else if (EmailSender is IdentityNoOpEmailSender)
         {
-            // Once you add a real email sender, you should remove this code that lets you confirm the account
+            // Cuando exista un servicio real de correo, este enlace manual de confirmación debe retirarse.
             var userId = await UserManager.GetUserIdAsync(user);
             var code = await UserManager.GenerateEmailConfirmationTokenAsync(user);
             code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));

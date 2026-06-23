@@ -8,10 +8,10 @@
 @inject SignInManager<ApplicationUser> SignInManager
 @inject IdentityRedirectManager RedirectManager
 
-<PageTitle>Autenticacion de dos factores (2FA)</PageTitle>
+<PageTitle>Autenticación de dos factores (2FA)</PageTitle>
 
 <StatusMessage />
-<h3>Autenticacion de dos factores (2FA)</h3>
+<h3>Autenticación de dos factores (2FA)</h3>
 @if (canTrack)
 {
     if (is2faEnabled)
@@ -19,22 +19,22 @@
         if (recoveryCodesLeft == 0)
         {
             <div class="alert alert-danger">
-                <strong>No quedan codigos de recuperacion.</strong>
-                <p>Debe <a href="Account/Manage/GenerateRecoveryCodes">generar nuevos codigos de recuperacion</a> antes de iniciar sesion con un codigo.</p>
+                <strong>No quedan códigos de recuperación.</strong>
+                <p>Debe <a href="Account/Manage/GenerateRecoveryCodes">generar nuevos códigos de recuperación</a> antes de iniciar sesión con un código.</p>
             </div>
         }
         else if (recoveryCodesLeft == 1)
         {
             <div class="alert alert-danger">
-                <strong>Queda 1 codigo de recuperacion.</strong>
-                <p>Puede <a href="Account/Manage/GenerateRecoveryCodes">generar nuevos codigos de recuperacion</a>.</p>
+                <strong>Queda 1 código de recuperación.</strong>
+                <p>Puede <a href="Account/Manage/GenerateRecoveryCodes">generar nuevos códigos de recuperación</a>.</p>
             </div>
         }
         else if (recoveryCodesLeft <= 3)
         {
             <div class="alert alert-warning">
-                <strong>Quedan @recoveryCodesLeft codigos de recuperacion.</strong>
-                <p>Se recomienda <a href="Account/Manage/GenerateRecoveryCodes">generar nuevos codigos de recuperacion</a>.</p>
+                <strong>Quedan @recoveryCodesLeft códigos de recuperación.</strong>
+                <p>Se recomienda <a href="Account/Manage/GenerateRecoveryCodes">generar nuevos códigos de recuperación</a>.</p>
             </div>
         }
 
@@ -47,25 +47,25 @@
         }
 
         <a href="Account/Manage/Disable2fa" class="btn btn-primary">Desactivar 2FA</a>
-        <a href="Account/Manage/GenerateRecoveryCodes" class="btn btn-primary">Restablecer codigos de recuperacion</a>
+        <a href="Account/Manage/GenerateRecoveryCodes" class="btn btn-primary">Restablecer códigos de recuperación</a>
     }
 
-    <h4>Aplicacion autenticadora</h4>
+    <h4>Aplicación autenticadora</h4>
     @if (!hasAuthenticator)
     {
-        <a href="Account/Manage/EnableAuthenticator" class="btn btn-primary">Agregar aplicacion autenticadora</a>
+        <a href="Account/Manage/EnableAuthenticator" class="btn btn-primary">Agregar aplicación autenticadora</a>
     }
     else
     {
-        <a href="Account/Manage/EnableAuthenticator" class="btn btn-primary">Configurar aplicacion autenticadora</a>
-        <a href="Account/Manage/ResetAuthenticator" class="btn btn-primary">Restablecer aplicacion autenticadora</a>
+        <a href="Account/Manage/EnableAuthenticator" class="btn btn-primary">Configurar aplicación autenticadora</a>
+        <a href="Account/Manage/ResetAuthenticator" class="btn btn-primary">Restablecer aplicación autenticadora</a>
     }
 }
 else
 {
     <div class="alert alert-danger">
-        <strong>La politica de privacidad y cookies no ha sido aceptada.</strong>
-        <p>Debe aceptar la politica antes de habilitar la autenticacion de dos factores.</p>
+        <strong>La política de privacidad y cookies no ha sido aceptada.</strong>
+        <p>Debe aceptar la política antes de habilitar la autenticación de dos factores.</p>
     </div>
 }
 
@@ -100,7 +100,7 @@ else
         await SignInManager.ForgetTwoFactorClientAsync();
 
         RedirectManager.RedirectToCurrentPageWithStatus(
-            "El navegador actual fue olvidado. Al iniciar sesion nuevamente desde este navegador, se solicitara el codigo 2FA.",
+            "El navegador actual fue olvidado. Al iniciar sesión nuevamente desde este navegador, se solicitará el código 2FA.",
             HttpContext);
     }
 }

@@ -1,0 +1,504 @@
+@page "/rrhh/colaboradores/{IdColaborador:long}/documentos"
+@rendermode InteractiveServer
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Recursos Humanos")]
+@using Microsoft.AspNetCore.Components.Forms
+@using SIGECDC.Application.RecursosHumanos
+@inject IContratoDocumentoService ContratoDocumentoService
+@inject AuthenticationStateProvider Autenticacion
+@inject ILogger<DocumentosColaborador> Logger
+
+<PageTitle>Documentos de colaborador | SIGE-CDC</PageTitle>
+
+<section class="page-banner">
+    <div class="container page-banner__inner stack--tight">
+        <p class="eyebrow">Recursos Humanos / Expediente documental</p>
+        <h1>Contratos y documentos.</h1>
+        <p class="lead">Adjunte, consulte y reemplace documentos del expediente laboral sin almacenar binarios en MySQL.</p>
+    </div>
+</section>
+
+<section class="section-shell">
+    <div class="container stack">
+        @if (!string.IsNullOrWhiteSpace(mensajeEstado))
+        {
+            <div class="alert alert--@(mensajeEsError ? "danger" : "success")" role="alert">
+                <strong>@(mensajeEsError ? "No se pudo completar la acción" : "Acción completada")</strong>
+                <span>@mensajeEstado</span>
+            </div>
+        }
+
+        @if (cargando)
+        {
+            <div class="empty-state">
+                <strong>Cargando expediente documental</strong>
+                <p class="text-muted">Estamos recuperando contratos y documentos asociados.</p>
+            </div>
+        }
+        else if (expediente.Colaborador is null)
+        {
+            <div class="empty-state">
+                <strong>Colaborador no encontrado</strong>
+                <p class="text-muted">El expediente solicitado no existe o no está activo.</p>
+                <a class="btn btn--secondary" href="rrhh/colaboradores">Volver al listado</a>
+            </div>
+        }
+        else
+        {
+            <header class="page-header">
+                <div>
+                    <p class="eyebrow">@expediente.Colaborador.CodigoColaborador</p>
+                    <h2>@NombreColaborador</h2>
+                    <div class="breadcrumb"><span>RRHH</span><span>Expediente documental</span></div>
+                </div>
+                <div class="page-actions">
+                    <a class="btn btn--secondary" href="@($"rrhh/colaboradores/{IdColaborador}")">Ficha</a>
+                    <a class="btn btn--secondary" href="rrhh/colaboradores">Colaboradores</a>
+                </div>
+            </header>
+
+            <section class="kpi-grid">
+                <article class="stat-card">
+                    <span class="stat-label">Contratos</span>
+                    <strong class="stat-value">@expediente.Contratos.Count</strong>
+                    <span class="stat-delta">Registros activos</span>
+                </article>
+                <article class="stat-card">
+                    <span class="stat-label">Documentos vigentes</span>
+                    <strong class="stat-value">@expediente.Documentos.Count(d => d.EstadoRegistro == "Activo")</strong>
+                    <span class="stat-delta">Metadatos activos</span>
+                </article>
+                <article class="stat-card">
+                    <span class="stat-label">Historial</span>
+                    <strong class="stat-value">@expediente.Documentos.Count(d => d.EstadoRegistro == "Inactivo")</strong>
+                    <span class="stat-delta">Versiones anteriores</span>
+                </article>
+                <article class="stat-card">
+                    <span class="stat-label">Tipos</span>
+                    <strong class="stat-value">@tiposDocumento.Count</strong>
+                    <span class="stat-delta">Catálogo existente</span>
+                </article>
+            </section>
+
+            <section class="page-grid">
+                <div class="page-main">
+                    <EditForm Model="contrato" OnValidSubmit="RegistrarContratoAsync" OnInvalidSubmit="LimpiarMensaje" class="form-section stack">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary />
+                        <div>
+                            <p class="eyebrow">Contrato</p>
+                            <h2>Registrar contrato</h2>
+                            <p class="lead">Registre los datos principales y adjunte el archivo contractual correspondiente.</p>
+                        </div>
+                        <div class="form-grid">
+                            <div class="field">
+                                <label for="tipoContrato">Tipo contrato</label>
+                                <InputText id="tipoContrato" @bind-Value="contrato.TipoContrato" />
+                                <ValidationMessage For="() => contrato.TipoContrato" />
+                            </div>
+                            <div class="field">
+                                <label for="estadoContrato">Estado</label>
+                                <InputSelect id="estadoContrato" @bind-Value="contrato.EstadoContrato">
+                                    <option value="Activo">Activo</option>
+                                    <option value="Finalizado">Finalizado</option>
+                                    <option value="Suspendido">Suspendido</option>
+                                    <option value="Anulado">Anulado</option>
+                                </InputSelect>
+                            </div>
+                            <div class="field">
+                                <label for="fechaInicio">Fecha inicio</label>
+                                <InputDate id="fechaInicio" @bind-Value="contrato.FechaInicio" />
+                                <ValidationMessage For="() => contrato.FechaInicio" />
+                            </div>
+                            <div class="field">
+                                <label for="fechaFin">Fecha fin</label>
+                                <InputDate id="fechaFin" @bind-Value="contrato.FechaFin" />
+                            </div>
+                            <div class="field">
+                                <label for="salarioBase">Salario base</label>
+                                <InputNumber id="salarioBase" @bind-Value="contrato.SalarioBase" />
+                                <ValidationMessage For="() => contrato.SalarioBase" />
+                            </div>
+                            <div class="field">
+                                <label for="periodicidadPago">Periodicidad pago</label>
+                                <InputSelect id="periodicidadPago" @bind-Value="contrato.PeriodicidadPago">
+                                    <option value="Quincenal">Quincenal</option>
+                                    <option value="Mensual">Mensual</option>
+                                </InputSelect>
+                            </div>
+                            <div class="field">
+                                <label for="jornada">Jornada</label>
+                                <InputText id="jornada" @bind-Value="contrato.Jornada" />
+                                <ValidationMessage For="() => contrato.Jornada" />
+                            </div>
+                            <div class="field">
+                                <label for="archivoContrato">Archivo contrato</label>
+                                <InputFile id="archivoContrato" OnChange="SeleccionarArchivoContrato" />
+                                <span class="help-text">@TextoArchivo(archivoContrato)</span>
+                            </div>
+                            <div class="field field--span-2">
+                                <label for="observacionesContrato">Observaciones</label>
+                                <InputTextArea id="observacionesContrato" @bind-Value="contrato.Observaciones" />
+                                <ValidationMessage For="() => contrato.Observaciones" />
+                            </div>
+                        </div>
+                        <div class="form-actions">
+                            <span class="help-text">El archivo debe ser PDF, DOC, DOCX, JPG o PNG y no superar 10 MB.</span>
+                            <button class="btn btn--primary" type="submit" disabled="@guardandoContrato">
+                                @(guardandoContrato ? "Guardando..." : "Registrar contrato")
+                            </button>
+                        </div>
+                    </EditForm>
+
+                    <article class="table-card">
+                        <div class="table-toolbar">
+                            <div>
+                                <h2 class="card__title">Contratos registrados</h2>
+                                <p class="card__meta">Contratos activos del expediente.</p>
+                            </div>
+                            <span class="badge badge--info">@expediente.Contratos.Count contratos</span>
+                        </div>
+                        @if (expediente.Contratos.Count == 0)
+                        {
+                            <div class="empty-state">
+                                <strong>Sin contratos registrados</strong>
+                                <p class="text-muted">Registre el primer contrato desde el formulario superior.</p>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="table-responsive">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Tipo</th>
+                                            <th>Inicio</th>
+                                            <th>Fin</th>
+                                            <th>Salario</th>
+                                            <th>Estado</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var item in expediente.Contratos)
+                                        {
+                                            <tr>
+                                                <td>@item.TipoContrato</td>
+                                                <td>@item.FechaInicio.ToString("dd/MM/yyyy")</td>
+                                                <td>@(item.FechaFin?.ToString("dd/MM/yyyy") ?? "Sin fecha")</td>
+                                                <td>@item.SalarioBase.ToString("N2")</td>
+                                                <td><span class="badge @ClaseEstadoContrato(item.EstadoContrato)">@item.EstadoContrato</span></td>
+                                                <td>
+                                                    <div class="table-actions">
+                                                        <a href="@($"rrhh/contratos/{item.IdContrato}")">Editar</a>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                    </article>
+                </div>
+
+                <aside class="page-aside">
+                    <EditForm Model="documento" OnValidSubmit="AdjuntarDocumentoAsync" OnInvalidSubmit="LimpiarMensaje" class="form-section stack">
+                        <DataAnnotationsValidator />
+                        <div>
+                            <p class="eyebrow">Documentos</p>
+                            <h2>Adjuntar documento</h2>
+                        </div>
+                        <div class="field">
+                            <label for="tipoDocumento">Tipo documento</label>
+                            <InputSelect id="tipoDocumento" @bind-Value="documento.IdTipoDocumento">
+                                <option value="0">Seleccione un tipo</option>
+                                @foreach (var tipo in tiposDocumento)
+                                {
+                                    <option value="@tipo.Id">@tipo.Nombre</option>
+                                }
+                            </InputSelect>
+                        </div>
+                        <div class="field">
+                            <label for="archivoDocumento">Archivo</label>
+                            <InputFile id="archivoDocumento" OnChange="SeleccionarArchivoDocumento" />
+                            <span class="help-text">@TextoArchivo(archivoDocumento)</span>
+                        </div>
+                        <button class="btn btn--primary" type="submit" disabled="@guardandoDocumento">
+                            @(guardandoDocumento ? "Guardando..." : "Adjuntar documento")
+                        </button>
+                    </EditForm>
+
+                    <article class="table-card">
+                        <div class="table-toolbar">
+                            <div>
+                                <h2 class="card__title">Documentos</h2>
+                                <p class="card__meta">Metadatos asociados al colaborador.</p>
+                            </div>
+                        </div>
+                        @if (expediente.Documentos.Count == 0)
+                        {
+                            <div class="empty-state">
+                                <strong>Sin documentos</strong>
+                                <p class="text-muted">Los archivos adjuntos apareceran en esta lista.</p>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="table-responsive">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Archivo</th>
+                                            <th>Tipo</th>
+                                            <th>Estado</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var item in expediente.Documentos)
+                                        {
+                                            <tr>
+                                                <td>
+                                                    <strong>@item.NombreOriginal</strong>
+                                                    <p class="card__meta">@item.FechaCarga.ToString("dd/MM/yyyy HH:mm") · @FormatoTamano(item.TamanoBytes)</p>
+                                                </td>
+                                                <td>@item.TipoDocumento</td>
+                                                <td><span class="badge @(item.EstadoRegistro == "Activo" ? "badge--success" : "badge--ink")">@item.EstadoRegistro</span></td>
+                                                <td>
+                                                    <div class="table-actions">
+                                                        @if (item.EstadoRegistro == "Activo")
+                                                        {
+                                                            <a href="@($"rrhh/documentos/{item.IdDocumentoArchivo}/descargar")">Descargar</a>
+                                                            <label>
+                                                                Reemplazar
+                                                                <InputFile OnChange="evento => ReemplazarDocumentoAsync(item, evento)" />
+                                                            </label>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span>Histórico</span>
+                                                        }
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                    </article>
+                </aside>
+            </section>
+        }
+    </div>
+</section>
+
+@code {
+    private const long TamanoMaximoArchivo = 10 * 1024 * 1024;
+
+    [Parameter]
+    public long IdColaborador { get; set; }
+
+    private ExpedienteDocumental expediente = new();
+    private IReadOnlyList<OpcionCatalogo> tiposDocumento = [];
+    private SolicitudContrato contrato = new();
+    private DocumentoForm documento = new();
+    private IBrowserFile? archivoContrato;
+    private IBrowserFile? archivoDocumento;
+    private bool cargando = true;
+    private bool guardandoContrato;
+    private bool guardandoDocumento;
+    private bool mensajeEsError;
+    private string? mensajeEstado;
+
+    private string NombreColaborador => expediente.Colaborador is null
+        ? "Sin colaborador"
+        : $"{expediente.Colaborador.Nombre} {expediente.Colaborador.PrimerApellido}";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await CargarAsync();
+    }
+
+    private async Task CargarAsync()
+    {
+        cargando = true;
+        expediente = await ContratoDocumentoService.ObtenerExpedienteDocumentalAsync(IdColaborador);
+        tiposDocumento = await ContratoDocumentoService.ObtenerTiposDocumentoAsync();
+
+        contrato = new SolicitudContrato
+        {
+            IdColaborador = IdColaborador,
+            FechaInicio = DateTime.Today,
+            PeriodicidadPago = "Quincenal",
+            EstadoContrato = "Activo"
+        };
+
+        documento = new DocumentoForm
+        {
+            IdTipoDocumento = tiposDocumento.FirstOrDefault(tipo => tipo.Nombre == "Documento colaborador")?.Id
+                ?? tiposDocumento.FirstOrDefault()?.Id
+                ?? 0
+        };
+
+        cargando = false;
+    }
+
+    private void SeleccionarArchivoContrato(InputFileChangeEventArgs evento)
+    {
+        archivoContrato = evento.File;
+    }
+
+    private void SeleccionarArchivoDocumento(InputFileChangeEventArgs evento)
+    {
+        archivoDocumento = evento.File;
+    }
+
+    private async Task RegistrarContratoAsync()
+    {
+        if (archivoContrato is null)
+        {
+            mensajeEsError = true;
+            mensajeEstado = "Debe seleccionar el archivo del contrato.";
+            return;
+        }
+
+        guardandoContrato = true;
+        LimpiarMensaje();
+
+        try
+        {
+            var idUsuarioActual = await ObtenerIdUsuarioActualAsync();
+            using var solicitudArchivo = CrearSolicitudArchivo(archivoContrato, IdColaborador, 0);
+            await ContratoDocumentoService.RegistrarContratoAsync(contrato, solicitudArchivo, idUsuarioActual);
+            mensajeEstado = "El contrato y su documento fueron registrados.";
+            archivoContrato = null;
+            await CargarAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudo registrar el contrato del colaborador {IdColaborador}.", IdColaborador);
+            mensajeEsError = true;
+            mensajeEstado = ex.Message;
+        }
+        finally
+        {
+            guardandoContrato = false;
+        }
+    }
+
+    private async Task AdjuntarDocumentoAsync()
+    {
+        if (archivoDocumento is null)
+        {
+            mensajeEsError = true;
+            mensajeEstado = "Debe seleccionar un archivo para adjuntar.";
+            return;
+        }
+
+        guardandoDocumento = true;
+        LimpiarMensaje();
+
+        try
+        {
+            var idUsuarioActual = await ObtenerIdUsuarioActualAsync();
+            using var solicitudArchivo = CrearSolicitudArchivo(archivoDocumento, IdColaborador, documento.IdTipoDocumento);
+            await ContratoDocumentoService.AdjuntarDocumentoAsync(solicitudArchivo, idUsuarioActual);
+            mensajeEstado = "El documento fue adjuntado al expediente.";
+            archivoDocumento = null;
+            await CargarAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudo adjuntar documento al colaborador {IdColaborador}.", IdColaborador);
+            mensajeEsError = true;
+            mensajeEstado = ex.Message;
+        }
+        finally
+        {
+            guardandoDocumento = false;
+        }
+    }
+
+    private async Task ReemplazarDocumentoAsync(DocumentoArchivoResumen documentoActual, InputFileChangeEventArgs evento)
+    {
+        var archivoNuevo = evento.File;
+        LimpiarMensaje();
+
+        try
+        {
+            var idUsuarioActual = await ObtenerIdUsuarioActualAsync();
+            using var solicitudArchivo = CrearSolicitudArchivo(archivoNuevo, IdColaborador, documentoActual.IdTipoDocumento);
+            await ContratoDocumentoService.ReemplazarDocumentoAsync(documentoActual.IdDocumentoArchivo, solicitudArchivo, idUsuarioActual);
+            mensajeEstado = "El documento fue reemplazado y la versión anterior quedó inactiva.";
+            await CargarAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudo reemplazar el documento {IdDocumentoArchivo}.", documentoActual.IdDocumentoArchivo);
+            mensajeEsError = true;
+            mensajeEstado = ex.Message;
+        }
+    }
+
+    private SolicitudArchivoDocumento CrearSolicitudArchivo(IBrowserFile archivo, long idColaborador, int idTipoDocumento)
+    {
+        return new SolicitudArchivoDocumento
+        {
+            IdColaborador = idColaborador,
+            IdTipoDocumento = idTipoDocumento,
+            NombreOriginal = archivo.Name,
+            MimeType = archivo.ContentType,
+            TamanoBytes = archivo.Size,
+            Contenido = archivo.OpenReadStream(TamanoMaximoArchivo)
+        };
+    }
+
+    private void LimpiarMensaje()
+    {
+        mensajeEstado = null;
+        mensajeEsError = false;
+    }
+
+    private async Task<string?> ObtenerIdUsuarioActualAsync()
+    {
+        var estadoAutenticacion = await Autenticacion.GetAuthenticationStateAsync();
+        return estadoAutenticacion.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+    }
+
+    private static string TextoArchivo(IBrowserFile? archivo)
+    {
+        return archivo is null
+            ? "Sin archivo seleccionado"
+            : $"{archivo.Name} · {FormatoTamano(archivo.Size)}";
+    }
+
+    private static string FormatoTamano(long? tamanoBytes)
+    {
+        if (tamanoBytes is null)
+        {
+            return "Tamaño no disponible";
+        }
+
+        return tamanoBytes.Value >= 1024 * 1024
+            ? $"{tamanoBytes.Value / 1024m / 1024m:N2} MB"
+            : $"{tamanoBytes.Value / 1024m:N2} KB";
+    }
+
+    private static string ClaseEstadoContrato(string estado)
+    {
+        return estado switch
+        {
+            "Activo" => "badge--success",
+            "Suspendido" => "badge--warning",
+            "Finalizado" => "badge--info",
+            "Anulado" => "badge--danger",
+            _ => "badge--ink"
+        };
+    }
+
+    private sealed class DocumentoForm
+    {
+        public int IdTipoDocumento { get; set; }
+    }
+}

@@ -1,0 +1,182 @@
+@page "/rrhh/contratos/{IdContrato:long}"
+@rendermode InteractiveServer
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Recursos Humanos")]
+@using SIGECDC.Application.RecursosHumanos
+@inject IContratoDocumentoService ContratoDocumentoService
+@inject AuthenticationStateProvider Autenticacion
+@inject ILogger<EditarContrato> Logger
+
+<PageTitle>Editar contrato | SIGE-CDC</PageTitle>
+
+<section class="page-banner">
+    <div class="container page-banner__inner stack--tight">
+        <p class="eyebrow">RRHH / Contratos</p>
+        <h1>Editar contrato.</h1>
+        <p class="lead">Actualice los datos contractuales sin modificar el archivo documental asociado.</p>
+    </div>
+</section>
+
+<section class="section-shell">
+    <div class="container page-grid">
+        <section class="page-main">
+            @if (!string.IsNullOrWhiteSpace(mensajeEstado))
+            {
+                <div class="alert alert--@(mensajeEsError ? "danger" : "success")" role="alert">
+                    <strong>@(mensajeEsError ? "No se pudo actualizar" : "Contrato actualizado")</strong>
+                    <span>@mensajeEstado</span>
+                </div>
+            }
+
+            @if (cargando)
+            {
+                <div class="empty-state">
+                    <strong>Cargando contrato</strong>
+                    <p class="text-muted">Estamos recuperando el registro solicitado.</p>
+                </div>
+            }
+            else if (contratoDetalle is null)
+            {
+                <div class="empty-state">
+                    <strong>Contrato no encontrado</strong>
+                    <p class="text-muted">El contrato solicitado no existe o no está activo.</p>
+                    <a class="btn btn--secondary" href="rrhh/colaboradores">Volver a colaboradores</a>
+                </div>
+            }
+            else
+            {
+                <EditForm Model="contrato" OnValidSubmit="GuardarAsync" OnInvalidSubmit="LimpiarMensaje" class="form-section stack">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
+                    <div class="form-grid">
+                        <div class="field">
+                            <label for="tipoContrato">Tipo contrato</label>
+                            <InputText id="tipoContrato" @bind-Value="contrato.TipoContrato" />
+                            <ValidationMessage For="() => contrato.TipoContrato" />
+                        </div>
+                        <div class="field">
+                            <label for="estadoContrato">Estado</label>
+                            <InputSelect id="estadoContrato" @bind-Value="contrato.EstadoContrato">
+                                <option value="Activo">Activo</option>
+                                <option value="Finalizado">Finalizado</option>
+                                <option value="Suspendido">Suspendido</option>
+                                <option value="Anulado">Anulado</option>
+                            </InputSelect>
+                        </div>
+                        <div class="field">
+                            <label for="fechaInicio">Fecha inicio</label>
+                            <InputDate id="fechaInicio" @bind-Value="contrato.FechaInicio" />
+                        </div>
+                        <div class="field">
+                            <label for="fechaFin">Fecha fin</label>
+                            <InputDate id="fechaFin" @bind-Value="contrato.FechaFin" />
+                        </div>
+                        <div class="field">
+                            <label for="salarioBase">Salario base</label>
+                            <InputNumber id="salarioBase" @bind-Value="contrato.SalarioBase" />
+                        </div>
+                        <div class="field">
+                            <label for="periodicidadPago">Periodicidad pago</label>
+                            <InputSelect id="periodicidadPago" @bind-Value="contrato.PeriodicidadPago">
+                                <option value="Quincenal">Quincenal</option>
+                                <option value="Mensual">Mensual</option>
+                            </InputSelect>
+                        </div>
+                        <div class="field">
+                            <label for="jornada">Jornada</label>
+                            <InputText id="jornada" @bind-Value="contrato.Jornada" />
+                        </div>
+                        <div class="field field--span-2">
+                            <label for="observaciones">Observaciones</label>
+                            <InputTextArea id="observaciones" @bind-Value="contrato.Observaciones" />
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <a class="btn btn--secondary" href="@($"rrhh/colaboradores/{contrato.IdColaborador}/documentos")">Volver a documentos</a>
+                        <button class="btn btn--primary" type="submit" disabled="@guardando">
+                            @(guardando ? "Guardando..." : "Guardar cambios")
+                        </button>
+                    </div>
+                </EditForm>
+            }
+        </section>
+
+        <aside class="page-aside">
+            <article class="card card--accent stack">
+                <p class="eyebrow">Gestión contractual</p>
+                <h2>Datos contractuales</h2>
+                <p>Esta pantalla actualiza el registro de contrato. El reemplazo del archivo se realiza desde la vista documental del colaborador.</p>
+            </article>
+        </aside>
+    </div>
+</section>
+
+@code {
+    [Parameter]
+    public long IdContrato { get; set; }
+
+    private ContratoDetalle? contratoDetalle;
+    private SolicitudContrato contrato = new();
+    private bool cargando = true;
+    private bool guardando;
+    private bool mensajeEsError;
+    private string? mensajeEstado;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        cargando = true;
+        contratoDetalle = await ContratoDocumentoService.ObtenerContratoPorIdAsync(IdContrato);
+
+        if (contratoDetalle is not null)
+        {
+            contrato = new SolicitudContrato
+            {
+                IdColaborador = contratoDetalle.IdColaborador,
+                TipoContrato = contratoDetalle.TipoContrato,
+                FechaInicio = contratoDetalle.FechaInicio,
+                FechaFin = contratoDetalle.FechaFin,
+                SalarioBase = contratoDetalle.SalarioBase,
+                Jornada = contratoDetalle.Jornada,
+                PeriodicidadPago = contratoDetalle.PeriodicidadPago,
+                EstadoContrato = contratoDetalle.EstadoContrato,
+                Observaciones = contratoDetalle.Observaciones
+            };
+        }
+
+        cargando = false;
+    }
+
+    private async Task GuardarAsync()
+    {
+        guardando = true;
+        LimpiarMensaje();
+
+        try
+        {
+            var idUsuarioActual = await ObtenerIdUsuarioActualAsync();
+            await ContratoDocumentoService.ActualizarContratoAsync(IdContrato, contrato, idUsuarioActual);
+            mensajeEstado = "El contrato fue actualizado correctamente.";
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudo actualizar el contrato {IdContrato}.", IdContrato);
+            mensajeEsError = true;
+            mensajeEstado = ex.Message;
+        }
+        finally
+        {
+            guardando = false;
+        }
+    }
+
+    private void LimpiarMensaje()
+    {
+        mensajeEstado = null;
+        mensajeEsError = false;
+    }
+
+    private async Task<string?> ObtenerIdUsuarioActualAsync()
+    {
+        var estadoAutenticacion = await Autenticacion.GetAuthenticationStateAsync();
+        return estadoAutenticacion.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+    }
+}

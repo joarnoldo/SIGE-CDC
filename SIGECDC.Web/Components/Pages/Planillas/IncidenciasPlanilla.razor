@@ -1,0 +1,296 @@
+@page "/rrhh/incidencias-planilla"
+@rendermode InteractiveServer
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Recursos Humanos")]
+@using SIGECDC.Application.Planillas
+@inject IIncidenciaPlanillaService IncidenciaPlanillaService
+@inject ILogger<IncidenciasPlanilla> Logger
+
+<PageTitle>Incidencias de planilla | SIGE-CDC</PageTitle>
+
+<section class="page-banner">
+    <div class="container page-banner__inner stack--tight">
+        <p class="eyebrow">Recursos Humanos / Planillas</p>
+        <h1>Incidencias de planilla.</h1>
+        <p class="lead">Registre horas extra, ausencias, bonos y deducciones asociadas a un período de pago.</p>
+    </div>
+</section>
+
+<section class="section-shell">
+    <div class="container stack">
+        @if (!string.IsNullOrWhiteSpace(mensajeEstado))
+        {
+            <div class="alert alert--@(mensajeEsError ? "danger" : "success")" role="alert">
+                <strong>@(mensajeEsError ? "No se pudo completar la acción" : "Acción completada")</strong>
+                <span>@mensajeEstado</span>
+            </div>
+        }
+
+        <div class="page-header">
+            <div>
+                <p class="eyebrow">Control de novedades</p>
+                <h2>Incidencias registradas</h2>
+            </div>
+            <div class="page-actions">
+                <a class="btn btn--primary" href="rrhh/incidencias-planilla/nueva">Nueva incidencia</a>
+            </div>
+        </div>
+
+        <section class="toolbar" aria-label="Filtros de incidencias de planilla">
+            <div class="toolbar__group">
+                <label class="field">
+                    <span>Período</span>
+                    <select @bind="idPeriodoFiltro">
+                        <option value="0">Todos</option>
+                        @foreach (var periodo in periodos)
+                        {
+                            <option value="@periodo.Id">@periodo.Codigo</option>
+                        }
+                    </select>
+                </label>
+                <label class="field">
+                    <span>Colaborador</span>
+                    <select @bind="idColaboradorFiltro">
+                        <option value="0">Todos</option>
+                        @foreach (var colaborador in colaboradores)
+                        {
+                            <option value="@colaborador.Id">@colaborador.Codigo - @colaborador.NombreCompleto</option>
+                        }
+                    </select>
+                </label>
+                <label class="field">
+                    <span>Tipo</span>
+                    <select @bind="idTipoIncidenciaFiltro">
+                        <option value="0">Todos</option>
+                        @foreach (var tipo in tiposIncidencia)
+                        {
+                            <option value="@tipo.Id">@tipo.Nombre</option>
+                        }
+                    </select>
+                </label>
+                <label class="field">
+                    <span>Estado</span>
+                    <select @bind="estadoRegistroFiltro">
+                        <option value="">Todos</option>
+                        <option value="Activo">Activo</option>
+                        <option value="Inactivo">Inactivo</option>
+                    </select>
+                </label>
+            </div>
+            <div class="toolbar__group">
+                <button class="btn btn--secondary" type="button" @onclick="LimpiarFiltrosAsync">Limpiar</button>
+                <button class="btn btn--primary" type="button" @onclick="CargarIncidenciasAsync">Buscar</button>
+            </div>
+        </section>
+
+        <section class="kpi-grid">
+            <article class="stat-card">
+                <span class="stat-label">Total visibles</span>
+                <strong class="stat-value">@incidencias.Count</strong>
+                <span class="stat-delta">Según filtros actuales</span>
+            </article>
+            <article class="stat-card">
+                <span class="stat-label">Ingresos</span>
+                <strong class="stat-value">@CantidadPorNaturaleza("Ingreso")</strong>
+                <span class="stat-delta">Horas extra y bonos</span>
+            </article>
+            <article class="stat-card">
+                <span class="stat-label">Deducciones</span>
+                <strong class="stat-value">@CantidadPorNaturaleza("Deduccion")</strong>
+                <span class="stat-delta">Ausencias y rebajos</span>
+            </article>
+            <article class="stat-card">
+                <span class="stat-label">Monto visible</span>
+                <strong class="stat-value">@MontoVisible</strong>
+                <span class="stat-delta">No ejecuta cálculo de planilla</span>
+            </article>
+        </section>
+
+        <article class="table-card">
+            <div class="table-toolbar">
+                <div>
+                    <h2 class="card__title">Incidencias</h2>
+                    <p class="card__meta">Registros asociados a períodos y colaboradores.</p>
+                </div>
+                <span class="badge badge--info">@TextoCantidad</span>
+            </div>
+
+            @if (cargando)
+            {
+                <div class="empty-state">
+                    <strong>Cargando incidencias</strong>
+                    <p class="text-muted">Estamos recuperando los registros de planilla.</p>
+                </div>
+            }
+            else if (periodos.Count == 0)
+            {
+                <div class="empty-state">
+                    <strong>No hay períodos disponibles</strong>
+                    <p class="text-muted">Se requiere un período de planilla existente para registrar incidencias.</p>
+                </div>
+            }
+            else if (incidencias.Count == 0)
+            {
+                <div class="empty-state">
+                    <strong>No hay incidencias para mostrar</strong>
+                    <p class="text-muted">Registre una incidencia o ajuste los filtros de búsqueda.</p>
+                    <a class="btn btn--primary" href="rrhh/incidencias-planilla/nueva">Nueva incidencia</a>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Periodo</th>
+                                <th>Colaborador</th>
+                                <th>Tipo</th>
+                                <th>Fecha</th>
+                                <th>Cantidad</th>
+                                <th>Monto</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var incidencia in incidencias)
+                            {
+                                <tr>
+                                    <td><strong>@incidencia.CodigoPeriodo</strong></td>
+                                    <td>
+                                        @incidencia.NombreColaborador
+                                        <p class="card__meta">@incidencia.CodigoColaborador</p>
+                                    </td>
+                                    <td>
+                                        @incidencia.TipoIncidencia
+                                        <p class="card__meta">@incidencia.Naturaleza</p>
+                                    </td>
+                                    <td>@incidencia.FechaIncidencia.ToString("dd/MM/yyyy")</td>
+                                    <td>@(incidencia.Cantidad?.ToString("N2") ?? "-")</td>
+                                    <td>@incidencia.Monto.ToString("N2")</td>
+                                    <td><span class="badge @ClaseEstado(incidencia.EstadoRegistro)">@incidencia.EstadoRegistro</span></td>
+                                    <td>
+                                        <div class="table-actions">
+                                            <a href="@($"rrhh/incidencias-planilla/{incidencia.IdIncidenciaPlanilla}")">Editar</a>
+                                            <button type="button"
+                                                    disabled="@NoPuedeDesactivar(incidencia)"
+                                                    @onclick="() => DesactivarAsync(incidencia)">
+                                                Desactivar
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </article>
+    </div>
+</section>
+
+@code {
+    private IReadOnlyList<IncidenciaPlanillaResumen> incidencias = [];
+    private IReadOnlyList<PeriodoPlanillaOpcion> periodos = [];
+    private IReadOnlyList<ColaboradorIncidenciaOpcion> colaboradores = [];
+    private IReadOnlyList<TipoIncidenciaPlanillaOpcion> tiposIncidencia = [];
+    private bool cargando = true;
+    private bool desactivando;
+    private bool mensajeEsError;
+    private long idPeriodoFiltro;
+    private long idColaboradorFiltro;
+    private int idTipoIncidenciaFiltro;
+    private string? estadoRegistroFiltro;
+    private string? mensajeEstado;
+
+    private string TextoCantidad => incidencias.Count == 1
+        ? "1 incidencia"
+        : $"{incidencias.Count} incidencias";
+
+    private string MontoVisible => incidencias.Sum(incidencia => incidencia.Monto).ToString("N2");
+
+    protected override async Task OnInitializedAsync()
+    {
+        periodos = await IncidenciaPlanillaService.ObtenerPeriodosAsync();
+        colaboradores = await IncidenciaPlanillaService.ObtenerColaboradoresAsync();
+        tiposIncidencia = await IncidenciaPlanillaService.ObtenerTiposIncidenciaAsync();
+        await CargarIncidenciasAsync();
+    }
+
+    private async Task CargarIncidenciasAsync()
+    {
+        cargando = true;
+        mensajeEstado = null;
+        mensajeEsError = false;
+
+        try
+        {
+            incidencias = await IncidenciaPlanillaService.ObtenerIncidenciasAsync(
+                idPeriodoFiltro > 0 ? idPeriodoFiltro : null,
+                idColaboradorFiltro > 0 ? idColaboradorFiltro : null,
+                idTipoIncidenciaFiltro > 0 ? idTipoIncidenciaFiltro : null,
+                string.IsNullOrWhiteSpace(estadoRegistroFiltro) ? null : estadoRegistroFiltro);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudo cargar la lista de incidencias de planilla.");
+            mensajeEsError = true;
+            mensajeEstado = "No se pudo cargar la lista de incidencias de planilla.";
+            incidencias = [];
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private async Task LimpiarFiltrosAsync()
+    {
+        idPeriodoFiltro = 0;
+        idColaboradorFiltro = 0;
+        idTipoIncidenciaFiltro = 0;
+        estadoRegistroFiltro = null;
+        await CargarIncidenciasAsync();
+    }
+
+    private async Task DesactivarAsync(IncidenciaPlanillaResumen incidencia)
+    {
+        desactivando = true;
+        mensajeEstado = null;
+        mensajeEsError = false;
+
+        try
+        {
+            await IncidenciaPlanillaService.DesactivarIncidenciaAsync(incidencia.IdIncidenciaPlanilla);
+            mensajeEstado = "La incidencia fue marcada como Inactiva.";
+            await CargarIncidenciasAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudo desactivar la incidencia {IdIncidenciaPlanilla}.", incidencia.IdIncidenciaPlanilla);
+            mensajeEsError = true;
+            mensajeEstado = ex.Message;
+        }
+        finally
+        {
+            desactivando = false;
+        }
+    }
+
+    private int CantidadPorNaturaleza(string naturaleza)
+    {
+        return incidencias.Count(incidencia => string.Equals(incidencia.Naturaleza, naturaleza, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private bool NoPuedeDesactivar(IncidenciaPlanillaResumen incidencia)
+    {
+        return desactivando || string.Equals(incidencia.EstadoRegistro, "Inactivo", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string ClaseEstado(string estado)
+    {
+        return string.Equals(estado, "Activo", StringComparison.OrdinalIgnoreCase)
+            ? "badge--success"
+            : "badge--danger";
+    }
+}

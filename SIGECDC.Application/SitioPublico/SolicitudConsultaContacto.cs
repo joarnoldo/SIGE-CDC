@@ -8,12 +8,12 @@ public class SolicitudConsultaContacto
     [StringLength(150, ErrorMessage = "El nombre completo no debe superar los 150 caracteres.")]
     public string Nombre { get; set; } = string.Empty;
 
-    [Required(ErrorMessage = "El correo electronico es obligatorio.")]
-    [EmailAddress(ErrorMessage = "Ingrese un correo electronico valido.")]
-    [StringLength(150, ErrorMessage = "El correo electronico no debe superar los 150 caracteres.")]
+    [Required(ErrorMessage = "El correo electrónico es obligatorio.")]
+    [EmailAddress(ErrorMessage = "Ingrese un correo electrónico válido.")]
+    [StringLength(150, ErrorMessage = "El correo electrónico no debe superar los 150 caracteres.")]
     public string CorreoElectronico { get; set; } = string.Empty;
 
-    [StringLength(30, ErrorMessage = "El telefono no debe superar los 30 caracteres.")]
+    [StringLength(30, ErrorMessage = "El teléfono no debe superar los 30 caracteres.")]
     public string? Telefono { get; set; }
 
     [StringLength(200, ErrorMessage = "El asunto no debe superar los 200 caracteres.")]

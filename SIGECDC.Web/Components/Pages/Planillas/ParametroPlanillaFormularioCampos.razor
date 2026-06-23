@@ -1,0 +1,68 @@
+@using SIGECDC.Application.Planillas
+
+<section class="form-section">
+    <p class="eyebrow">Datos del parámetro</p>
+    <div class="form-grid">
+        <div class="field">
+            <label for="codigo">Código</label>
+            <InputText id="codigo" @bind-Value="Solicitud.Codigo" autocomplete="off" />
+            <ValidationMessage For="() => Solicitud.Codigo" />
+        </div>
+        <div class="field">
+            <label for="tipoParametro">Tipo</label>
+            <InputSelect id="tipoParametro" @bind-Value="Solicitud.TipoParametro">
+                @foreach (var tipo in TiposParametro)
+                {
+                    <option value="@tipo.Nombre">@tipo.Nombre</option>
+                }
+            </InputSelect>
+            <ValidationMessage For="() => Solicitud.TipoParametro" />
+        </div>
+        <div class="field field--span-2">
+            <label for="nombre">Nombre</label>
+            <InputText id="nombre" @bind-Value="Solicitud.Nombre" autocomplete="off" />
+            <ValidationMessage For="() => Solicitud.Nombre" />
+        </div>
+        <div class="field field--span-2">
+            <label for="descripcion">Descripción</label>
+            <InputTextArea id="descripcion" @bind-Value="Solicitud.Descripcion" />
+            <ValidationMessage For="() => Solicitud.Descripcion" />
+        </div>
+        @if (UsaValorTexto)
+        {
+            <div class="field field--span-2">
+                <label for="valorTexto">Valor de texto</label>
+                <InputText id="valorTexto" @bind-Value="Solicitud.ValorTexto" autocomplete="off" />
+                <ValidationMessage For="() => Solicitud.ValorTexto" />
+            </div>
+        }
+        else
+        {
+            <div class="field">
+                <label for="valorDecimal">Valor numérico</label>
+                <InputNumber id="valorDecimal" @bind-Value="Solicitud.ValorDecimal" />
+                <ValidationMessage For="() => Solicitud.ValorDecimal" />
+            </div>
+        }
+        <div class="field">
+            <label for="fechaVigenciaInicio">Vigencia desde</label>
+            <InputDate id="fechaVigenciaInicio" @bind-Value="Solicitud.FechaVigenciaInicio" />
+            <ValidationMessage For="() => Solicitud.FechaVigenciaInicio" />
+        </div>
+        <div class="field">
+            <label for="fechaVigenciaFin">Vigencia hasta</label>
+            <InputDate id="fechaVigenciaFin" @bind-Value="Solicitud.FechaVigenciaFin" />
+            <ValidationMessage For="() => Solicitud.FechaVigenciaFin" />
+        </div>
+    </div>
+</section>
+
+@code {
+    [Parameter, EditorRequired]
+    public SolicitudParametroPlanilla Solicitud { get; set; } = default!;
+
+    [Parameter]
+    public IReadOnlyList<TipoParametroPlanillaOpcion> TiposParametro { get; set; } = [];
+
+    private bool UsaValorTexto => string.Equals(Solicitud.TipoParametro, "Texto", StringComparison.OrdinalIgnoreCase);
+}

@@ -6,16 +6,16 @@
 @inject UserManager<ApplicationUser> UserManager
 @inject IdentityRedirectManager RedirectManager
 
-<PageTitle>Personal Data</PageTitle>
+<PageTitle>Datos personales</PageTitle>
 
 <StatusMessage />
-<h3>Personal Data</h3>
+<h3>Datos personales</h3>
 
 <div class="row">
     <div class="col-md-6">
-        <p>Su cuenta contiene datos personales proporcionados al sistema. Esta pagina permite descargarlos o eliminarlos.</p>
+        <p>Su cuenta contiene datos personales proporcionados al sistema. Esta página permite descargarlos o eliminarlos.</p>
         <p>
-            <strong>Al eliminar estos datos, la cuenta se cerrara de forma permanente y no podra recuperarse.</strong>
+            <strong>Al eliminar estos datos, la cuenta se cerrará de forma permanente y no podrá recuperarse.</strong>
         </p>
         <form action="Account/Manage/DescargarPersonalData" method="post">
             <AntiforgeryToken />

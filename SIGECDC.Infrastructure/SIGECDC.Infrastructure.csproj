@@ -6,4 +6,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\SIGECDC.Application\SIGECDC.Application.csproj" />
+  </ItemGroup>
+
 </Project>

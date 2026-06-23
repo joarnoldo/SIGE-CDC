@@ -1,0 +1,74 @@
+@using SIGECDC.Application.Planillas
+
+<section class="form-section">
+    <p class="eyebrow">Datos de incidencia</p>
+    <div class="form-grid">
+        <div class="field">
+            <label for="periodo">Período</label>
+            <InputSelect id="periodo" @bind-Value="Solicitud.IdPeriodoPlanilla">
+                <option value="0">Seleccione un período</option>
+                @foreach (var periodo in Periodos)
+                {
+                    <option value="@periodo.Id">@periodo.Codigo - @periodo.Nombre</option>
+                }
+            </InputSelect>
+            <ValidationMessage For="() => Solicitud.IdPeriodoPlanilla" />
+        </div>
+        <div class="field">
+            <label for="colaborador">Colaborador</label>
+            <InputSelect id="colaborador" @bind-Value="Solicitud.IdColaborador">
+                <option value="0">Seleccione un colaborador</option>
+                @foreach (var colaborador in Colaboradores)
+                {
+                    <option value="@colaborador.Id">@colaborador.Codigo - @colaborador.NombreCompleto</option>
+                }
+            </InputSelect>
+            <ValidationMessage For="() => Solicitud.IdColaborador" />
+        </div>
+        <div class="field">
+            <label for="tipoIncidencia">Tipo de incidencia</label>
+            <InputSelect id="tipoIncidencia" @bind-Value="Solicitud.IdTipoIncidenciaPlanilla">
+                <option value="0">Seleccione un tipo</option>
+                @foreach (var tipo in TiposIncidencia)
+                {
+                    <option value="@tipo.Id">@tipo.Nombre (@tipo.Naturaleza)</option>
+                }
+            </InputSelect>
+            <ValidationMessage For="() => Solicitud.IdTipoIncidenciaPlanilla" />
+        </div>
+        <div class="field">
+            <label for="fechaIncidencia">Fecha</label>
+            <InputDate id="fechaIncidencia" @bind-Value="Solicitud.FechaIncidencia" />
+            <ValidationMessage For="() => Solicitud.FechaIncidencia" />
+        </div>
+        <div class="field">
+            <label for="cantidad">Cantidad</label>
+            <InputNumber id="cantidad" @bind-Value="Solicitud.Cantidad" />
+            <ValidationMessage For="() => Solicitud.Cantidad" />
+        </div>
+        <div class="field">
+            <label for="monto">Monto</label>
+            <InputNumber id="monto" @bind-Value="Solicitud.Monto" />
+            <ValidationMessage For="() => Solicitud.Monto" />
+        </div>
+        <div class="field field--span-2">
+            <label for="descripcion">Descripción</label>
+            <InputTextArea id="descripcion" @bind-Value="Solicitud.Descripcion" />
+            <ValidationMessage For="() => Solicitud.Descripcion" />
+        </div>
+    </div>
+</section>
+
+@code {
+    [Parameter, EditorRequired]
+    public SolicitudIncidenciaPlanilla Solicitud { get; set; } = default!;
+
+    [Parameter]
+    public IReadOnlyList<PeriodoPlanillaOpcion> Periodos { get; set; } = [];
+
+    [Parameter]
+    public IReadOnlyList<ColaboradorIncidenciaOpcion> Colaboradores { get; set; } = [];
+
+    [Parameter]
+    public IReadOnlyList<TipoIncidenciaPlanillaOpcion> TiposIncidencia { get; set; } = [];
+}

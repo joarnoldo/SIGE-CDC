@@ -6,34 +6,42 @@
 <header class="site-header">
     <div class="container site-header__inner">
         <a class="brand" href="">
-            <span class="brand-mark">SC</span>
+            <span class="brand-mark">CDC</span>
             <span class="brand-copy">
                 <strong>Canales y Drenajes del Caribe S.R.L.</strong>
                 <span>Obras civiles e infraestructura</span>
             </span>
         </a>
 
-        <nav class="site-nav" aria-label="Navegacion publica">
+        <nav class="site-nav" aria-label="Navegación pública">
             <NavLink href="" Match="NavLinkMatch.All" ActiveClass="is-active">Inicio</NavLink>
-            <NavLink href="quienes-somos" ActiveClass="is-active">Quienes Somos</NavLink>
+            <NavLink href="quienes-somos" ActiveClass="is-active">Quiénes Somos</NavLink>
             <NavLink href="servicios" ActiveClass="is-active">Servicios</NavLink>
             <NavLink href="contacto" ActiveClass="is-active">Contacto</NavLink>
-            <NavLink href="politicas" ActiveClass="is-active">Politicas</NavLink>
+            <NavLink href="politicas" ActiveClass="is-active">Políticas</NavLink>
         </nav>
 
         <AuthorizeView>
             <Authorized>
-                <nav class="site-nav" aria-label="Sesion">
+                <nav class="site-nav" aria-label="Sesión">
                     <AuthorizeView Roles="Administrador" Context="adminContext">
                         <Authorized>
                             <NavLink href="admin/consultas-contacto" ActiveClass="is-active">Consultas</NavLink>
+                            <NavLink href="admin/historial" ActiveClass="is-active">Historial</NavLink>
+                        </Authorized>
+                    </AuthorizeView>
+                    <AuthorizeView Roles="Recursos Humanos" Context="rrhhContext">
+                        <Authorized>
+                            <NavLink href="rrhh/colaboradores" ActiveClass="is-active">Colaboradores</NavLink>
+                            <NavLink href="rrhh/parametros-planilla" ActiveClass="is-active">Parámetros de planilla</NavLink>
+                            <NavLink href="rrhh/incidencias-planilla" ActiveClass="is-active">Incidencias</NavLink>
                         </Authorized>
                     </AuthorizeView>
                     <NavLink href="Account/Manage" ActiveClass="is-active">Mi cuenta</NavLink>
                     <form action="Account/Logout" method="post">
                         <AntiforgeryToken />
                         <input type="hidden" name="ReturnUrl" value="@rutaActual" />
-                        <button class="btn btn--secondary" type="submit">Cerrar sesion</button>
+                        <button class="btn btn--secondary" type="submit">Cerrar sesión</button>
                     </form>
                 </nav>
             </Authorized>
@@ -52,7 +60,7 @@
     <div class="container">
         <div class="site-footer__inner">
             <a class="brand" href="">
-                <span class="brand-mark">SC</span>
+                <span class="brand-mark">CDC</span>
                 <span class="brand-copy">
                     <strong>Canales y Drenajes del Caribe S.R.L.</strong>
                     <span>Obras civiles e infraestructura</span>
@@ -66,10 +74,10 @@
                 <p>Empresa costarricense dedicada a obras civiles, puentes, drenajes y soporte operativo para proyectos de infraestructura.</p>
             </section>
             <section>
-                <h3>Sitio publico</h3>
+                <h3>Sitio público</h3>
                 <ul>
                     <li><a href="">Inicio</a></li>
-                    <li><a href="quienes-somos">Quienes Somos</a></li>
+                    <li><a href="quienes-somos">Quiénes Somos</a></li>
                     <li><a href="servicios">Servicios</a></li>
                 </ul>
             </section>
@@ -77,7 +85,7 @@
                 <h3>Contacto</h3>
                 <ul>
                     <li><a href="contacto">Formulario de contacto</a></li>
-                    <li><a href="politicas">Politicas del sitio</a></li>
+                    <li><a href="politicas">Políticas del sitio</a></li>
                 </ul>
             </section>
             <section>
@@ -91,7 +99,7 @@
 </footer>
 
 <div id="blazor-error-ui" data-nosnippet>
-    Ocurrio un error inesperado.
+    Ocurrió un error inesperado.
     <a href="." class="reload">Recargar</a>
     <span class="dismiss">x</span>
 </div>

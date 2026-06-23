@@ -3,9 +3,12 @@
 @using System.ComponentModel.DataAnnotations
 @using Microsoft.AspNetCore.Authentication
 @using Microsoft.AspNetCore.Identity
+@using SIGECDC.Application.Auditoria
 @using SIGECDC.Persistence.Identity
 
 @inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+@inject IHistorialSistemaService HistorialSistemaService
 @inject ILogger<Login> Logger
 @inject IdentityRedirectManager RedirectManager
 
@@ -15,7 +18,7 @@
     <div class="container page-banner__inner stack--tight">
         <p class="eyebrow">Acceso interno</p>
         <h1>Ingreso al sistema SIGE-CDC.</h1>
-        <p class="lead">Esta seccion es exclusiva para usuarios autorizados de Canales y Drenajes del Caribe S.R.L.</p>
+        <p class="lead">Esta sección es exclusiva para usuarios autorizados de Canales y Drenajes del Caribe S.R.L.</p>
     </div>
 </section>
 
@@ -27,8 +30,8 @@
 
                 <div>
                     <p class="eyebrow">Credenciales</p>
-                    <h2>Iniciar sesion</h2>
-                    <p class="lead">Ingrese con la cuenta asignada para consultar las funciones internas disponibles segun su rol.</p>
+                    <h2>Iniciar sesión</h2>
+                    <p class="lead">Ingrese con la cuenta asignada para consultar las funciones internas disponibles según su rol.</p>
                 </div>
 
                 <StatusMessage Message="@errorMessage" />
@@ -36,24 +39,24 @@
 
                 <div class="form-grid">
                     <div class="field field--span-2">
-                        <label for="Input.Email">Correo electronico</label>
+                        <label for="Input.Email">Correo electrónico</label>
                         <InputText @bind-Value="Input.Email" id="Input.Email" autocomplete="username" aria-required="true" placeholder="usuario@empresa.com" />
                         <ValidationMessage For="() => Input.Email" />
                     </div>
                     <div class="field field--span-2">
-                        <label for="Input.Password">Contrasena</label>
-                        <InputText type="password" @bind-Value="Input.Password" id="Input.Password" autocomplete="current-password" aria-required="true" placeholder="Contrasena de acceso" />
+                        <label for="Input.Password">Contraseña</label>
+                        <InputText type="password" @bind-Value="Input.Password" id="Input.Password" autocomplete="current-password" aria-required="true" placeholder="Contraseña de acceso" />
                         <ValidationMessage For="() => Input.Password" />
                     </div>
                 </div>
 
                 <label class="checkbox-card">
                     <InputCheckbox @bind-Value="Input.RememberMe" />
-                    <span>Recordar sesion en este equipo</span>
+                    <span>Recordar sesión en este equipo</span>
                 </label>
 
                 <div class="form-actions">
-                    <span class="help-text">El registro de usuarios no esta habilitado publicamente.</span>
+                    <span class="help-text">El registro de usuarios no está habilitado públicamente.</span>
                     <button class="btn btn--primary" type="submit">Ingresar</button>
                 </div>
             </EditForm>
@@ -63,7 +66,7 @@
             <article class="card card--accent stack">
                 <p class="eyebrow">Usuarios autorizados</p>
                 <h2>Acceso protegido</h2>
-                <p>Las funciones internas del sistema requieren autenticacion y permisos asignados por rol.</p>
+                <p>Las funciones internas del sistema requieren autenticación y permisos asignados por rol.</p>
             </article>
         </aside>
     </div>
@@ -101,27 +104,50 @@
             return;
         }
 
+        var usuario = await UserManager.FindByEmailAsync(Input.Email);
         var result = await SignInManager.PasswordSignInAsync(Input.Email, Input.Password, Input.RememberMe, lockoutOnFailure: false);
 
         if (result.Succeeded)
         {
-            Logger.LogInformation("Usuario inicio sesion.");
+            await RegistrarAccesoAsync("Acceso exitoso", usuario?.Id, "Ingreso interno completado.");
+            Logger.LogInformation("Usuario inició sesión.");
             RedirectManager.RedirectTo(ReturnUrl);
         }
         else if (result.RequiresTwoFactor)
         {
+            await RegistrarAccesoAsync("Acceso requiere verificacion", usuario?.Id, "El ingreso requiere verificación adicional.");
             RedirectManager.RedirectTo(
                 "Account/LoginWith2fa",
                 new() { ["returnUrl"] = ReturnUrl, ["rememberMe"] = Input.RememberMe });
         }
         else if (result.IsLockedOut)
         {
+            await RegistrarAccesoAsync("Acceso bloqueado", usuario?.Id, "La cuenta se encuentra bloqueada.");
             Logger.LogWarning("Cuenta de usuario bloqueada.");
             RedirectManager.RedirectTo("Account/Lockout");
         }
         else
         {
-            errorMessage = "Error: credenciales invalidas.";
+            await RegistrarAccesoAsync("Acceso fallido", null, "Credenciales inválidas.");
+            errorMessage = "Error: credenciales inválidas.";
+        }
+    }
+
+    private async Task RegistrarAccesoAsync(string accion, string? idUsuario, string observacion)
+    {
+        try
+        {
+            await HistorialSistemaService.RegistrarAccesoAsync(new SolicitudRegistroAcceso
+            {
+                IdUsuario = idUsuario,
+                Accion = accion,
+                DireccionIP = HttpContext.Connection.RemoteIpAddress?.ToString(),
+                Observacion = observacion
+            });
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "No se pudo registrar el evento de acceso interno.");
         }
     }
 
@@ -135,7 +161,7 @@
         [DataType(DataType.Password)]
         public string Password { get; set; } = "";
 
-        [Display(Name = "Recordar sesion")]
+        [Display(Name = "Recordar sesión")]
         public bool RememberMe { get; set; }
     }
 }
