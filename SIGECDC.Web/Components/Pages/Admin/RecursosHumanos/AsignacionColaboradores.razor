@@ -1,0 +1,214 @@
+@page "/rrhh/asignacion-colaboradores"
+@using Microsoft.AspNetCore.Authorization
+@using SIGECDC.Application.RecursosHumanos
+@inject IColaboradorService ColaboradorService
+@inject IDepartamentoService DepartamentoService
+@inject IPuestoService PuestoService
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "Administrador,Recursos Humanos")]
+
+<PageTitle>Asignacion de colaboradores - SIGE-CDC</PageTitle>
+
+<div class="page-frame">
+    <div class="page-header">
+        <h1>Asignacion de puestos y departamentos</h1>
+    </div>
+
+    @if (!string.IsNullOrEmpty(mensajeExito))
+    {
+        <div class="alert alert--success" role="status">@mensajeExito</div>
+    }
+
+    @if (!string.IsNullOrEmpty(mensajeErrorGlobal))
+    {
+        <div class="alert alert--danger" role="alert">@mensajeErrorGlobal</div>
+    }
+
+    @if (cargando)
+    {
+        <p>Cargando...</p>
+    }
+    else if (colaboradores.Count == 0)
+    {
+        <div class="empty-state">
+            <p>No hay colaboradores registrados.</p>
+        </div>
+    }
+    else
+    {
+        <div class="table-card">
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Colaborador</th>
+                            <th>Correo electronico</th>
+                            <th>Departamento actual</th>
+                            <th>Puesto actual</th>
+                            <th>Estado laboral</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var colaborador in colaboradores)
+                        {
+                            <tr>
+                                <td>@colaborador.NombreCompleto</td>
+                                <td>@(colaborador.CorreoElectronico ?? "-")</td>
+                                <td>@(string.IsNullOrWhiteSpace(colaborador.Departamento) ? "Sin asignar" : colaborador.Departamento)</td>
+                                <td>@(string.IsNullOrWhiteSpace(colaborador.Puesto) ? "Sin asignar" : colaborador.Puesto)</td>
+                                <td>
+                                    <span class="badge @(colaborador.EstadoLaboral == "Activo" ? "badge--success" : "badge--ink")">
+                                        @colaborador.EstadoLaboral
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="table-actions">
+                                        <button @onclick="() => AbrirAsignacion(colaborador)">Asignar</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>
+
+@if (mostrarFormulario && colaboradorSeleccionado is not null)
+{
+    <div class="modal-backdrop-sige">
+        <div class="card modal-card-sige">
+            <div class="card__header">
+                <h5 class="card__title">Asignar puesto y departamento</h5>
+                <button type="button" class="btn-close" @onclick="CerrarFormulario"></button>
+            </div>
+
+            <p class="card__meta">Colaborador: <strong>@colaboradorSeleccionado.NombreCompleto</strong></p>
+
+            @if (!string.IsNullOrEmpty(mensajeErrorModal))
+            {
+                <div class="alert alert--danger" role="alert">@mensajeErrorModal</div>
+            }
+
+            <div class="form-group">
+                <label class="form-label">Departamento</label>
+                <select class="form-select" @bind="idDepartamentoSeleccionado">
+                    <option value="0">Seleccione</option>
+                    @foreach (var departamento in departamentos.Where(departamento => departamento.EstadoRegistro == "Activo"))
+                    {
+                        <option value="@departamento.IdDepartamento">@departamento.Nombre</option>
+                    }
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Puesto</label>
+                <select class="form-select" @bind="idPuestoSeleccionado">
+                    <option value="0">Seleccione</option>
+                    @foreach (var puesto in puestos.Where(puesto => puesto.EstadoRegistro == "Activo" && (puesto.IdDepartamento is null || puesto.IdDepartamento == idDepartamentoSeleccionado)))
+                    {
+                        <option value="@puesto.IdPuesto">@puesto.Nombre</option>
+                    }
+                </select>
+            </div>
+
+            <div class="form-actions">
+                <button class="btn btn--secondary" @onclick="CerrarFormulario">Cancelar</button>
+                <button class="btn btn--primary" @onclick="GuardarAsignacion" disabled="@guardando">
+                    @(guardando ? "Guardando..." : "Guardar asignacion")
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<ColaboradorResumen> colaboradores = [];
+    private List<DepartamentoResumen> departamentos = [];
+    private List<PuestoResumen> puestos = [];
+    private bool cargando = true;
+    private bool mostrarFormulario;
+    private bool guardando;
+    private string? mensajeExito;
+    private string? mensajeErrorGlobal;
+    private string? mensajeErrorModal;
+    private ColaboradorResumen? colaboradorSeleccionado;
+    private int idDepartamentoSeleccionado;
+    private int idPuestoSeleccionado;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarDatos();
+    }
+
+    private async Task CargarDatos()
+    {
+        cargando = true;
+        try
+        {
+            colaboradores = [.. await ColaboradorService.ObtenerColaboradoresAsync()];
+            departamentos = [.. await DepartamentoService.ObtenerTodosAsync()];
+            puestos = [.. await PuestoService.ObtenerTodosAsync()];
+        }
+        catch (Exception ex)
+        {
+            mensajeErrorGlobal = $"Error al cargar datos: {ex.Message}";
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private void AbrirAsignacion(ColaboradorResumen colaborador)
+    {
+        colaboradorSeleccionado = colaborador;
+        idDepartamentoSeleccionado = colaborador.IdDepartamento;
+        idPuestoSeleccionado = colaborador.IdPuesto;
+        mensajeErrorModal = null;
+        mostrarFormulario = true;
+    }
+
+    private void CerrarFormulario()
+    {
+        mostrarFormulario = false;
+        colaboradorSeleccionado = null;
+        mensajeErrorModal = null;
+    }
+
+    private async Task GuardarAsignacion()
+    {
+        if (idDepartamentoSeleccionado == 0 || idPuestoSeleccionado == 0)
+        {
+            mensajeErrorModal = "Debe seleccionar un departamento y un puesto.";
+            return;
+        }
+
+        guardando = true;
+        mensajeErrorModal = null;
+
+        try
+        {
+            await ColaboradorService.AsignarPuestoYDepartamentoAsync(new SolicitudAsignarColaborador
+            {
+                IdColaborador = colaboradorSeleccionado!.IdColaborador,
+                IdDepartamento = idDepartamentoSeleccionado,
+                IdPuesto = idPuestoSeleccionado
+            });
+
+            mensajeExito = $"Asignacion de {colaboradorSeleccionado.NombreCompleto} actualizada correctamente.";
+            mostrarFormulario = false;
+            await CargarDatos();
+        }
+        catch (Exception ex)
+        {
+            mensajeErrorModal = ex.Message;
+        }
+        finally
+        {
+            guardando = false;
+        }
+    }
+}

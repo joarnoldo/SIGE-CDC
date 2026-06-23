@@ -31,4 +31,8 @@ public interface IColaboradorService
         long idColaborador,
         string? idUsuarioActual = null,
         CancellationToken cancellationToken = default);
+
+    Task AsignarPuestoYDepartamentoAsync(
+        SolicitudAsignarColaborador solicitud,
+        CancellationToken cancellationToken = default);
 }

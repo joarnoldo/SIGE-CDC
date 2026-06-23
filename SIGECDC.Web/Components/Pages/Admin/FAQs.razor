@@ -1,0 +1,271 @@
+@page "/admin/faqs"
+@using Microsoft.AspNetCore.Authorization
+@using SIGECDC.Application.SitioPublico
+@inject IFaqService FaqService
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "Administrador")]
+
+<PageTitle>Preguntas Frecuentes - SIGE-CDC</PageTitle>
+
+<div class="page-frame">
+    <div class="page-header">
+        <h1>Preguntas Frecuentes</h1>
+        <div class="page-actions">
+            <button class="btn btn--primary" @onclick="AbrirFormularioNuevo">Nueva pregunta</button>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(mensajeExito))
+    {
+        <div class="alert alert--success" role="status">@mensajeExito</div>
+    }
+
+    @if (!string.IsNullOrEmpty(mensajeErrorGlobal))
+    {
+        <div class="alert alert--danger" role="alert">@mensajeErrorGlobal</div>
+    }
+
+    @if (cargando)
+    {
+        <p>Cargando...</p>
+    }
+    else if (faqs.Count == 0)
+    {
+        <div class="empty-state">
+            <p>No hay preguntas frecuentes registradas.</p>
+            <button class="btn btn--primary" @onclick="AbrirFormularioNuevo">Nueva pregunta</button>
+        </div>
+    }
+    else
+    {
+        <div class="table-card">
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Orden</th>
+                            <th>Pregunta</th>
+                            <th>Estado</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var faq in faqs)
+                        {
+                            <tr>
+                                <td>@faq.Orden</td>
+                                <td>@faq.Pregunta</td>
+                                <td>
+                                    <span class="badge @(faq.EstaPublicado ? "badge--success" : "badge--ink")">
+                                        @(faq.EstaPublicado ? "Publicada" : "No publicada")
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="table-actions">
+                                        <button @onclick="() => AbrirFormularioEditar(faq)">Editar</button>
+                                        @if (faq.EstaPublicado)
+                                        {
+                                            <button @onclick="() => Despublicar(faq.IdFAQ)">Ocultar</button>
+                                        }
+                                        else
+                                        {
+                                            <button @onclick="() => Publicar(faq.IdFAQ)">Publicar</button>
+                                        }
+                                        <button @onclick="() => Desactivar(faq.IdFAQ)">Desactivar</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>
+
+@if (mostrarFormulario)
+{
+    <div class="modal-backdrop-sige">
+        <div class="card modal-card-sige">
+            <div class="card__header">
+                <h5 class="card__title">@(esNuevo ? "Nueva pregunta frecuente" : "Editar pregunta frecuente")</h5>
+                <button type="button" class="btn-close" @onclick="CerrarFormulario"></button>
+            </div>
+
+            @if (!string.IsNullOrEmpty(mensajeErrorModal))
+            {
+                <div class="alert alert--danger" role="alert">@mensajeErrorModal</div>
+            }
+
+            <div class="form-group">
+                <label class="form-label">Pregunta</label>
+                <input class="form-control" @bind="formulario.Pregunta" maxlength="300" />
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Respuesta</label>
+                <textarea class="form-control" @bind="formulario.Respuesta" rows="5"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Orden</label>
+                <input type="number" class="form-control" @bind="formulario.Orden" min="0" />
+            </div>
+
+            <div class="form-actions">
+                <button class="btn btn--secondary" @onclick="CerrarFormulario">Cancelar</button>
+                <button class="btn btn--primary" @onclick="Guardar" disabled="@guardando">
+                    @(guardando ? "Guardando..." : "Guardar")
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<FaqResumen> faqs = [];
+    private bool cargando = true;
+    private bool mostrarFormulario;
+    private bool esNuevo = true;
+    private bool guardando;
+    private string? mensajeExito;
+    private string? mensajeErrorGlobal;
+    private string? mensajeErrorModal;
+    private FormularioFaq formulario = new();
+    private long idEditando;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarFaqs();
+    }
+
+    private async Task CargarFaqs()
+    {
+        cargando = true;
+        try
+        {
+            faqs = [.. await FaqService.ObtenerTodosAdminAsync()];
+        }
+        catch (Exception ex)
+        {
+            mensajeErrorGlobal = $"Error al cargar datos: {ex.Message}";
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private void AbrirFormularioNuevo()
+    {
+        esNuevo = true;
+        formulario = new();
+        idEditando = 0;
+        mensajeErrorModal = null;
+        mostrarFormulario = true;
+    }
+
+    private void AbrirFormularioEditar(FaqResumen faq)
+    {
+        esNuevo = false;
+        idEditando = faq.IdFAQ;
+        formulario = new FormularioFaq
+        {
+            Pregunta = faq.Pregunta,
+            Respuesta = faq.Respuesta,
+            Orden = faq.Orden
+        };
+        mensajeErrorModal = null;
+        mostrarFormulario = true;
+    }
+
+    private void CerrarFormulario()
+    {
+        mostrarFormulario = false;
+        mensajeErrorModal = null;
+    }
+
+    private async Task Guardar()
+    {
+        if (string.IsNullOrWhiteSpace(formulario.Pregunta) || string.IsNullOrWhiteSpace(formulario.Respuesta))
+        {
+            mensajeErrorModal = "La pregunta y la respuesta son obligatorias.";
+            return;
+        }
+
+        guardando = true;
+        mensajeErrorModal = null;
+
+        try
+        {
+            if (esNuevo)
+            {
+                await FaqService.RegistrarAsync(new SolicitudRegistrarFaq
+                {
+                    Pregunta = formulario.Pregunta,
+                    Respuesta = formulario.Respuesta,
+                    Orden = formulario.Orden
+                });
+                mensajeExito = "Pregunta frecuente registrada correctamente.";
+            }
+            else
+            {
+                await FaqService.ActualizarAsync(new SolicitudActualizarFaq
+                {
+                    IdFAQ = idEditando,
+                    Pregunta = formulario.Pregunta,
+                    Respuesta = formulario.Respuesta,
+                    Orden = formulario.Orden
+                });
+                mensajeExito = "Pregunta frecuente actualizada correctamente.";
+            }
+
+            mostrarFormulario = false;
+            await CargarFaqs();
+        }
+        catch (Exception ex)
+        {
+            mensajeErrorModal = ex.Message;
+        }
+        finally
+        {
+            guardando = false;
+        }
+    }
+
+    private async Task Publicar(long id)
+    {
+        await EjecutarAccionAsync(() => FaqService.PublicarAsync(id), "Pregunta frecuente publicada correctamente.");
+    }
+
+    private async Task Despublicar(long id)
+    {
+        await EjecutarAccionAsync(() => FaqService.DespublicarAsync(id), "Pregunta frecuente ocultada correctamente.");
+    }
+
+    private async Task Desactivar(long id)
+    {
+        await EjecutarAccionAsync(() => FaqService.DesactivarAsync(id), "Pregunta frecuente desactivada correctamente.");
+    }
+
+    private async Task EjecutarAccionAsync(Func<Task> accion, string mensaje)
+    {
+        try
+        {
+            await accion();
+            mensajeExito = mensaje;
+            await CargarFaqs();
+        }
+        catch (Exception ex)
+        {
+            mensajeErrorGlobal = ex.Message;
+        }
+    }
+
+    private sealed class FormularioFaq
+    {
+        public string Pregunta { get; set; } = string.Empty;
+        public string Respuesta { get; set; } = string.Empty;
+        public int Orden { get; set; }
+    }
+}

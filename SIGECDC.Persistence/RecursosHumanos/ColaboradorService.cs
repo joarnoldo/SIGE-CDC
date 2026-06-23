@@ -277,6 +277,46 @@ public sealed class ColaboradorService(ApplicationDbContext contexto) : IColabor
         await contexto.SaveChangesAsync(cancellationToken);
     }
 
+    public async Task AsignarPuestoYDepartamentoAsync(
+        SolicitudAsignarColaborador solicitud,
+        CancellationToken cancellationToken = default)
+    {
+        var colaborador = await contexto.Colaboradores
+            .FirstOrDefaultAsync(
+                colaborador => colaborador.IdColaborador == solicitud.IdColaborador
+                    && colaborador.EstadoRegistro == EstadoRegistroActivo,
+                cancellationToken)
+            ?? throw new InvalidOperationException("No se encontro el colaborador solicitado.");
+
+        var departamentoExiste = await contexto.Departamentos
+            .AnyAsync(
+                departamento => departamento.IdDepartamento == solicitud.IdDepartamento
+                    && departamento.EstadoRegistro == EstadoRegistroActivo,
+                cancellationToken);
+
+        if (!departamentoExiste)
+        {
+            throw new ArgumentException("El departamento seleccionado no esta disponible.");
+        }
+
+        var puestoExiste = await contexto.Puestos
+            .AnyAsync(
+                puesto => puesto.IdPuesto == solicitud.IdPuesto
+                    && puesto.EstadoRegistro == EstadoRegistroActivo
+                    && (puesto.IdDepartamento == null || puesto.IdDepartamento == solicitud.IdDepartamento),
+                cancellationToken);
+
+        if (!puestoExiste)
+        {
+            throw new ArgumentException("El puesto seleccionado no esta disponible para el departamento indicado.");
+        }
+
+        colaborador.IdDepartamento = solicitud.IdDepartamento;
+        colaborador.IdPuesto = solicitud.IdPuesto;
+        colaborador.FechaModificacion = DateTime.Now;
+
+        await contexto.SaveChangesAsync(cancellationToken);
+    }
     private async Task<DatosColaboradorLimpios> ValidarSolicitudAsync(
         SolicitudColaborador solicitud,
         long? idColaboradorActual,

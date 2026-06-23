@@ -1,0 +1,280 @@
+@page "/rrhh/puestos"
+@using Microsoft.AspNetCore.Authorization
+@using SIGECDC.Application.RecursosHumanos
+@inject IPuestoService PuestoService
+@inject IDepartamentoService DepartamentoService
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "Administrador,Recursos Humanos")]
+
+<PageTitle>Puestos - SIGE-CDC</PageTitle>
+
+<div class="page-frame">
+    <div class="page-header">
+        <h1>Puestos</h1>
+        <div class="page-actions">
+            <button class="btn btn--primary" @onclick="AbrirFormularioNuevo">Nuevo puesto</button>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(mensajeExito))
+    {
+        <div class="alert alert--success" role="status">@mensajeExito</div>
+    }
+
+    @if (!string.IsNullOrEmpty(mensajeErrorGlobal))
+    {
+        <div class="alert alert--danger" role="alert">@mensajeErrorGlobal</div>
+    }
+
+    @if (cargando)
+    {
+        <p>Cargando...</p>
+    }
+    else if (puestos.Count == 0)
+    {
+        <div class="empty-state">
+            <p>No hay puestos registrados.</p>
+            <button class="btn btn--primary" @onclick="AbrirFormularioNuevo">Nuevo puesto</button>
+        </div>
+    }
+    else
+    {
+        <div class="table-card">
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Departamento</th>
+                            <th>Descripcion</th>
+                            <th>Colaboradores activos</th>
+                            <th>Estado</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var puesto in puestos)
+                        {
+                            <tr>
+                                <td>@puesto.Nombre</td>
+                                <td>@(puesto.Departamento ?? "Sin departamento")</td>
+                                <td>@(puesto.Descripcion ?? "-")</td>
+                                <td>@puesto.TotalColaboradores</td>
+                                <td>
+                                    <span class="badge @(puesto.EstadoRegistro == "Activo" ? "badge--success" : "badge--ink")">
+                                        @puesto.EstadoRegistro
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="table-actions">
+                                        <button @onclick="() => AbrirFormularioEditar(puesto)">Editar</button>
+                                        @if (puesto.EstadoRegistro == "Activo")
+                                        {
+                                            <button @onclick="() => Desactivar(puesto.IdPuesto)">Desactivar</button>
+                                        }
+                                        else
+                                        {
+                                            <button @onclick="() => Activar(puesto.IdPuesto)">Activar</button>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>
+
+@if (mostrarFormulario)
+{
+    <div class="modal-backdrop-sige">
+        <div class="card modal-card-sige">
+            <div class="card__header">
+                <h5 class="card__title">@(esNuevo ? "Nuevo puesto" : "Editar puesto")</h5>
+                <button type="button" class="btn-close" @onclick="CerrarFormulario"></button>
+            </div>
+
+            @if (!string.IsNullOrEmpty(mensajeErrorModal))
+            {
+                <div class="alert alert--danger" role="alert">@mensajeErrorModal</div>
+            }
+
+            <div class="form-group">
+                <label class="form-label">Departamento</label>
+                <select class="form-select" @bind="formulario.IdDepartamento">
+                    <option value="0">Sin departamento asociado</option>
+                    @foreach (var departamento in departamentos.Where(departamento => departamento.EstadoRegistro == "Activo"))
+                    {
+                        <option value="@departamento.IdDepartamento">@departamento.Nombre</option>
+                    }
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Nombre</label>
+                <input class="form-control" @bind="formulario.Nombre" maxlength="100" />
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Descripcion</label>
+                <textarea class="form-control" @bind="formulario.Descripcion" rows="3" maxlength="255"></textarea>
+            </div>
+
+            <div class="form-actions">
+                <button class="btn btn--secondary" @onclick="CerrarFormulario">Cancelar</button>
+                <button class="btn btn--primary" @onclick="Guardar" disabled="@guardando">
+                    @(guardando ? "Guardando..." : "Guardar")
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<PuestoResumen> puestos = [];
+    private List<DepartamentoResumen> departamentos = [];
+    private bool cargando = true;
+    private bool mostrarFormulario;
+    private bool esNuevo = true;
+    private bool guardando;
+    private string? mensajeExito;
+    private string? mensajeErrorGlobal;
+    private string? mensajeErrorModal;
+    private FormularioPuesto formulario = new();
+    private int idEditando;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarDatos();
+    }
+
+    private async Task CargarDatos()
+    {
+        cargando = true;
+        try
+        {
+            puestos = [.. await PuestoService.ObtenerTodosAsync()];
+            departamentos = [.. await DepartamentoService.ObtenerTodosAsync()];
+        }
+        catch (Exception ex)
+        {
+            mensajeErrorGlobal = $"Error al cargar datos: {ex.Message}";
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private void AbrirFormularioNuevo()
+    {
+        esNuevo = true;
+        formulario = new();
+        idEditando = 0;
+        mensajeErrorModal = null;
+        mostrarFormulario = true;
+    }
+
+    private void AbrirFormularioEditar(PuestoResumen puesto)
+    {
+        esNuevo = false;
+        idEditando = puesto.IdPuesto;
+        formulario = new FormularioPuesto
+        {
+            IdDepartamento = puesto.IdDepartamento ?? 0,
+            Nombre = puesto.Nombre,
+            Descripcion = puesto.Descripcion
+        };
+        mensajeErrorModal = null;
+        mostrarFormulario = true;
+    }
+
+    private void CerrarFormulario()
+    {
+        mostrarFormulario = false;
+        mensajeErrorModal = null;
+    }
+
+    private async Task Guardar()
+    {
+        if (string.IsNullOrWhiteSpace(formulario.Nombre))
+        {
+            mensajeErrorModal = "El nombre es obligatorio.";
+            return;
+        }
+
+        guardando = true;
+        mensajeErrorModal = null;
+
+        try
+        {
+            int? idDepartamento = formulario.IdDepartamento > 0 ? formulario.IdDepartamento : null;
+
+            if (esNuevo)
+            {
+                await PuestoService.RegistrarAsync(new SolicitudRegistrarPuesto
+                {
+                    IdDepartamento = idDepartamento,
+                    Nombre = formulario.Nombre,
+                    Descripcion = formulario.Descripcion
+                });
+                mensajeExito = "Puesto registrado correctamente.";
+            }
+            else
+            {
+                await PuestoService.ActualizarAsync(new SolicitudActualizarPuesto
+                {
+                    IdPuesto = idEditando,
+                    IdDepartamento = idDepartamento,
+                    Nombre = formulario.Nombre,
+                    Descripcion = formulario.Descripcion
+                });
+                mensajeExito = "Puesto actualizado correctamente.";
+            }
+
+            mostrarFormulario = false;
+            await CargarDatos();
+        }
+        catch (Exception ex)
+        {
+            mensajeErrorModal = ex.Message;
+        }
+        finally
+        {
+            guardando = false;
+        }
+    }
+
+    private async Task Desactivar(int idPuesto)
+    {
+        await EjecutarAccionAsync(() => PuestoService.DesactivarAsync(idPuesto), "Puesto desactivado correctamente.");
+    }
+
+    private async Task Activar(int idPuesto)
+    {
+        await EjecutarAccionAsync(() => PuestoService.ActivarAsync(idPuesto), "Puesto activado correctamente.");
+    }
+
+    private async Task EjecutarAccionAsync(Func<Task> accion, string mensaje)
+    {
+        try
+        {
+            await accion();
+            mensajeExito = mensaje;
+            await CargarDatos();
+        }
+        catch (Exception ex)
+        {
+            mensajeErrorGlobal = ex.Message;
+        }
+    }
+
+    private sealed class FormularioPuesto
+    {
+        public int IdDepartamento { get; set; }
+        public string Nombre { get; set; } = string.Empty;
+        public string? Descripcion { get; set; }
+    }
+}

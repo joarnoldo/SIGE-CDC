@@ -27,10 +27,13 @@ public static class ConfiguracionPersistencia
             opciones.UseMySQL(cadenaConexion));
 
         servicios.AddScoped<IConsultaContactoService, ConsultaContactoService>();
+        servicios.AddScoped<IFaqService, FaqService>();
         servicios.AddScoped<IPaginaContenidoService, PaginaContenidoService>();
         servicios.AddScoped<IProyectoService, ProyectoService>();
         servicios.AddScoped<IProyectoPublicadoService, ProyectoPublicadoService>();
         servicios.AddScoped<IColaboradorService, ColaboradorService>();
+        servicios.AddScoped<IDepartamentoService, DepartamentoService>();
+        servicios.AddScoped<IPuestoService, PuestoService>();
         servicios.AddScoped<IContratoDocumentoService, ContratoDocumentoService>();
         servicios.AddScoped<IParametroPlanillaService, ParametroPlanillaService>();
         servicios.AddScoped<IIncidenciaPlanillaService, IncidenciaPlanillaService>();

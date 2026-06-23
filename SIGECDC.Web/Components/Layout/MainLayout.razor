@@ -13,23 +13,25 @@
             </span>
         </a>
 
-        <nav class="site-nav" aria-label="Navegación pública">
+        <nav class="site-nav" aria-label="Navegacion publica">
             <NavLink href="" Match="NavLinkMatch.All" ActiveClass="is-active">Inicio</NavLink>
-            <NavLink href="quienes-somos" ActiveClass="is-active">Quiénes Somos</NavLink>
+            <NavLink href="quienes-somos" ActiveClass="is-active">Quienes Somos</NavLink>
             <NavLink href="servicios" ActiveClass="is-active">Servicios</NavLink>
             <NavLink href="portafolio" ActiveClass="is-active">Portafolio</NavLink>
+            <NavLink href="preguntas-frecuentes" ActiveClass="is-active">Preguntas Frecuentes</NavLink>
             <NavLink href="contacto" ActiveClass="is-active">Contacto</NavLink>
-            <NavLink href="politicas" ActiveClass="is-active">Políticas</NavLink>
+            <NavLink href="politicas" ActiveClass="is-active">Politicas</NavLink>
         </nav>
 
         <AuthorizeView>
             <Authorized>
-                <nav class="site-nav" aria-label="Sesión">
+                <nav class="site-nav" aria-label="Sesion">
                     <AuthorizeView Roles="Administrador" Context="adminContext">
                         <Authorized>
                             <NavLink href="admin/consultas-contacto" ActiveClass="is-active">Consultas</NavLink>
                             <NavLink href="admin/contenido-paginas" ActiveClass="is-active">Contenido</NavLink>
                             <NavLink href="admin/proyectos-publicados" ActiveClass="is-active">Publicaciones</NavLink>
+                            <NavLink href="admin/faqs" ActiveClass="is-active">Preguntas</NavLink>
                             <NavLink href="admin/historial" ActiveClass="is-active">Historial</NavLink>
                         </Authorized>
                     </AuthorizeView>
@@ -38,10 +40,13 @@
                             <NavLink href="operaciones/proyectos" ActiveClass="is-active">Proyectos</NavLink>
                         </Authorized>
                     </AuthorizeView>
-                    <AuthorizeView Roles="Recursos Humanos" Context="rrhhContext">
+                    <AuthorizeView Roles="Administrador,Recursos Humanos" Context="rrhhContext">
                         <Authorized>
                             <NavLink href="rrhh/colaboradores" ActiveClass="is-active">Colaboradores</NavLink>
-                            <NavLink href="rrhh/parametros-planilla" ActiveClass="is-active">Parámetros de planilla</NavLink>
+                            <NavLink href="rrhh/departamentos" ActiveClass="is-active">Departamentos</NavLink>
+                            <NavLink href="rrhh/puestos" ActiveClass="is-active">Puestos</NavLink>
+                            <NavLink href="rrhh/asignacion-colaboradores" ActiveClass="is-active">Asignacion</NavLink>
+                            <NavLink href="rrhh/parametros-planilla" ActiveClass="is-active">Parametros de planilla</NavLink>
                             <NavLink href="rrhh/incidencias-planilla" ActiveClass="is-active">Incidencias</NavLink>
                         </Authorized>
                     </AuthorizeView>
@@ -49,7 +54,7 @@
                     <form action="Account/Logout" method="post">
                         <AntiforgeryToken />
                         <input type="hidden" name="ReturnUrl" value="@rutaActual" />
-                        <button class="btn btn--secondary" type="submit">Cerrar sesión</button>
+                        <button class="btn btn--secondary" type="submit">Cerrar sesion</button>
                     </form>
                 </nav>
             </Authorized>
@@ -82,19 +87,20 @@
                 <p>Empresa costarricense dedicada a obras civiles, puentes, drenajes y soporte operativo para proyectos de infraestructura.</p>
             </section>
             <section>
-                <h3>Sitio público</h3>
+                <h3>Sitio publico</h3>
                 <ul>
                     <li><a href="">Inicio</a></li>
-                    <li><a href="quienes-somos">Quiénes Somos</a></li>
+                    <li><a href="quienes-somos">Quienes Somos</a></li>
                     <li><a href="servicios">Servicios</a></li>
                     <li><a href="portafolio">Portafolio</a></li>
+                    <li><a href="preguntas-frecuentes">Preguntas Frecuentes</a></li>
                 </ul>
             </section>
             <section>
                 <h3>Contacto</h3>
                 <ul>
                     <li><a href="contacto">Formulario de contacto</a></li>
-                    <li><a href="politicas">Políticas del sitio</a></li>
+                    <li><a href="politicas">Politicas del sitio</a></li>
                 </ul>
             </section>
             <section>
@@ -108,7 +114,7 @@
 </footer>
 
 <div id="blazor-error-ui" data-nosnippet>
-    Ocurrió un error inesperado.
+    Ocurrio un error inesperado.
     <a href="." class="reload">Recargar</a>
     <span class="dismiss">x</span>
 </div>

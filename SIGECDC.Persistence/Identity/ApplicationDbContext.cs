@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using SIGECDC.Domain.Auditoria;
@@ -13,6 +13,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     : IdentityDbContext<ApplicationUser, IdentityRole, string>(options)
 {
     public DbSet<ConsultaContacto> ConsultasContacto => Set<ConsultaContacto>();
+    public DbSet<FAQ> FAQs => Set<FAQ>();
     public DbSet<EstadoLaboral> EstadosLaborales => Set<EstadoLaboral>();
     public DbSet<Departamento> Departamentos => Set<Departamento>();
     public DbSet<Puesto> Puestos => Set<Puesto>();
@@ -38,6 +39,18 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
+
+        builder.Entity<ApplicationUser>(entidad =>
+        {
+            entidad.Property(usuario => usuario.EstadoRegistro)
+                .HasColumnType("enum('Activo','Inactivo')")
+                .HasDefaultValue(EstadosRegistro.Activo)
+                .IsRequired();
+
+            entidad.Property(usuario => usuario.FechaCreacion)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .IsRequired();
+        });
 
         builder.Entity<ConsultaContacto>(entidad =>
         {
@@ -93,6 +106,64 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                 .HasDatabaseName("IX_ConsultaContacto_CorreoElectronico");
         });
 
+        builder.Entity<FAQ>(entidad =>
+        {
+            entidad.ToTable("FAQ");
+
+            entidad.HasKey(faq => faq.IdFAQ);
+
+            entidad.Property(faq => faq.IdFAQ)
+                .ValueGeneratedOnAdd();
+
+            entidad.Property(faq => faq.Pregunta)
+                .HasMaxLength(300)
+                .IsRequired();
+
+            entidad.Property(faq => faq.Respuesta)
+                .HasColumnType("text")
+                .IsRequired();
+
+            entidad.Property(faq => faq.Orden)
+                .HasDefaultValue(0)
+                .IsRequired();
+
+            entidad.Property(faq => faq.EstaPublicado)
+                .HasDefaultValue(false)
+                .IsRequired();
+
+            entidad.Property(faq => faq.FechaCreacion)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .IsRequired();
+
+            entidad.Property(faq => faq.CreadoPor)
+                .HasMaxLength(255);
+
+            entidad.Property(faq => faq.ModificadoPor)
+                .HasMaxLength(255);
+
+            entidad.Property(faq => faq.EstadoRegistro)
+                .HasColumnType("enum('Activo','Inactivo')")
+                .HasDefaultValue(EstadosRegistro.Activo)
+                .IsRequired();
+
+            entidad.HasIndex(faq => faq.EstaPublicado)
+                .HasDatabaseName("IX_FAQ_EstaPublicado");
+
+            entidad.HasIndex(faq => faq.Orden)
+                .HasDatabaseName("IX_FAQ_Orden");
+
+            entidad.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(faq => faq.CreadoPor)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_FAQ_CreadoPor");
+
+            entidad.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(faq => faq.ModificadoPor)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_FAQ_ModificadoPor");
+        });
         builder.Entity<EstadoLaboral>(entidad =>
         {
             entidad.ToTable("EstadoLaboral");
