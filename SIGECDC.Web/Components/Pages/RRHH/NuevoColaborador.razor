@@ -1,6 +1,6 @@
 @page "/rrhh/colaboradores/nuevo"
 @rendermode InteractiveServer
-@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Recursos Humanos")]
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Administrador,Recursos Humanos")]
 @using SIGECDC.Application.RecursosHumanos
 @inject IColaboradorService ColaboradorService
 @inject AuthenticationStateProvider Autenticacion

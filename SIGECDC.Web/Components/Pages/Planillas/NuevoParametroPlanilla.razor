@@ -1,6 +1,6 @@
 @page "/rrhh/parametros-planilla/nuevo"
 @rendermode InteractiveServer
-@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Recursos Humanos")]
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Administrador,Recursos Humanos")]
 @using SIGECDC.Application.Planillas
 @inject IParametroPlanillaService ParametroPlanillaService
 @inject AuthenticationStateProvider Autenticacion

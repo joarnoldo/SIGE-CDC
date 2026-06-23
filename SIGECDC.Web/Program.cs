@@ -77,7 +77,7 @@ app.MapGet(
                 ? Results.NotFound()
                 : Results.File(archivo.Contenido, archivo.MimeType, archivo.NombreOriginal);
         })
-    .RequireAuthorization(policy => policy.RequireRole("Recursos Humanos"));
+    .RequireAuthorization(policy => policy.RequireRole("Administrador", "Recursos Humanos"));
 
 // Add additional endpoints required by the Identity /Account Razor components.
 app.MapAdditionalIdentityEndpoints();

@@ -1,6 +1,6 @@
 @page "/rrhh/colaboradores/{IdColaborador:long}/documentos"
 @rendermode InteractiveServer
-@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Recursos Humanos")]
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Administrador,Recursos Humanos")]
 @using Microsoft.AspNetCore.Components.Forms
 @using SIGECDC.Application.RecursosHumanos
 @inject IContratoDocumentoService ContratoDocumentoService
