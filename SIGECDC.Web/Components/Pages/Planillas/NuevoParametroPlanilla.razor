@@ -41,7 +41,9 @@
                     <DataAnnotationsValidator />
                     <ValidationSummary />
 
-                    <ParametroPlanillaFormularioCampos Solicitud="solicitud" TiposParametro="tiposParametro" />
+                    <ParametroPlanillaFormularioCampos Solicitud="solicitud"
+                                                       TiposParametro="tiposParametro"
+                                                       NaturalezasParametro="naturalezasParametro" />
 
                     <div class="form-actions">
                         <a class="btn btn--secondary" href="rrhh/parametros-planilla">Volver</a>
@@ -70,6 +72,7 @@
 @code {
     private SolicitudParametroPlanilla solicitud = new();
     private IReadOnlyList<TipoParametroPlanillaOpcion> tiposParametro = [];
+    private IReadOnlyList<NaturalezaParametroPlanillaOpcion> naturalezasParametro = [];
     private bool cargando = true;
     private bool guardando;
     private string? mensajeError;
@@ -77,6 +80,7 @@
     protected override async Task OnInitializedAsync()
     {
         tiposParametro = await ParametroPlanillaService.ObtenerTiposParametroAsync();
+        naturalezasParametro = await ParametroPlanillaService.ObtenerNaturalezasParametroAsync();
         solicitud.TipoParametro = tiposParametro.FirstOrDefault()?.Nombre ?? "Porcentaje";
         cargando = false;
     }

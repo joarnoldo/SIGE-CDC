@@ -11,4 +11,6 @@ public interface IAlmacenamientoArchivosService
         CancellationToken cancellationToken = default);
 
     Task<Stream> AbrirLecturaAsync(string rutaRelativa, CancellationToken cancellationToken = default);
+
+    Task EliminarAsync(string rutaRelativa, CancellationToken cancellationToken = default);
 }

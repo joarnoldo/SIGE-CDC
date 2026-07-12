@@ -3,6 +3,7 @@
 @rendermode InteractiveServer
 @using SIGECDC.Application.Operaciones
 @inject IProyectoService ProyectoService
+@inject ILogger<Proyectos> Logger
 
 <PageTitle>Proyectos | SIGE-CDC</PageTitle>
 
@@ -87,8 +88,10 @@
                 </div>
 
                 <div class="form-actions mt-3">
-                    <button class="btn btn--primary" type="submit">Guardar proyecto</button>
-                    <button class="btn btn--secondary" type="button" @onclick="PrepararNuevoProyecto">Nuevo proyecto</button>
+                    <button class="btn btn--primary" type="submit" disabled="@guardando">
+                        @(guardando ? "Guardando..." : "Guardar proyecto")
+                    </button>
+                    <button class="btn btn--secondary" type="button" disabled="@guardando" @onclick="PrepararNuevoProyecto">Nuevo proyecto</button>
                 </div>
             </EditForm>
         </article>
@@ -167,6 +170,7 @@
     private List<EstadoProyectoOpcion> estados = [];
     private SolicitudProyecto solicitud = new();
     private bool cargando = true;
+    private bool guardando;
     private string? mensajeFormulario;
 
     private string TituloFormulario => solicitud.IdProyecto == 0
@@ -175,8 +179,17 @@
 
     protected override async Task OnInitializedAsync()
     {
-        estados = [.. await ProyectoService.ObtenerEstadosAsync()];
-        await CargarProyectosAsync();
+        try
+        {
+            estados = [.. await ProyectoService.ObtenerEstadosAsync()];
+            await CargarProyectosAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudo cargar la gestión de proyectos.");
+            mensajeFormulario = "No se pudo cargar la información de proyectos. Verifique la conexión e intente nuevamente.";
+            cargando = false;
+        }
     }
 
     private async Task CargarProyectosAsync()
@@ -188,16 +201,37 @@
 
     private async Task GuardarProyectoAsync()
     {
+        if (guardando)
+        {
+            return;
+        }
+
+        guardando = true;
+        mensajeFormulario = null;
+
         try
         {
             await ProyectoService.GuardarProyectoAsync(solicitud);
-            mensajeFormulario = "Proyecto guardado correctamente.";
             PrepararNuevoProyecto();
+            mensajeFormulario = "Proyecto guardado correctamente.";
             await CargarProyectosAsync();
+        }
+        catch (ArgumentException ex)
+        {
+            mensajeFormulario = ex.Message;
+        }
+        catch (InvalidOperationException ex)
+        {
+            mensajeFormulario = ex.Message;
         }
         catch (Exception ex)
         {
-            mensajeFormulario = ex.Message;
+            Logger.LogError(ex, "No se pudo guardar el proyecto {CodigoProyecto}.", solicitud.CodigoProyecto);
+            mensajeFormulario = "No se pudo guardar el proyecto. Intente nuevamente y, si el problema continúa, revise la configuración de la base de datos.";
+        }
+        finally
+        {
+            guardando = false;
         }
     }
 
@@ -223,6 +257,7 @@
     private void PrepararNuevoProyecto()
     {
         solicitud = new SolicitudProyecto();
+        mensajeFormulario = null;
     }
 
     private static string TextoFecha(DateTime? fecha)

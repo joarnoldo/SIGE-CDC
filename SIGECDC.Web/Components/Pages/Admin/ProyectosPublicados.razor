@@ -5,14 +5,15 @@
 @using SIGECDC.Application.SitioPublico
 @inject IProyectoPublicadoService ProyectoPublicadoService
 @inject IProyectoService ProyectoService
+@inject ILogger<ProyectosPublicados> Logger
 
 <PageTitle>Proyectos publicados | SIGE-CDC</PageTitle>
 
 <section class="page-banner">
     <div class="container page-banner__inner stack--tight">
-        <p class="eyebrow">Administracion</p>
-        <h1>Tarjetas publicas de proyectos.</h1>
-        <p class="lead">Controle que proyectos aparecen u ocultan en el portafolio institucional.</p>
+        <p class="eyebrow">Administración</p>
+        <h1>Tarjetas públicas de proyectos.</h1>
+        <p class="lead">Controle qué proyectos aparecen u ocultan en el portafolio institucional.</p>
     </div>
 </section>
 
@@ -34,7 +35,7 @@
                     <div class="field field--span-2">
                         <label for="proyectoBase">Proyecto interno relacionado</label>
                         <InputSelect id="proyectoBase" class="form-control" @bind-Value="solicitud.IdProyecto">
-                            <option value="">Sin relacion interna</option>
+                        <option value="">Sin relación interna</option>
                             @foreach (var proyecto in proyectosInternos)
                             {
                                 <option value="@proyecto.IdProyecto">@proyecto.CodigoProyecto - @proyecto.NombreProyecto</option>
@@ -43,7 +44,7 @@
                     </div>
 
                     <div class="field">
-                        <label for="titulo">Titulo publico</label>
+                        <label for="titulo">Título público</label>
                         <InputText id="titulo" class="form-control" @bind-Value="solicitud.Titulo" />
                     </div>
 
@@ -53,19 +54,21 @@
                     </div>
 
                     <div class="field field--span-2">
-                        <label for="descripcion">Descripcion publica</label>
+                        <label for="descripcion">Descripción pública</label>
                         <InputTextArea id="descripcion" class="form-control" @bind-Value="solicitud.Descripcion" />
                     </div>
 
                     <label class="checkbox-card field--span-2">
                         <InputCheckbox @bind-Value="solicitud.EstaPublicado" />
-                        <span>Visible en el portafolio publico</span>
+                        <span>Visible en el portafolio público</span>
                     </label>
                 </div>
 
                 <div class="form-actions mt-3">
-                    <button class="btn btn--primary" type="submit">Guardar tarjeta</button>
-                    <button class="btn btn--secondary" type="button" @onclick="PrepararNuevaTarjeta">Nueva tarjeta</button>
+                    <button class="btn btn--primary" type="submit" disabled="@guardando">
+                        @(guardando ? "Guardando..." : "Guardar tarjeta")
+                    </button>
+                    <button class="btn btn--secondary" type="button" disabled="@guardando" @onclick="PrepararNuevaTarjeta">Nueva tarjeta</button>
                 </div>
             </EditForm>
         </article>
@@ -74,7 +77,7 @@
             <div class="table-toolbar">
                 <div>
                     <h2 class="card__title">Tarjetas registradas</h2>
-                    <p class="card__meta">Estado actual de visibilidad publica.</p>
+                    <p class="card__meta">Estado actual de visibilidad pública.</p>
                 </div>
                 <span class="badge badge--info">@proyectosPublicados.Count tarjetas</span>
             </div>
@@ -144,6 +147,7 @@
     private List<ProyectoResumen> proyectosInternos = [];
     private SolicitudProyectoPublicado solicitud = new();
     private bool cargando = true;
+    private bool guardando;
     private string? mensajeFormulario;
 
     private string TituloFormulario => solicitud.IdProyectoPublicado == 0
@@ -152,8 +156,17 @@
 
     protected override async Task OnInitializedAsync()
     {
-        proyectosInternos = [.. await ProyectoService.ObtenerProyectosAsync()];
-        await CargarTarjetasAsync();
+        try
+        {
+            proyectosInternos = [.. await ProyectoService.ObtenerProyectosAsync()];
+            await CargarTarjetasAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudo cargar la publicación de proyectos.");
+            mensajeFormulario = "No se pudo cargar la publicación de proyectos. Intente nuevamente.";
+            cargando = false;
+        }
     }
 
     private async Task CargarTarjetasAsync()
@@ -165,6 +178,13 @@
 
     private async Task GuardarProyectoPublicadoAsync()
     {
+        if (guardando)
+        {
+            return;
+        }
+
+        guardando = true;
+
         try
         {
             await ProyectoPublicadoService.GuardarProyectoPublicadoAsync(solicitud);
@@ -173,19 +193,40 @@
             proyectosInternos = [.. await ProyectoService.ObtenerProyectosAsync()];
             await CargarTarjetasAsync();
         }
-        catch (Exception ex)
+        catch (ArgumentException ex)
         {
             mensajeFormulario = ex.Message;
+        }
+        catch (InvalidOperationException ex)
+        {
+            mensajeFormulario = ex.Message;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudo guardar la tarjeta de proyecto.");
+            mensajeFormulario = "No se pudo guardar la tarjeta. Intente nuevamente.";
+        }
+        finally
+        {
+            guardando = false;
         }
     }
 
     private async Task CambiarPublicacionAsync(ProyectoPublicadoResumen proyecto)
     {
-        await ProyectoPublicadoService.CambiarPublicacionAsync(proyecto.IdProyectoPublicado, !proyecto.EstaPublicado);
-        mensajeFormulario = proyecto.EstaPublicado
-            ? "La tarjeta quedo oculta."
-            : "La tarjeta quedo visible en el portafolio.";
-        await CargarTarjetasAsync();
+        try
+        {
+            await ProyectoPublicadoService.CambiarPublicacionAsync(proyecto.IdProyectoPublicado, !proyecto.EstaPublicado);
+            mensajeFormulario = proyecto.EstaPublicado
+                ? "La tarjeta quedó oculta."
+                : "La tarjeta quedó visible en el portafolio.";
+            await CargarTarjetasAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudo cambiar la publicación de la tarjeta {IdProyectoPublicado}.", proyecto.IdProyectoPublicado);
+            mensajeFormulario = "No se pudo cambiar la visibilidad de la tarjeta. Intente nuevamente.";
+        }
     }
 
     private void EditarTarjeta(ProyectoPublicadoResumen proyecto)
@@ -211,7 +252,7 @@
     {
         if (string.IsNullOrWhiteSpace(proyecto.CodigoProyecto) && string.IsNullOrWhiteSpace(proyecto.NombreProyecto))
         {
-            return "Sin relacion";
+            return "Sin relación";
         }
 
         return $"{proyecto.CodigoProyecto} - {proyecto.NombreProyecto}";

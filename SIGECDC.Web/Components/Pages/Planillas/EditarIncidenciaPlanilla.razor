@@ -50,6 +50,16 @@
                     <a class="btn btn--secondary" href="rrhh/incidencias-planilla">Volver al listado</a>
                 </div>
             }
+            else if (incidencia.EstaBloqueada)
+            {
+                <div class="empty-state">
+                    <strong>Período bloqueado</strong>
+                    <p class="text-muted">
+                        La incidencia se conserva para consulta, pero no puede modificarse porque la planilla está en estado @incidencia.EstadoPlanilla.
+                    </p>
+                    <a class="btn btn--secondary" href="rrhh/incidencias-planilla">Volver al listado</a>
+                </div>
+            }
             else
             {
                 <EditForm Model="solicitud" OnValidSubmit="GuardarAsync" OnInvalidSubmit="LimpiarMensaje" class="stack">
@@ -115,6 +125,7 @@
 
     private bool NoPuedeDesactivar => desactivando
         || incidencia is null
+        || incidencia.EstaBloqueada
         || string.Equals(incidencia.EstadoRegistro, "Inactivo", StringComparison.OrdinalIgnoreCase);
 
     protected override async Task OnParametersSetAsync()

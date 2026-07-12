@@ -29,4 +29,6 @@ public sealed class PeriodoPlanilla
     public string EstadoRegistro { get; set; } = "Activo";
 
     public EstadoPlanilla? EstadoPlanilla { get; set; }
+
+    public Planilla? Planilla { get; set; }
 }

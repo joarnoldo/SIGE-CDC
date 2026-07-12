@@ -2,6 +2,7 @@
 @using Microsoft.AspNetCore.Authorization
 @using SIGECDC.Application.SitioPublico
 @inject INoticiaService NoticiaService
+@inject ILogger<Noticias> Logger
 @rendermode InteractiveServer
 @attribute [Authorize(Roles = "Administrador")]
 
@@ -43,9 +44,9 @@
                 <table class="data-table">
                     <thead>
                         <tr>
-                            <th>Titulo</th>
+                            <th>Título</th>
                             <th>Resumen</th>
-                            <th>Publicacion</th>
+                            <th>Publicación</th>
                             <th>Estado</th>
                             <th></th>
                         </tr>
@@ -100,7 +101,7 @@
             }
 
             <div class="form-group">
-                <label class="form-label">Titulo</label>
+                <label class="form-label">Título</label>
                 <input class="form-control" @bind="formulario.Titulo" maxlength="200" />
             </div>
 
@@ -149,7 +150,8 @@
         }
         catch (Exception ex)
         {
-            mensajeErrorGlobal = $"Error al cargar noticias: {ex.Message}";
+            Logger.LogError(ex, "No se pudieron cargar las noticias.");
+            mensajeErrorGlobal = "No se pudieron cargar las noticias. Intente nuevamente.";
         }
         finally
         {
@@ -188,7 +190,7 @@
     {
         if (string.IsNullOrWhiteSpace(formulario.Titulo))
         {
-            mensajeErrorModal = "El titulo es obligatorio.";
+            mensajeErrorModal = "El título es obligatorio.";
             return;
         }
 
@@ -211,9 +213,18 @@
             mostrarFormulario = false;
             await CargarNoticias();
         }
-        catch (Exception ex)
+        catch (ArgumentException ex)
         {
             mensajeErrorModal = ex.Message;
+        }
+        catch (InvalidOperationException ex)
+        {
+            mensajeErrorModal = ex.Message;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudo guardar la noticia {IdNoticia}.", idEditando);
+            mensajeErrorModal = "No se pudo guardar la noticia. Intente nuevamente.";
         }
         finally
         {
@@ -246,7 +257,8 @@
         }
         catch (Exception ex)
         {
-            mensajeErrorGlobal = ex.Message;
+            Logger.LogError(ex, "No se pudo completar una acción sobre una noticia.");
+            mensajeErrorGlobal = "No se pudo completar la acción sobre la noticia. Intente nuevamente.";
         }
     }
 }

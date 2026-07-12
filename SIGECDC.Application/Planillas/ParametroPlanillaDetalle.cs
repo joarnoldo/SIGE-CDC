@@ -12,6 +12,8 @@ public sealed class ParametroPlanillaDetalle
 
     public string TipoParametro { get; set; } = string.Empty;
 
+    public string? Naturaleza { get; set; }
+
     public decimal? ValorDecimal { get; set; }
 
     public string? ValorTexto { get; set; }

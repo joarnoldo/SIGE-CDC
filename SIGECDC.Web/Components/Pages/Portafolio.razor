@@ -1,6 +1,8 @@
 @page "/portafolio"
+@rendermode InteractiveServer
 @using SIGECDC.Application.SitioPublico
 @inject IProyectoPublicadoService ProyectoPublicadoService
+@inject ILogger<Portafolio> Logger
 
 <PageTitle>Portafolio | SIGE-CDC</PageTitle>
 
@@ -8,23 +10,60 @@
     <div class="container page-banner__inner stack--tight">
         <p class="eyebrow">Portafolio institucional</p>
         <h1>Proyectos visibles.</h1>
-        <p class="lead">Obras y servicios publicados por la administracion para consulta publica.</p>
+        <p class="lead">Obras y servicios publicados por la administración para consulta pública.</p>
     </div>
 </section>
 
 <section class="section-shell">
-    <div class="container">
-        @if (proyectos.Count == 0)
+    <div class="container stack">
+        @if (estadosDisponibles.Count > 0)
+        {
+            <section class="toolbar" aria-label="Filtros del portafolio">
+                <div class="toolbar__group">
+                    <label class="field">
+                        <span>Estado del proyecto</span>
+                        <select @bind="estadoSeleccionado">
+                            <option value="">Todos los estados</option>
+                            @foreach (var estado in estadosDisponibles)
+                            {
+                                <option value="@estado">@estado</option>
+                            }
+                        </select>
+                    </label>
+                </div>
+                <span class="badge badge--info">@TextoCantidad</span>
+            </section>
+        }
+
+        @if (cargando)
+        {
+            <div class="empty-state">
+                <strong>Cargando proyectos</strong>
+                <p class="text-muted">Estamos recuperando el portafolio publicado.</p>
+            </div>
+        }
+        else if (!string.IsNullOrWhiteSpace(mensajeError))
+        {
+            <div class="alert alert--danger" role="alert">@mensajeError</div>
+        }
+        else if (proyectos.Count == 0)
         {
             <div class="empty-state">
                 <strong>No hay proyectos publicados</strong>
-                <p class="text-muted">Cuando administracion publique tarjetas, apareceran en este portafolio.</p>
+                <p class="text-muted">Cuando administración publique tarjetas, aparecerán en este portafolio.</p>
+            </div>
+        }
+        else if (ProyectosFiltrados.Count == 0)
+        {
+            <div class="empty-state">
+                <strong>No hay proyectos para este estado</strong>
+                <p class="text-muted">Seleccione otro estado o muestre todos los proyectos.</p>
             </div>
         }
         else
         {
             <div class="content-grid">
-                @foreach (var proyecto in proyectos)
+                @foreach (var proyecto in ProyectosFiltrados)
                 {
                     <article class="card">
                         <div class="card__meta">@TextoEstado(proyecto)</div>
@@ -43,10 +82,39 @@
 
 @code {
     private IReadOnlyList<ProyectoPublicadoResumen> proyectos = [];
+    private IReadOnlyList<string> estadosDisponibles = [];
+    private bool cargando = true;
+    private string? estadoSeleccionado;
+    private string? mensajeError;
+
+    private IReadOnlyList<ProyectoPublicadoResumen> ProyectosFiltrados => string.IsNullOrWhiteSpace(estadoSeleccionado)
+        ? proyectos
+        : proyectos.Where(proyecto => string.Equals(TextoEstado(proyecto), estadoSeleccionado, StringComparison.OrdinalIgnoreCase)).ToList();
+
+    private string TextoCantidad => ProyectosFiltrados.Count == 1
+        ? "1 proyecto"
+        : $"{ProyectosFiltrados.Count} proyectos";
 
     protected override async Task OnInitializedAsync()
     {
-        proyectos = await ProyectoPublicadoService.ObtenerProyectosPublicadosAsync();
+        try
+        {
+            proyectos = await ProyectoPublicadoService.ObtenerProyectosPublicadosAsync();
+            estadosDisponibles = proyectos
+                .Select(TextoEstado)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(estado => estado)
+                .ToList();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudo cargar el portafolio público.");
+            mensajeError = "No se pudo cargar el portafolio en este momento. Intente nuevamente más tarde.";
+        }
+        finally
+        {
+            cargando = false;
+        }
     }
 
     private static string TextoEstado(ProyectoPublicadoResumen proyecto)

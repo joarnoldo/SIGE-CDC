@@ -1,0 +1,339 @@
+@page "/rrhh/parametros-planilla/{IdParametroPlanilla:int}/asignaciones"
+@rendermode InteractiveServer
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Administrador,Recursos Humanos")]
+@using SIGECDC.Application.Planillas
+@using SIGECDC.Domain.Planillas
+@inject IParametroPlanillaService ParametroPlanillaService
+@inject AuthenticationStateProvider Autenticacion
+@inject ILogger<AsignacionesParametroPlanilla> Logger
+
+<PageTitle>Asignaciones de parámetro | SIGE-CDC</PageTitle>
+
+<section class="page-banner">
+    <div class="container page-banner__inner stack--tight">
+        <p class="eyebrow">Recursos Humanos / Planillas</p>
+        <h1>Asignaciones de parámetro.</h1>
+        <p class="lead">Relacione una deducción o beneficio con un colaborador o período específico.</p>
+    </div>
+</section>
+
+<section class="section-shell">
+    <div class="container stack">
+        @if (!string.IsNullOrWhiteSpace(mensajeEstado))
+        {
+            <div class="alert alert--@(mensajeEsError ? "danger" : "success")" role="alert">
+                <strong>@(mensajeEsError ? "No se pudo completar la acción" : "Acción completada")</strong>
+                <span>@mensajeEstado</span>
+            </div>
+        }
+
+        @if (cargando)
+        {
+            <div class="empty-state">
+                <strong>Cargando asignaciones</strong>
+                <p class="text-muted">Estamos recuperando la configuración del parámetro.</p>
+            </div>
+        }
+        else if (parametro is null)
+        {
+            <div class="empty-state">
+                <strong>Parámetro no encontrado</strong>
+                <p class="text-muted">El parámetro solicitado no existe.</p>
+                <a class="btn btn--secondary" href="rrhh/parametros-planilla">Volver al listado</a>
+            </div>
+        }
+        else
+        {
+            <div class="page-header">
+                <div>
+                    <p class="eyebrow">@parametro.Codigo</p>
+                    <h2>@parametro.Nombre</h2>
+                    <p class="card__meta">Tipo: @parametro.TipoParametro · Naturaleza: @(parametro.Naturaleza ?? "Referencia técnica")</p>
+                </div>
+                <div class="page-actions">
+                    <a class="btn btn--secondary" href="@($"rrhh/parametros-planilla/{IdParametroPlanilla}")">Editar parámetro</a>
+                    <a class="btn btn--secondary" href="rrhh/parametros-planilla">Volver al listado</a>
+                </div>
+            </div>
+
+            @if (string.IsNullOrWhiteSpace(parametro.Naturaleza))
+            {
+                <div class="alert alert--warning" role="alert">
+                    <strong>Naturaleza requerida</strong>
+                    <span>Defina el parámetro como Deduccion o Beneficio antes de crear asignaciones.</span>
+                </div>
+            }
+            else if (!string.Equals(parametro.EstadoRegistro, "Activo", StringComparison.OrdinalIgnoreCase))
+            {
+                <div class="alert alert--warning" role="alert">
+                    <strong>Parámetro inactivo</strong>
+                    <span>Las asignaciones se conservan para trazabilidad, pero no pueden modificarse mientras el parámetro esté inactivo.</span>
+                </div>
+            }
+            else
+            {
+                <EditForm Model="solicitud" OnValidSubmit="GuardarAsync" OnInvalidSubmit="LimpiarMensaje" class="form-section stack">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
+
+                    <div>
+                        <p class="eyebrow">Nueva asignación</p>
+                        <h2>Definir ámbito y valor</h2>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="field">
+                            <label for="ambito">Ámbito</label>
+                            <select id="ambito" value="@solicitud.Ambito" @onchange="CambiarAmbito">
+                                <option value="@AmbitosAsignacionParametroPlanilla.Colaborador">Colaborador</option>
+                                <option value="@AmbitosAsignacionParametroPlanilla.Periodo">Período</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label for="destino">@(EsAmbitoColaborador ? "Colaborador" : "Período")</label>
+                            <InputSelect id="destino" @bind-Value="solicitud.IdDestino">
+                                <option value="0">Seleccione una opción</option>
+                                @foreach (var destino in DestinosActuales)
+                                {
+                                    <option value="@destino.Id" disabled="@destino.EstaBloqueado">
+                                        @destino.Codigo · @destino.Nombre@(destino.EstaBloqueado ? " · Bloqueado" : string.Empty)
+                                    </option>
+                                }
+                            </InputSelect>
+                            <ValidationMessage For="() => solicitud.IdDestino" />
+                        </div>
+                        @if (UsaValorTexto)
+                        {
+                            <div class="field field--span-2">
+                                <label for="valorTextoOverride">Valor de texto asignado</label>
+                                <InputText id="valorTextoOverride" @bind-Value="solicitud.ValorTextoOverride" />
+                                <ValidationMessage For="() => solicitud.ValorTextoOverride" />
+                                <span class="help-text">Déjelo vacío para usar el valor global del parámetro.</span>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="field field--span-2">
+                                <label for="valorDecimalOverride">Valor numérico asignado</label>
+                                <InputNumber id="valorDecimalOverride" @bind-Value="solicitud.ValorDecimalOverride" />
+                                <ValidationMessage For="() => solicitud.ValorDecimalOverride" />
+                                <span class="help-text">Déjelo vacío para usar el valor global. En porcentajes, 10 representa 10%.</span>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="form-actions">
+                        <span class="help-text">Guardar nuevamente el mismo ámbito y destino actualiza o reactiva su asignación.</span>
+                        <button class="btn btn--primary" type="submit" disabled="@(guardando || DestinosActuales.Count == 0)">
+                            @(guardando ? "Guardando..." : "Guardar asignación")
+                        </button>
+                    </div>
+                </EditForm>
+            }
+
+            <article class="table-card">
+                <div class="table-toolbar">
+                    <div>
+                        <h2 class="card__title">Asignaciones registradas</h2>
+                        <p class="card__meta">La precedencia para cálculo será colaborador, período y luego valor global.</p>
+                    </div>
+                    <span class="badge badge--info">@asignaciones.Count</span>
+                </div>
+
+                @if (asignaciones.Count == 0)
+                {
+                    <div class="empty-state">
+                        <strong>Sin asignaciones</strong>
+                        <p class="text-muted">El parámetro utilizará únicamente su valor global.</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Ámbito</th>
+                                    <th>Destino</th>
+                                    <th>Valor asignado</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var asignacion in asignaciones)
+                                {
+                                    <tr>
+                                        <td>@asignacion.Ambito</td>
+                                        <td><strong>@asignacion.CodigoDestino</strong><br />@asignacion.NombreDestino</td>
+                                        <td>@TextoValorAsignado(asignacion)</td>
+                                        <td><span class="badge @ClaseEstado(asignacion.EstadoRegistro)">@asignacion.EstadoRegistro</span></td>
+                                        <td>
+                                            <div class="table-actions">
+                                                <button type="button"
+                                                        disabled="@(desactivando || asignacion.EstaBloqueada || asignacion.EstadoRegistro != "Activo")"
+                                                        @onclick="() => DesactivarAsync(asignacion)">
+                                                    @(asignacion.EstaBloqueada ? "Bloqueada" : "Desactivar")
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </article>
+        }
+    </div>
+</section>
+
+@code {
+    [Parameter]
+    public int IdParametroPlanilla { get; set; }
+
+    private ParametroPlanillaDetalle? parametro;
+    private SolicitudAsignacionParametroPlanilla solicitud = new();
+    private IReadOnlyList<AsignacionParametroPlanillaResumen> asignaciones = [];
+    private IReadOnlyList<DestinoAsignacionParametroPlanillaOpcion> colaboradores = [];
+    private IReadOnlyList<DestinoAsignacionParametroPlanillaOpcion> periodos = [];
+    private bool cargando = true;
+    private bool guardando;
+    private bool desactivando;
+    private bool mensajeEsError;
+    private string? mensajeEstado;
+
+    private bool EsAmbitoColaborador => string.Equals(
+        solicitud.Ambito,
+        AmbitosAsignacionParametroPlanilla.Colaborador,
+        StringComparison.OrdinalIgnoreCase);
+
+    private bool UsaValorTexto => string.Equals(parametro?.TipoParametro, "Texto", StringComparison.OrdinalIgnoreCase);
+
+    private IReadOnlyList<DestinoAsignacionParametroPlanillaOpcion> DestinosActuales => EsAmbitoColaborador
+        ? colaboradores
+        : periodos;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await CargarAsync();
+    }
+
+    private async Task CargarAsync()
+    {
+        cargando = true;
+        mensajeEstado = null;
+        mensajeEsError = false;
+
+        try
+        {
+            parametro = await ParametroPlanillaService.ObtenerParametroPorIdAsync(IdParametroPlanilla);
+            asignaciones = await ParametroPlanillaService.ObtenerAsignacionesAsync(IdParametroPlanilla);
+            colaboradores = await ParametroPlanillaService.ObtenerColaboradoresAsignacionAsync();
+            periodos = await ParametroPlanillaService.ObtenerPeriodosAsignacionAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudieron cargar las asignaciones del parámetro {IdParametroPlanilla}.", IdParametroPlanilla);
+            mensajeEsError = true;
+            mensajeEstado = "No se pudieron cargar las asignaciones del parámetro.";
+            asignaciones = [];
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private void CambiarAmbito(ChangeEventArgs evento)
+    {
+        solicitud.Ambito = evento.Value?.ToString() ?? AmbitosAsignacionParametroPlanilla.Colaborador;
+        solicitud.IdDestino = 0;
+    }
+
+    private async Task GuardarAsync()
+    {
+        guardando = true;
+        mensajeEstado = null;
+        mensajeEsError = false;
+
+        try
+        {
+            await ParametroPlanillaService.GuardarAsignacionAsync(
+                IdParametroPlanilla,
+                solicitud,
+                await ObtenerIdUsuarioActualAsync());
+
+            var ambitoActual = solicitud.Ambito;
+            solicitud = new SolicitudAsignacionParametroPlanilla { Ambito = ambitoActual };
+            mensajeEstado = "La asignación fue guardada correctamente.";
+            asignaciones = await ParametroPlanillaService.ObtenerAsignacionesAsync(IdParametroPlanilla);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudo guardar una asignación del parámetro {IdParametroPlanilla}.", IdParametroPlanilla);
+            mensajeEsError = true;
+            mensajeEstado = ex.Message;
+        }
+        finally
+        {
+            guardando = false;
+        }
+    }
+
+    private async Task DesactivarAsync(AsignacionParametroPlanillaResumen asignacion)
+    {
+        desactivando = true;
+        mensajeEstado = null;
+        mensajeEsError = false;
+
+        try
+        {
+            await ParametroPlanillaService.DesactivarAsignacionAsync(
+                asignacion.Ambito,
+                asignacion.IdAsignacion,
+                await ObtenerIdUsuarioActualAsync());
+            mensajeEstado = "La asignación fue desactivada.";
+            asignaciones = await ParametroPlanillaService.ObtenerAsignacionesAsync(IdParametroPlanilla);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudo desactivar la asignación {IdAsignacion}.", asignacion.IdAsignacion);
+            mensajeEsError = true;
+            mensajeEstado = ex.Message;
+        }
+        finally
+        {
+            desactivando = false;
+        }
+    }
+
+    private void LimpiarMensaje()
+    {
+        mensajeEstado = null;
+        mensajeEsError = false;
+    }
+
+    private string TextoValorAsignado(AsignacionParametroPlanillaResumen asignacion)
+    {
+        if (UsaValorTexto)
+        {
+            return asignacion.ValorTextoOverride ?? "Usa valor global";
+        }
+
+        return asignacion.ValorDecimalOverride?.ToString("N4") ?? "Usa valor global";
+    }
+
+    private static string ClaseEstado(string estado)
+    {
+        return string.Equals(estado, "Activo", StringComparison.OrdinalIgnoreCase)
+            ? "badge--success"
+            : "badge--danger";
+    }
+
+    private async Task<string?> ObtenerIdUsuarioActualAsync()
+    {
+        var estadoAutenticacion = await Autenticacion.GetAuthenticationStateAsync();
+        return estadoAutenticacion.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+    }
+}

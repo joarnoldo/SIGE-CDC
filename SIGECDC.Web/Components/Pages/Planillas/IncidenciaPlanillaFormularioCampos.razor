@@ -9,7 +9,9 @@
                 <option value="0">Seleccione un período</option>
                 @foreach (var periodo in Periodos)
                 {
-                    <option value="@periodo.Id">@periodo.Codigo - @periodo.Nombre</option>
+                    <option value="@periodo.Id" disabled="@periodo.EstaBloqueado">
+                        @periodo.Codigo - @periodo.Nombre@(periodo.EstaBloqueado ? " · Bloqueado" : string.Empty)
+                    </option>
                 }
             </InputSelect>
             <ValidationMessage For="() => Solicitud.IdPeriodoPlanilla" />
@@ -43,12 +45,12 @@
         </div>
         <div class="field">
             <label for="cantidad">Cantidad</label>
-            <InputNumber id="cantidad" @bind-Value="Solicitud.Cantidad" />
+            <InputNumberInmediato id="cantidad" @bind-Value="Solicitud.Cantidad" />
             <ValidationMessage For="() => Solicitud.Cantidad" />
         </div>
         <div class="field">
             <label for="monto">Monto</label>
-            <InputNumber id="monto" @bind-Value="Solicitud.Monto" />
+            <InputNumberInmediato id="monto" @bind-Value="Solicitud.Monto" />
             <ValidationMessage For="() => Solicitud.Monto" />
         </div>
         <div class="field field--span-2">

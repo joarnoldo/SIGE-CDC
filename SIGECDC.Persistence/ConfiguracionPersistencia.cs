@@ -39,6 +39,7 @@ public static class ConfiguracionPersistencia
         servicios.AddScoped<IContratoDocumentoService, ContratoDocumentoService>();
         servicios.AddScoped<IParametroPlanillaService, ParametroPlanillaService>();
         servicios.AddScoped<IIncidenciaPlanillaService, IncidenciaPlanillaService>();
+        servicios.AddScoped<IPlanillaService, PlanillaService>();
         servicios.AddScoped<IHistorialSistemaService, HistorialSistemaService>();
 
         return servicios;

@@ -1,0 +1,9 @@
+@typeparam TValue
+@inherits InputNumber<TValue>
+
+<input @attributes="AdditionalAttributes"
+       type="number"
+       step="any"
+       class="@CssClass"
+       @bind="CurrentValueAsString"
+       @bind:event="oninput" />

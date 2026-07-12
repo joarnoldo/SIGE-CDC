@@ -1,0 +1,345 @@
+@page "/rrhh/periodos-planilla/{IdPeriodoPlanilla:long}"
+@rendermode InteractiveServer
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Recursos Humanos")]
+@using SIGECDC.Application.Planillas
+@using SIGECDC.Domain.Planillas
+@inject IPlanillaService PlanillaService
+@inject AuthenticationStateProvider Autenticacion
+@inject ILogger<DetallePeriodoPlanilla> Logger
+
+<PageTitle>Detalle del período | SIGE-CDC</PageTitle>
+
+<section class="page-banner">
+    <div class="container page-banner__inner stack--tight">
+        <p class="eyebrow">Recursos Humanos / Períodos</p>
+        <h1>@(periodo?.CodigoPeriodo ?? "Detalle del período")</h1>
+        <p class="lead">Revise las incidencias registradas y el resultado consolidado del cálculo.</p>
+    </div>
+</section>
+
+<section class="section-shell">
+    <div class="container stack">
+        @if (!string.IsNullOrWhiteSpace(mensajeEstado))
+        {
+            <div class="alert alert--@(mensajeEsError ? "danger" : "success")" role="alert">
+                <strong>@(mensajeEsError ? "No se pudo completar la acción" : "Acción completada")</strong>
+                <span>@mensajeEstado</span>
+            </div>
+        }
+
+        <div class="page-header">
+            <div>
+                <p class="eyebrow">Detalle de procesamiento</p>
+                <h2>@(periodo?.Nombre ?? "Período no disponible")</h2>
+            </div>
+            <div class="page-actions">
+                <a class="btn btn--secondary" href="rrhh/periodos-planilla">Volver a períodos</a>
+                @if (PuedeCalcular)
+                {
+                    <button class="btn btn--primary" type="button" disabled="@calculando" @onclick="CalcularAsync">
+                        @(calculando ? "Calculando..." : "Calcular planilla")
+                    </button>
+                }
+                else if (PuedeAprobar)
+                {
+                    <button class="btn btn--primary" type="button" disabled="@cambiandoEstado" @onclick="AprobarAsync">
+                        @(cambiandoEstado ? "Aprobando..." : "Aprobar y bloquear")
+                    </button>
+                }
+                else if (PuedeCerrar)
+                {
+                    <button class="btn btn--primary" type="button" disabled="@cambiandoEstado" @onclick="CerrarAsync">
+                        @(cambiandoEstado ? "Cerrando..." : "Cerrar planilla")
+                    </button>
+                }
+            </div>
+        </div>
+
+        @if (cargando)
+        {
+            <div class="empty-state">
+                <strong>Cargando período</strong>
+                <p class="text-muted">Estamos recuperando los datos del procesamiento.</p>
+            </div>
+        }
+        else if (periodo is null)
+        {
+            <div class="empty-state">
+                <strong>Período no encontrado</strong>
+                <p class="text-muted">El registro solicitado no existe o no está activo.</p>
+                <a class="btn btn--primary" href="rrhh/periodos-planilla">Ver períodos</a>
+            </div>
+        }
+        else
+        {
+            <section class="kpi-grid">
+                <article class="stat-card">
+                    <span class="stat-label">Estado</span>
+                    <strong class="stat-value">@periodo.EstadoPlanilla</strong>
+                    <span class="stat-delta">@periodo.TipoPeriodo</span>
+                </article>
+                <article class="stat-card">
+                    <span class="stat-label">Incidencias</span>
+                    <strong class="stat-value">@periodo.CantidadIncidencias</strong>
+                    <span class="stat-delta">Registros activos del período</span>
+                </article>
+                <article class="stat-card">
+                    <span class="stat-label">Rango</span>
+                    <strong class="stat-value">@periodo.FechaInicio.ToString("dd/MM") – @periodo.FechaFin.ToString("dd/MM")</strong>
+                    <span class="stat-delta">@periodo.FechaFin.Year</span>
+                </article>
+                <article class="stat-card">
+                    <span class="stat-label">Colaboradores calculados</span>
+                    <strong class="stat-value">@periodo.Detalles.Count</strong>
+                    <span class="stat-delta">Con contrato aplicable</span>
+                </article>
+            </section>
+
+            @if (periodo.IdPlanilla is null)
+            {
+                <article class="form-section stack">
+                    <div>
+                        <p class="eyebrow">Listo para procesar</p>
+                        <h2>Planilla todavía no calculada</h2>
+                    </div>
+                    <p class="text-muted">
+                        El cálculo incluirá salario base, horas extra, bonos, ausencias, deducciones manuales y parámetros configurables vigentes.
+                    </p>
+                    <div class="alert alert--info" role="status">
+                        <strong>Validación integral</strong>
+                        <span>Si un colaborador activo no tiene exactamente un contrato aplicable, no se guardará ningún resultado parcial.</span>
+                    </div>
+                </article>
+            }
+            else
+            {
+                <section class="kpi-grid">
+                    <article class="stat-card">
+                        <span class="stat-label">Salario bruto</span>
+                        <strong class="stat-value">@TextoMoneda(periodo.SalarioBrutoTotal)</strong>
+                        <span class="stat-delta">Incluye beneficios configurables</span>
+                    </article>
+                    <article class="stat-card">
+                        <span class="stat-label">Deducciones</span>
+                        <strong class="stat-value">@TextoMoneda(periodo.DeduccionesTotal)</strong>
+                        <span class="stat-delta">Manuales y configurables</span>
+                    </article>
+                    <article class="stat-card">
+                        <span class="stat-label">Neto a pagar</span>
+                        <strong class="stat-value">@TextoMoneda(periodo.SalarioNetoTotal)</strong>
+                        <span class="stat-delta">Resultado consolidado</span>
+                    </article>
+                    <article class="stat-card">
+                        <span class="stat-label">@EtiquetaFechaEstado</span>
+                        <strong class="stat-value">@TextoFechaEstado</strong>
+                        <span class="stat-delta">Estado @periodo.EstadoPlanilla</span>
+                    </article>
+                </section>
+
+                @if (FlujoEstadosPlanilla.EstaBloqueada(periodo.EstadoPlanilla))
+                {
+                    <div class="alert alert--info" role="status">
+                        <strong>Planilla bloqueada</strong>
+                        <span>La planilla está en estado @periodo.EstadoPlanilla y no permite cambios en sus incidencias o parámetros del período.</span>
+                    </div>
+                }
+
+                <article class="table-card">
+                    <div class="table-toolbar">
+                        <div>
+                            <h2 class="card__title">Resultado por colaborador</h2>
+                            <p class="card__meta">Montos persistidos para revisión de Recursos Humanos.</p>
+                        </div>
+                        <span class="badge badge--success">@periodo.Detalles.Count</span>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Colaborador</th>
+                                    <th>Salario período</th>
+                                    <th>Horas extra</th>
+                                    <th>Bonos</th>
+                                    <th>Beneficios</th>
+                                    <th>Ausencias</th>
+                                    <th>Bruto</th>
+                                    <th>Deducciones</th>
+                                    <th>Neto</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var detalle in periodo.Detalles)
+                                {
+                                    <tr>
+                                        <td>
+                                            <strong>@detalle.NombreColaborador</strong>
+                                            <p class="card__meta">@detalle.CodigoColaborador · @detalle.Departamento</p>
+                                        </td>
+                                        <td>@TextoMoneda(detalle.SalarioProporcional)</td>
+                                        <td>@TextoMoneda(detalle.TotalHorasExtra)</td>
+                                        <td>@TextoMoneda(detalle.TotalBonos)</td>
+                                        <td>@TextoMoneda(detalle.TotalBeneficiosConfigurables)</td>
+                                        <td>@TextoMoneda(detalle.TotalAusencias)</td>
+                                        <td>@TextoMoneda(detalle.SalarioBruto)</td>
+                                        <td>@TextoMoneda(detalle.TotalDeducciones)</td>
+                                        <td><strong>@TextoMoneda(detalle.SalarioNeto)</strong></td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </article>
+            }
+        }
+    </div>
+</section>
+
+@code {
+    [Parameter]
+    public long IdPeriodoPlanilla { get; set; }
+
+    private PeriodoPlanillaDetalle? periodo;
+    private bool cargando = true;
+    private bool calculando;
+    private bool cambiandoEstado;
+    private bool mensajeEsError;
+    private string? mensajeEstado;
+
+    private bool PuedeCalcular => periodo is not null
+        && periodo.IdPlanilla is null
+        && string.Equals(periodo.EstadoPlanilla, EstadosPlanilla.Borrador, StringComparison.OrdinalIgnoreCase);
+
+    private bool PuedeAprobar => periodo?.IdPlanilla is not null
+        && string.Equals(periodo.EstadoPlanilla, EstadosPlanilla.Calculada, StringComparison.OrdinalIgnoreCase);
+
+    private bool PuedeCerrar => periodo?.IdPlanilla is not null
+        && string.Equals(periodo.EstadoPlanilla, EstadosPlanilla.Aprobada, StringComparison.OrdinalIgnoreCase);
+
+    private string EtiquetaFechaEstado => periodo?.EstadoPlanilla switch
+    {
+        EstadosPlanilla.Cerrada => "Fecha de cierre",
+        EstadosPlanilla.Aprobada => "Fecha de aprobación",
+        _ => "Fecha de cálculo"
+    };
+
+    private string TextoFechaEstado => periodo?.EstadoPlanilla switch
+    {
+        EstadosPlanilla.Cerrada => periodo.FechaCierre?.ToString("dd/MM/yyyy") ?? "—",
+        EstadosPlanilla.Aprobada => periodo.FechaAprobacion?.ToString("dd/MM/yyyy") ?? "—",
+        _ => periodo?.FechaCalculo?.ToString("dd/MM/yyyy") ?? "—"
+    };
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await CargarAsync();
+    }
+
+    private async Task CargarAsync()
+    {
+        cargando = true;
+        try
+        {
+            periodo = await PlanillaService.ObtenerDetallePeriodoAsync(IdPeriodoPlanilla);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudo cargar el período de planilla {IdPeriodoPlanilla}.", IdPeriodoPlanilla);
+            mensajeEsError = true;
+            mensajeEstado = "No se pudo cargar el detalle del período.";
+            periodo = null;
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private async Task CalcularAsync()
+    {
+        calculando = true;
+        mensajeEstado = null;
+        mensajeEsError = false;
+
+        try
+        {
+            await PlanillaService.CalcularPlanillaAsync(
+                IdPeriodoPlanilla,
+                await ObtenerIdUsuarioActualAsync());
+            periodo = await PlanillaService.ObtenerDetallePeriodoAsync(IdPeriodoPlanilla);
+            mensajeEstado = "La planilla fue calculada correctamente.";
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudo calcular la planilla del período {IdPeriodoPlanilla}.", IdPeriodoPlanilla);
+            mensajeEsError = true;
+            mensajeEstado = ex is ArgumentException or InvalidOperationException
+                ? ex.Message
+                : "No se pudo calcular la planilla. Intente nuevamente o revise los datos laborales.";
+        }
+        finally
+        {
+            calculando = false;
+        }
+    }
+
+    private async Task AprobarAsync()
+    {
+        await CambiarEstadoAsync(
+            (idUsuario, cancellationToken) => PlanillaService.AprobarPlanillaAsync(
+                IdPeriodoPlanilla,
+                idUsuario,
+                cancellationToken),
+            "La planilla fue aprobada y bloqueada correctamente.",
+            "No se pudo aprobar la planilla.");
+    }
+
+    private async Task CerrarAsync()
+    {
+        await CambiarEstadoAsync(
+            (idUsuario, cancellationToken) => PlanillaService.CerrarPlanillaAsync(
+                IdPeriodoPlanilla,
+                idUsuario,
+                cancellationToken),
+            "La planilla fue cerrada correctamente.",
+            "No se pudo cerrar la planilla.");
+    }
+
+    private async Task CambiarEstadoAsync(
+        Func<string, CancellationToken, Task> accion,
+        string mensajeExito,
+        string mensajeErrorPredeterminado)
+    {
+        cambiandoEstado = true;
+        mensajeEstado = null;
+        mensajeEsError = false;
+
+        try
+        {
+            await accion(await ObtenerIdUsuarioActualAsync(), CancellationToken.None);
+            periodo = await PlanillaService.ObtenerDetallePeriodoAsync(IdPeriodoPlanilla);
+            mensajeEstado = mensajeExito;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudo cambiar el estado de la planilla del período {IdPeriodoPlanilla}.", IdPeriodoPlanilla);
+            mensajeEsError = true;
+            mensajeEstado = ex is ArgumentException or InvalidOperationException
+                ? ex.Message
+                : mensajeErrorPredeterminado;
+        }
+        finally
+        {
+            cambiandoEstado = false;
+        }
+    }
+
+    private async Task<string> ObtenerIdUsuarioActualAsync()
+    {
+        var estadoAutenticacion = await Autenticacion.GetAuthenticationStateAsync();
+        return estadoAutenticacion.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+            ?? throw new InvalidOperationException("No se pudo identificar al usuario actual.");
+    }
+
+    private static string TextoMoneda(decimal monto) => $"₡{monto:N2}";
+}

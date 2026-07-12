@@ -280,8 +280,15 @@ public sealed class ContratoDocumentoService(
             return null;
         }
 
-        var contenido = await almacenamientoArchivos.AbrirLecturaAsync(documento.RutaRelativa, cancellationToken);
-        return new ArchivoDescarga(contenido, documento.NombreOriginal, documento.MimeType);
+        try
+        {
+            var contenido = await almacenamientoArchivos.AbrirLecturaAsync(documento.RutaRelativa, cancellationToken);
+            return new ArchivoDescarga(contenido, documento.NombreOriginal, documento.MimeType);
+        }
+        catch (FileNotFoundException)
+        {
+            return null;
+        }
     }
 
     private async Task<IReadOnlyList<ContratoResumen>> ObtenerContratosAsync(long idColaborador, CancellationToken cancellationToken)

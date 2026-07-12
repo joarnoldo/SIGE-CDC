@@ -74,6 +74,22 @@ public sealed class ProyectoService(ApplicationDbContext contexto) : IProyectoSe
 
     public async Task GuardarProyectoAsync(SolicitudProyecto solicitud, CancellationToken cancellationToken = default)
     {
+        var codigoProyecto = LimpiarObligatorio(solicitud.CodigoProyecto, "El codigo del proyecto es obligatorio.");
+        var nombreProyecto = LimpiarObligatorio(solicitud.NombreProyecto, "El nombre del proyecto es obligatorio.");
+        ValidarFechas(solicitud);
+
+        var codigoDuplicado = await contexto.Proyectos
+            .AsNoTracking()
+            .AnyAsync(
+                proyecto => proyecto.CodigoProyecto == codigoProyecto
+                    && proyecto.IdProyecto != solicitud.IdProyecto,
+                cancellationToken);
+
+        if (codigoDuplicado)
+        {
+            throw new InvalidOperationException("Ya existe un proyecto con el codigo indicado.");
+        }
+
         var idEstado = solicitud.IdEstadoProyecto ?? await ObtenerIdEstadoPlanificadoAsync(cancellationToken);
         await ValidarEstadoActivoAsync(idEstado, cancellationToken);
 
@@ -81,8 +97,8 @@ public sealed class ProyectoService(ApplicationDbContext contexto) : IProyectoSe
         {
             var proyecto = new Proyecto
             {
-                CodigoProyecto = solicitud.CodigoProyecto.Trim(),
-                NombreProyecto = solicitud.NombreProyecto.Trim(),
+                CodigoProyecto = codigoProyecto,
+                NombreProyecto = nombreProyecto,
                 Descripcion = LimpiarTextoOpcional(solicitud.Descripcion),
                 FechaInicio = solicitud.FechaInicio,
                 FechaFinEstimada = solicitud.FechaFinEstimada,
@@ -101,8 +117,8 @@ public sealed class ProyectoService(ApplicationDbContext contexto) : IProyectoSe
         {
             var proyecto = await ObtenerProyectoActivoAsync(solicitud.IdProyecto, cancellationToken);
 
-            proyecto.CodigoProyecto = solicitud.CodigoProyecto.Trim();
-            proyecto.NombreProyecto = solicitud.NombreProyecto.Trim();
+            proyecto.CodigoProyecto = codigoProyecto;
+            proyecto.NombreProyecto = nombreProyecto;
             proyecto.Descripcion = LimpiarTextoOpcional(solicitud.Descripcion);
             proyecto.FechaInicio = solicitud.FechaInicio;
             proyecto.FechaFinEstimada = solicitud.FechaFinEstimada;
@@ -114,7 +130,14 @@ public sealed class ProyectoService(ApplicationDbContext contexto) : IProyectoSe
             proyecto.FechaModificacion = DateTime.Now;
         }
 
-        await contexto.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await contexto.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException ex) when (EsCodigoDuplicado(ex))
+        {
+            throw new InvalidOperationException("Ya existe un proyecto con el codigo indicado.", ex);
+        }
     }
 
     private async Task<int> ObtenerIdEstadoPlanificadoAsync(CancellationToken cancellationToken)
@@ -156,6 +179,40 @@ public sealed class ProyectoService(ApplicationDbContext contexto) : IProyectoSe
     private static string? LimpiarTextoOpcional(string? valor)
     {
         return string.IsNullOrWhiteSpace(valor) ? null : valor.Trim();
+    }
+
+    private static string LimpiarObligatorio(string valor, string mensajeError)
+    {
+        if (string.IsNullOrWhiteSpace(valor))
+        {
+            throw new ArgumentException(mensajeError);
+        }
+
+        return valor.Trim();
+    }
+
+    private static void ValidarFechas(SolicitudProyecto solicitud)
+    {
+        if (solicitud.FechaInicio.HasValue
+            && solicitud.FechaFinEstimada.HasValue
+            && solicitud.FechaFinEstimada.Value.Date < solicitud.FechaInicio.Value.Date)
+        {
+            throw new ArgumentException("La fecha fin estimada no puede ser anterior a la fecha de inicio.");
+        }
+
+        if (solicitud.FechaInicio.HasValue
+            && solicitud.FechaFinReal.HasValue
+            && solicitud.FechaFinReal.Value.Date < solicitud.FechaInicio.Value.Date)
+        {
+            throw new ArgumentException("La fecha fin real no puede ser anterior a la fecha de inicio.");
+        }
+    }
+
+    private static bool EsCodigoDuplicado(DbUpdateException exception)
+    {
+        var detalle = exception.GetBaseException().Message;
+        return detalle.Contains("UX_Proyecto_CodigoProyecto", StringComparison.OrdinalIgnoreCase)
+            || detalle.Contains("Duplicate entry", StringComparison.OrdinalIgnoreCase);
     }
 
 }

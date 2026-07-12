@@ -8,6 +8,10 @@ public sealed class IncidenciaPlanillaResumen
 
     public string CodigoPeriodo { get; set; } = string.Empty;
 
+    public string EstadoPlanilla { get; set; } = string.Empty;
+
+    public bool EstaBloqueada { get; set; }
+
     public long IdColaborador { get; set; }
 
     public string CodigoColaborador { get; set; } = string.Empty;

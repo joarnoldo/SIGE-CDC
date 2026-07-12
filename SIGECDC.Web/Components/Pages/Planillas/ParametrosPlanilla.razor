@@ -125,6 +125,7 @@
                                 <th>Código</th>
                                 <th>Parámetro</th>
                                 <th>Tipo</th>
+                                <th>Naturaleza</th>
                                 <th>Valor</th>
                                 <th>Vigencia</th>
                                 <th>Estado</th>
@@ -144,6 +145,7 @@
                                         }
                                     </td>
                                     <td>@parametro.TipoParametro</td>
+                                    <td>@(parametro.Naturaleza ?? "Referencia técnica")</td>
                                     <td>@TextoValor(parametro)</td>
                                     <td>@TextoVigencia(parametro)</td>
                                     <td>
@@ -156,6 +158,7 @@
                                     <td>
                                         <div class="table-actions">
                                             <a href="@($"rrhh/parametros-planilla/{parametro.IdParametroPlanilla}")">Editar</a>
+                                            <a href="@($"rrhh/parametros-planilla/{parametro.IdParametroPlanilla}/asignaciones")">Asignaciones</a>
                                             <button type="button"
                                                     disabled="@NoPuedeDesactivar(parametro)"
                                                     @onclick="() => DesactivarAsync(parametro)">

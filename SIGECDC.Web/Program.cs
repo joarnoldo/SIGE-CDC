@@ -1,5 +1,6 @@
 using SIGECDC.Application.Archivos;
 using SIGECDC.Application.RecursosHumanos;
+using SIGECDC.Application.SitioPublico;
 using SIGECDC.Infrastructure.Archivos;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -35,6 +36,9 @@ builder.Services.AgregarPersistencia(connectionString);
 builder.Services.AddIdentityCore<ApplicationUser>(options =>
     {
         options.SignIn.RequireConfirmedAccount = true;
+        options.Lockout.AllowedForNewUsers = true;
+        options.Lockout.MaxFailedAccessAttempts = 5;
+        options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
         options.Stores.SchemaVersion = IdentitySchemaVersions.Version2;
     })
     .AddRoles<IdentityRole>()
@@ -78,6 +82,29 @@ app.MapGet(
                 : Results.File(archivo.Contenido, archivo.MimeType, archivo.NombreOriginal);
         })
     .RequireAuthorization(policy => policy.RequireRole("Administrador", "Recursos Humanos"));
+
+app.MapGet(
+    "/galeria/imagenes/{idImagenGaleria:long}",
+    async (long idImagenGaleria, IGaleriaService galeriaService, CancellationToken cancellationToken) =>
+    {
+        var archivo = await galeriaService.AbrirImagenPublicaAsync(idImagenGaleria, cancellationToken);
+
+        return archivo is null
+            ? Results.NotFound()
+            : Results.File(archivo.Contenido, archivo.MimeType ?? "application/octet-stream");
+});
+
+app.MapGet(
+        "/admin/galeria/imagenes/{idImagenGaleria:long}",
+        async (long idImagenGaleria, IGaleriaService galeriaService, CancellationToken cancellationToken) =>
+        {
+            var archivo = await galeriaService.AbrirImagenAdministrativaAsync(idImagenGaleria, cancellationToken);
+
+            return archivo is null
+                ? Results.NotFound()
+                : Results.File(archivo.Contenido, archivo.MimeType ?? "application/octet-stream");
+        })
+    .RequireAuthorization(policy => policy.RequireRole("Administrador"));
 
 // Add additional endpoints required by the Identity /Account Razor components.
 app.MapAdditionalIdentityEndpoints();

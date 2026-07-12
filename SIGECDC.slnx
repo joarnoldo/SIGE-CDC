@@ -3,5 +3,6 @@
   <Project Path="SIGECDC.Domain/SIGECDC.Domain.csproj" />
   <Project Path="SIGECDC.Infrastructure/SIGECDC.Infrastructure.csproj" />
   <Project Path="SIGECDC.Persistence/SIGECDC.Persistence.csproj" />
+  <Project Path="SIGECDC.Tests/SIGECDC.Tests.csproj" />
   <Project Path="SIGECDC.Web/SIGECDC.Web.csproj" />
 </Solution>

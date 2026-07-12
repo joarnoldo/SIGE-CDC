@@ -3,6 +3,45 @@
 
 @inject NavigationManager NavigationManager
 
+@if (EsRutaInterna)
+{
+    <AuthorizeView>
+        <Authorized>
+            <div class="app-shell">
+                <input id="menu-interno-toggle"
+                       class="sidebar-toggle"
+                       type="checkbox"
+                       aria-label="Mostrar u ocultar menú interno"
+                       aria-controls="menu-interno" />
+
+                <InternalSidebar RutaActual="@rutaActual" />
+                <label class="sidebar-backdrop" for="menu-interno-toggle" aria-hidden="true"></label>
+
+                <main class="app-main">
+                    <header class="app-topbar">
+                        <label class="sidebar-toggle-button" for="menu-interno-toggle" title="Mostrar u ocultar menú">
+                            <span class="sidebar-toggle-symbol" aria-hidden="true">&#9776;</span>
+                            <span>Menú</span>
+                        </label>
+                        <div class="app-topbar__context">
+                            <strong>Área interna</strong>
+                            <span>Canales y Drenajes del Caribe S.R.L.</span>
+                        </div>
+                    </header>
+
+                    <div class="page-frame">
+                        @Body
+                    </div>
+                </main>
+            </div>
+        </Authorized>
+        <NotAuthorized>
+            @Body
+        </NotAuthorized>
+    </AuthorizeView>
+}
+else
+{
 <header class="site-header">
     <div class="container site-header__inner">
         <a class="brand" href="">
@@ -13,50 +52,26 @@
             </span>
         </a>
 
-        <nav class="site-nav" aria-label="Navegacion publica">
+        <nav class="site-nav" aria-label="Navegación pública">
             <NavLink href="" Match="NavLinkMatch.All" ActiveClass="is-active">Inicio</NavLink>
-            <NavLink href="quienes-somos" ActiveClass="is-active">Quienes Somos</NavLink>
+            <NavLink href="quienes-somos" ActiveClass="is-active">Quiénes Somos</NavLink>
             <NavLink href="servicios" ActiveClass="is-active">Servicios</NavLink>
             <NavLink href="portafolio" ActiveClass="is-active">Portafolio</NavLink>
+            <NavLink href="noticias" ActiveClass="is-active">Noticias</NavLink>
+            <NavLink href="galeria" ActiveClass="is-active">Galería</NavLink>
             <NavLink href="preguntas-frecuentes" ActiveClass="is-active">Preguntas Frecuentes</NavLink>
             <NavLink href="contacto" ActiveClass="is-active">Contacto</NavLink>
-            <NavLink href="politicas" ActiveClass="is-active">Politicas</NavLink>
+            <NavLink href="politicas" ActiveClass="is-active">Políticas</NavLink>
         </nav>
 
         <AuthorizeView>
             <Authorized>
-                <nav class="site-nav" aria-label="Sesion">
-                    <AuthorizeView Roles="Administrador" Context="adminContext">
-                        <Authorized>
-                            <NavLink href="admin/consultas-contacto" ActiveClass="is-active">Consultas</NavLink>
-                            <NavLink href="admin/contenido-paginas" ActiveClass="is-active">Contenido</NavLink>
-                            <NavLink href="admin/proyectos-publicados" ActiveClass="is-active">Publicaciones</NavLink>
-                            <NavLink href="admin/noticias" ActiveClass="is-active">Noticias</NavLink>
-                            <NavLink href="admin/galeria" ActiveClass="is-active">Galeria</NavLink>
-                            <NavLink href="admin/faqs" ActiveClass="is-active">Preguntas</NavLink>
-                            <NavLink href="admin/historial" ActiveClass="is-active">Historial</NavLink>
-                        </Authorized>
-                    </AuthorizeView>
-                    <AuthorizeView Roles="Administrador,Operaciones" Context="operacionesContext">
-                        <Authorized>
-                            <NavLink href="operaciones/proyectos" ActiveClass="is-active">Proyectos</NavLink>
-                        </Authorized>
-                    </AuthorizeView>
-                    <AuthorizeView Roles="Administrador,Recursos Humanos" Context="rrhhContext">
-                        <Authorized>
-                            <NavLink href="rrhh/colaboradores" ActiveClass="is-active">Colaboradores</NavLink>
-                            <NavLink href="rrhh/departamentos" ActiveClass="is-active">Departamentos</NavLink>
-                            <NavLink href="rrhh/puestos" ActiveClass="is-active">Puestos</NavLink>
-                            <NavLink href="rrhh/asignacion-colaboradores" ActiveClass="is-active">Asignacion</NavLink>
-                            <NavLink href="rrhh/parametros-planilla" ActiveClass="is-active">Parametros de planilla</NavLink>
-                            <NavLink href="rrhh/incidencias-planilla" ActiveClass="is-active">Incidencias</NavLink>
-                        </Authorized>
-                    </AuthorizeView>
+                <nav class="site-nav" aria-label="Sesión">
                     <NavLink href="Account/Manage" ActiveClass="is-active">Mi cuenta</NavLink>
                     <form action="Account/Logout" method="post">
                         <AntiforgeryToken />
                         <input type="hidden" name="ReturnUrl" value="@rutaActual" />
-                        <button class="btn btn--secondary" type="submit">Cerrar sesion</button>
+                        <button class="btn btn--secondary" type="submit">Cerrar sesión</button>
                     </form>
                 </nav>
             </Authorized>
@@ -89,12 +104,14 @@
                 <p>Empresa costarricense dedicada a obras civiles, puentes, drenajes y soporte operativo para proyectos de infraestructura.</p>
             </section>
             <section>
-                <h3>Sitio publico</h3>
+                <h3>Sitio público</h3>
                 <ul>
                     <li><a href="">Inicio</a></li>
-                    <li><a href="quienes-somos">Quienes Somos</a></li>
+                    <li><a href="quienes-somos">Quiénes Somos</a></li>
                     <li><a href="servicios">Servicios</a></li>
                     <li><a href="portafolio">Portafolio</a></li>
+                    <li><a href="noticias">Noticias</a></li>
+                    <li><a href="galeria">Galería</a></li>
                     <li><a href="preguntas-frecuentes">Preguntas Frecuentes</a></li>
                 </ul>
             </section>
@@ -102,7 +119,7 @@
                 <h3>Contacto</h3>
                 <ul>
                     <li><a href="contacto">Formulario de contacto</a></li>
-                    <li><a href="politicas">Politicas del sitio</a></li>
+                    <li><a href="politicas">Políticas del sitio</a></li>
                 </ul>
             </section>
             <section>
@@ -114,15 +131,22 @@
         </div>
     </div>
 </footer>
+}
 
 <div id="blazor-error-ui" data-nosnippet>
-    Ocurrio un error inesperado.
+    Ocurrió un error inesperado.
     <a href="." class="reload">Recargar</a>
     <span class="dismiss">x</span>
 </div>
 
 @code {
     private string rutaActual = "";
+
+    private bool EsRutaInterna =>
+        RutaIniciaCon("admin") ||
+        RutaIniciaCon("rrhh") ||
+        RutaIniciaCon("operaciones") ||
+        RutaIniciaCon("Account/Manage");
 
     protected override void OnInitialized()
     {
@@ -134,6 +158,12 @@
     {
         rutaActual = NavigationManager.ToBaseRelativePath(e.Location);
         StateHasChanged();
+    }
+
+    private bool RutaIniciaCon(string prefijo)
+    {
+        return rutaActual.Equals(prefijo, StringComparison.OrdinalIgnoreCase) ||
+               rutaActual.StartsWith($"{prefijo}/", StringComparison.OrdinalIgnoreCase);
     }
 
     public void Dispose()

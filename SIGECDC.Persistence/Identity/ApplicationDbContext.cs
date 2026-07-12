@@ -25,9 +25,13 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<TipoDocumento> TiposDocumento => Set<TipoDocumento>();
     public DbSet<DocumentoArchivo> DocumentosArchivo => Set<DocumentoArchivo>();
     public DbSet<ParametroPlanilla> ParametrosPlanilla => Set<ParametroPlanilla>();
+    public DbSet<ParametroPlanillaColaborador> ParametrosPlanillaColaborador => Set<ParametroPlanillaColaborador>();
+    public DbSet<ParametroPlanillaPeriodo> ParametrosPlanillaPeriodo => Set<ParametroPlanillaPeriodo>();
     public DbSet<EstadoPlanilla> EstadosPlanilla => Set<EstadoPlanilla>();
     public DbSet<TipoIncidenciaPlanilla> TiposIncidenciaPlanilla => Set<TipoIncidenciaPlanilla>();
     public DbSet<PeriodoPlanilla> PeriodosPlanilla => Set<PeriodoPlanilla>();
+    public DbSet<Planilla> Planillas => Set<Planilla>();
+    public DbSet<DetallePlanilla> DetallesPlanilla => Set<DetallePlanilla>();
     public DbSet<IncidenciaPlanilla> IncidenciasPlanilla => Set<IncidenciaPlanilla>();
     public DbSet<BitacoraAuditoria> BitacoraAuditoria => Set<BitacoraAuditoria>();
 
@@ -744,6 +748,9 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                 .HasDefaultValue(TiposParametroPlanilla.Porcentaje)
                 .IsRequired();
 
+            entidad.Property(parametro => parametro.Naturaleza)
+                .HasColumnType("enum('Deduccion','Beneficio')");
+
             entidad.Property(parametro => parametro.ValorDecimal)
                 .HasPrecision(18, 4);
 
@@ -793,6 +800,132 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                 .HasForeignKey(parametro => parametro.ModificadoPor)
                 .OnDelete(DeleteBehavior.SetNull)
                 .HasConstraintName("FK_ParametroPlanilla_ModificadoPor");
+        });
+
+        builder.Entity<ParametroPlanillaColaborador>(entidad =>
+        {
+            entidad.ToTable("ParametroPlanillaColaborador");
+
+            entidad.HasKey(asignacion => asignacion.IdParametroPlanillaColaborador);
+
+            entidad.Property(asignacion => asignacion.IdParametroPlanillaColaborador)
+                .ValueGeneratedOnAdd();
+
+            entidad.Property(asignacion => asignacion.ValorDecimalOverride)
+                .HasPrecision(18, 4);
+
+            entidad.Property(asignacion => asignacion.ValorTextoOverride)
+                .HasMaxLength(255);
+
+            entidad.Property(asignacion => asignacion.FechaCreacion)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .IsRequired();
+
+            entidad.Property(asignacion => asignacion.CreadoPor)
+                .HasMaxLength(255);
+
+            entidad.Property(asignacion => asignacion.ModificadoPor)
+                .HasMaxLength(255);
+
+            entidad.Property(asignacion => asignacion.EstadoRegistro)
+                .HasColumnType("enum('Activo','Inactivo')")
+                .HasDefaultValue("Activo")
+                .IsRequired();
+
+            entidad.HasIndex(asignacion => new
+                {
+                    asignacion.IdParametroPlanilla,
+                    asignacion.IdColaborador
+                })
+                .IsUnique()
+                .HasDatabaseName("UX_ParametroPlanillaColaborador_Parametro_Colaborador");
+
+            entidad.HasOne(asignacion => asignacion.ParametroPlanilla)
+                .WithMany(parametro => parametro.AsignacionesColaborador)
+                .HasForeignKey(asignacion => asignacion.IdParametroPlanilla)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_ParametroPlanillaColaborador_ParametroPlanilla");
+
+            entidad.HasOne(asignacion => asignacion.Colaborador)
+                .WithMany()
+                .HasForeignKey(asignacion => asignacion.IdColaborador)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_ParametroPlanillaColaborador_Colaborador");
+
+            entidad.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(asignacion => asignacion.CreadoPor)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_ParametroPlanillaColaborador_CreadoPor");
+
+            entidad.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(asignacion => asignacion.ModificadoPor)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_ParametroPlanillaColaborador_ModificadoPor");
+        });
+
+        builder.Entity<ParametroPlanillaPeriodo>(entidad =>
+        {
+            entidad.ToTable("ParametroPlanillaPeriodo");
+
+            entidad.HasKey(asignacion => asignacion.IdParametroPlanillaPeriodo);
+
+            entidad.Property(asignacion => asignacion.IdParametroPlanillaPeriodo)
+                .ValueGeneratedOnAdd();
+
+            entidad.Property(asignacion => asignacion.ValorDecimalOverride)
+                .HasPrecision(18, 4);
+
+            entidad.Property(asignacion => asignacion.ValorTextoOverride)
+                .HasMaxLength(255);
+
+            entidad.Property(asignacion => asignacion.FechaCreacion)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .IsRequired();
+
+            entidad.Property(asignacion => asignacion.CreadoPor)
+                .HasMaxLength(255);
+
+            entidad.Property(asignacion => asignacion.ModificadoPor)
+                .HasMaxLength(255);
+
+            entidad.Property(asignacion => asignacion.EstadoRegistro)
+                .HasColumnType("enum('Activo','Inactivo')")
+                .HasDefaultValue("Activo")
+                .IsRequired();
+
+            entidad.HasIndex(asignacion => new
+                {
+                    asignacion.IdParametroPlanilla,
+                    asignacion.IdPeriodoPlanilla
+                })
+                .IsUnique()
+                .HasDatabaseName("UX_ParametroPlanillaPeriodo_Parametro_Periodo");
+
+            entidad.HasOne(asignacion => asignacion.ParametroPlanilla)
+                .WithMany(parametro => parametro.AsignacionesPeriodo)
+                .HasForeignKey(asignacion => asignacion.IdParametroPlanilla)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_ParametroPlanillaPeriodo_ParametroPlanilla");
+
+            entidad.HasOne(asignacion => asignacion.PeriodoPlanilla)
+                .WithMany()
+                .HasForeignKey(asignacion => asignacion.IdPeriodoPlanilla)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_ParametroPlanillaPeriodo_PeriodoPlanilla");
+
+            entidad.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(asignacion => asignacion.CreadoPor)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_ParametroPlanillaPeriodo_CreadoPor");
+
+            entidad.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(asignacion => asignacion.ModificadoPor)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_ParametroPlanillaPeriodo_ModificadoPor");
         });
 
         builder.Entity<EstadoPlanilla>(entidad =>
@@ -930,6 +1063,155 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                 .HasForeignKey(periodo => periodo.ModificadoPor)
                 .OnDelete(DeleteBehavior.SetNull)
                 .HasConstraintName("FK_PeriodoPlanilla_ModificadoPor");
+        });
+
+        builder.Entity<Planilla>(entidad =>
+        {
+            entidad.ToTable("Planilla");
+
+            entidad.HasKey(planilla => planilla.IdPlanilla);
+
+            entidad.Property(planilla => planilla.IdPlanilla)
+                .ValueGeneratedOnAdd();
+
+            entidad.Property(planilla => planilla.FechaCalculo);
+
+            entidad.Property(planilla => planilla.SalarioBrutoTotal)
+                .HasPrecision(18, 2)
+                .HasDefaultValue(0.00m)
+                .IsRequired();
+
+            entidad.Property(planilla => planilla.DeduccionesTotal)
+                .HasPrecision(18, 2)
+                .HasDefaultValue(0.00m)
+                .IsRequired();
+
+            entidad.Property(planilla => planilla.SalarioNetoTotal)
+                .HasPrecision(18, 2)
+                .HasDefaultValue(0.00m)
+                .IsRequired();
+
+            entidad.Property(planilla => planilla.CostoPatronalEstimadoTotal)
+                .HasPrecision(18, 2)
+                .HasDefaultValue(0.00m)
+                .IsRequired();
+
+            entidad.Property(planilla => planilla.AprobadoPor)
+                .HasMaxLength(255);
+
+            entidad.Property(planilla => planilla.CerradoPor)
+                .HasMaxLength(255);
+
+            entidad.Property(planilla => planilla.Observaciones)
+                .HasMaxLength(500);
+
+            entidad.Property(planilla => planilla.FechaCreacion)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .IsRequired();
+
+            entidad.Property(planilla => planilla.CreadoPor)
+                .HasMaxLength(255);
+
+            entidad.Property(planilla => planilla.ModificadoPor)
+                .HasMaxLength(255);
+
+            entidad.Property(planilla => planilla.EstadoRegistro)
+                .HasColumnType("enum('Activo','Inactivo')")
+                .HasDefaultValue("Activo")
+                .IsRequired();
+
+            entidad.HasIndex(planilla => planilla.IdPeriodoPlanilla)
+                .IsUnique()
+                .HasDatabaseName("UX_Planilla_IdPeriodoPlanilla");
+
+            entidad.HasIndex(planilla => planilla.IdEstadoPlanilla)
+                .HasDatabaseName("IX_Planilla_IdEstadoPlanilla");
+
+            entidad.HasOne(planilla => planilla.PeriodoPlanilla)
+                .WithOne(periodo => periodo.Planilla)
+                .HasForeignKey<Planilla>(planilla => planilla.IdPeriodoPlanilla)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_Planilla_PeriodoPlanilla");
+
+            entidad.HasOne(planilla => planilla.EstadoPlanilla)
+                .WithMany()
+                .HasForeignKey(planilla => planilla.IdEstadoPlanilla)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_Planilla_EstadoPlanilla");
+
+            entidad.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(planilla => planilla.AprobadoPor)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_Planilla_AprobadoPor");
+
+            entidad.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(planilla => planilla.CerradoPor)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_Planilla_CerradoPor");
+
+            entidad.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(planilla => planilla.CreadoPor)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_Planilla_CreadoPor");
+
+            entidad.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(planilla => planilla.ModificadoPor)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_Planilla_ModificadoPor");
+        });
+
+        builder.Entity<DetallePlanilla>(entidad =>
+        {
+            entidad.ToTable("DetallePlanilla");
+
+            entidad.HasKey(detalle => detalle.IdDetallePlanilla);
+
+            entidad.Property(detalle => detalle.IdDetallePlanilla)
+                .ValueGeneratedOnAdd();
+
+            entidad.Property(detalle => detalle.SalarioBase).HasPrecision(18, 2).IsRequired();
+            entidad.Property(detalle => detalle.SalarioProporcional).HasPrecision(18, 2).IsRequired();
+            entidad.Property(detalle => detalle.TotalHorasExtra).HasPrecision(18, 2).IsRequired();
+            entidad.Property(detalle => detalle.TotalBonos).HasPrecision(18, 2).IsRequired();
+            entidad.Property(detalle => detalle.TotalBeneficiosConfigurables)
+                .HasPrecision(18, 2)
+                .HasDefaultValue(0.00m)
+                .IsRequired();
+            entidad.Property(detalle => detalle.TotalAusencias).HasPrecision(18, 2).IsRequired();
+            entidad.Property(detalle => detalle.SalarioBruto).HasPrecision(18, 2).IsRequired();
+            entidad.Property(detalle => detalle.TotalDeducciones).HasPrecision(18, 2).IsRequired();
+            entidad.Property(detalle => detalle.SalarioNeto).HasPrecision(18, 2).IsRequired();
+            entidad.Property(detalle => detalle.CostoPatronalEstimado).HasPrecision(18, 2).IsRequired();
+
+            entidad.Property(detalle => detalle.Observaciones)
+                .HasMaxLength(500);
+
+            entidad.Property(detalle => detalle.FechaCreacion)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .IsRequired();
+
+            entidad.HasIndex(detalle => new { detalle.IdPlanilla, detalle.IdColaborador })
+                .IsUnique()
+                .HasDatabaseName("UX_DetallePlanilla_Planilla_Colaborador");
+
+            entidad.HasIndex(detalle => detalle.IdColaborador)
+                .HasDatabaseName("IX_DetallePlanilla_IdColaborador");
+
+            entidad.HasOne(detalle => detalle.Planilla)
+                .WithMany(planilla => planilla.Detalles)
+                .HasForeignKey(detalle => detalle.IdPlanilla)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_DetallePlanilla_Planilla");
+
+            entidad.HasOne(detalle => detalle.Colaborador)
+                .WithMany()
+                .HasForeignKey(detalle => detalle.IdColaborador)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_DetallePlanilla_Colaborador");
         });
 
         builder.Entity<IncidenciaPlanilla>(entidad =>

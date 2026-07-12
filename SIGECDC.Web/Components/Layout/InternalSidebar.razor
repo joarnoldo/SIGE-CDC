@@ -1,0 +1,120 @@
+<aside id="menu-interno" class="app-sidebar" aria-label="Navegación interna">
+    <div class="sidebar-heading">
+        <a class="sidebar-brand" href="/" data-enhance-nav="false">
+            <span class="brand-mark">CDC</span>
+            <span class="brand-copy">
+                <strong>SIGE-CDC</strong>
+                <span>Gestión empresarial</span>
+            </span>
+        </a>
+        <label class="sidebar-close" for="menu-interno-toggle" title="Ocultar menú">
+            <span aria-hidden="true">&times;</span>
+            <span class="visually-hidden">Ocultar menú</span>
+        </label>
+    </div>
+
+    <AuthorizeView>
+        <Authorized Context="usuarioContext">
+            <div class="sidebar-user">
+                <small>Sesión activa</small>
+                <strong>@NombreUsuario(usuarioContext.User)</strong>
+                <span>Área interna SIGE-CDC</span>
+            </div>
+
+            <AuthorizeView Roles="Administrador,Recursos Humanos" Context="rrhhContext">
+                <Authorized>
+                    <details class="sidebar-section" open="@EsSeccionActiva("rrhh/colaboradores", "rrhh/departamentos", "rrhh/puestos", "rrhh/asignacion-colaboradores")">
+                        <summary>Recursos Humanos</summary>
+                        <nav class="sidebar-nav" aria-label="Recursos Humanos">
+                            <NavLink href="rrhh/colaboradores" ActiveClass="is-active">Colaboradores</NavLink>
+                            <NavLink href="rrhh/departamentos" ActiveClass="is-active">Departamentos</NavLink>
+                            <NavLink href="rrhh/puestos" ActiveClass="is-active">Puestos</NavLink>
+                            <NavLink href="rrhh/asignacion-colaboradores" ActiveClass="is-active">Asignación de colaboradores</NavLink>
+                        </nav>
+                    </details>
+
+                    <details class="sidebar-section" open="@EsSeccionActiva("rrhh/periodos-planilla", "rrhh/parametros-planilla", "rrhh/incidencias-planilla")">
+                        <summary>Planillas</summary>
+                        <nav class="sidebar-nav" aria-label="Planillas">
+                            <AuthorizeView Roles="Recursos Humanos" Context="periodosContext">
+                                <Authorized>
+                                    <NavLink href="rrhh/periodos-planilla" ActiveClass="is-active">Períodos de planilla</NavLink>
+                                </Authorized>
+                            </AuthorizeView>
+                            <NavLink href="rrhh/parametros-planilla" ActiveClass="is-active">Parámetros de planilla</NavLink>
+                            <NavLink href="rrhh/incidencias-planilla" ActiveClass="is-active">Incidencias</NavLink>
+                        </nav>
+                    </details>
+                </Authorized>
+            </AuthorizeView>
+
+            <AuthorizeView Roles="Administrador" Context="adminContext">
+                <Authorized>
+                    <details class="sidebar-section" open="@EsSeccionActiva("admin/contenido-paginas", "admin/noticias", "admin/galeria", "admin/faqs", "admin/proyectos-publicados", "admin/consultas-contacto")">
+                        <summary>Contenido del sitio</summary>
+                        <nav class="sidebar-nav" aria-label="Contenido del sitio">
+                            <NavLink href="admin/contenido-paginas" ActiveClass="is-active">Páginas y secciones</NavLink>
+                            <NavLink href="admin/noticias" ActiveClass="is-active">Noticias</NavLink>
+                            <NavLink href="admin/galeria" ActiveClass="is-active">Galerías</NavLink>
+                            <NavLink href="admin/faqs" ActiveClass="is-active">Preguntas frecuentes</NavLink>
+                            <NavLink href="admin/proyectos-publicados" ActiveClass="is-active">Proyectos publicados</NavLink>
+                            <NavLink href="admin/consultas-contacto" ActiveClass="is-active">Consultas de contacto</NavLink>
+                        </nav>
+                    </details>
+                </Authorized>
+            </AuthorizeView>
+
+            <AuthorizeView Roles="Administrador,Operaciones" Context="operacionesContext">
+                <Authorized>
+                    <details class="sidebar-section" open="@EsSeccionActiva("operaciones/proyectos")">
+                        <summary>Proyectos</summary>
+                        <nav class="sidebar-nav" aria-label="Proyectos">
+                            <NavLink href="operaciones/proyectos" ActiveClass="is-active">Gestión de proyectos</NavLink>
+                        </nav>
+                    </details>
+                </Authorized>
+            </AuthorizeView>
+
+            <AuthorizeView Roles="Administrador" Context="historialContext">
+                <Authorized>
+                    <details class="sidebar-section" open="@EsSeccionActiva("admin/historial")">
+                        <summary>Administración</summary>
+                        <nav class="sidebar-nav" aria-label="Administración">
+                            <NavLink href="admin/historial" ActiveClass="is-active">Historial del sistema</NavLink>
+                        </nav>
+                    </details>
+                </Authorized>
+            </AuthorizeView>
+
+            <details class="sidebar-section" open="@EsSeccionActiva("Account/Manage")">
+                <summary>Cuenta</summary>
+                <nav class="sidebar-nav" aria-label="Cuenta">
+                    <NavLink href="Account/Manage" ActiveClass="is-active">Mi cuenta</NavLink>
+                    <a href="/" data-enhance-nav="false">Ir al sitio público</a>
+                </nav>
+                <form class="sidebar-logout" action="Account/Logout" method="post">
+                    <AntiforgeryToken />
+                    <input type="hidden" name="ReturnUrl" value="@RutaActual" />
+                    <button type="submit">Cerrar sesión</button>
+                </form>
+            </details>
+        </Authorized>
+    </AuthorizeView>
+</aside>
+
+@code {
+    [Parameter]
+    public string RutaActual { get; set; } = string.Empty;
+
+    private bool EsSeccionActiva(params string[] prefijos)
+    {
+        return prefijos.Any(prefijo => RutaActual.StartsWith(prefijo, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static string NombreUsuario(System.Security.Claims.ClaimsPrincipal usuario)
+    {
+        return string.IsNullOrWhiteSpace(usuario.Identity?.Name)
+            ? "Usuario autenticado"
+            : usuario.Identity.Name;
+    }
+}

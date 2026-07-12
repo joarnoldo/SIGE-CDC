@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace SIGECDC.Application.Operaciones;
 
-public sealed class SolicitudProyecto
+public sealed class SolicitudProyecto : IValidatableObject
 {
     public long IdProyecto { get; set; }
 
@@ -33,4 +33,25 @@ public sealed class SolicitudProyecto
 
     [StringLength(500, ErrorMessage = "Las observaciones no pueden superar 500 caracteres.")]
     public string? Observaciones { get; set; }
+
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    {
+        if (FechaInicio.HasValue
+            && FechaFinEstimada.HasValue
+            && FechaFinEstimada.Value.Date < FechaInicio.Value.Date)
+        {
+            yield return new ValidationResult(
+                "La fecha fin estimada no puede ser anterior a la fecha de inicio.",
+                [nameof(FechaFinEstimada)]);
+        }
+
+        if (FechaInicio.HasValue
+            && FechaFinReal.HasValue
+            && FechaFinReal.Value.Date < FechaInicio.Value.Date)
+        {
+            yield return new ValidationResult(
+                "La fecha fin real no puede ser anterior a la fecha de inicio.",
+                [nameof(FechaFinReal)]);
+        }
+    }
 }

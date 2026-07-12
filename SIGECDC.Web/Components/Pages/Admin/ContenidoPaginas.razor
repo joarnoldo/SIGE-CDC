@@ -3,14 +3,15 @@
 @rendermode InteractiveServer
 @using SIGECDC.Application.SitioPublico
 @inject IPaginaContenidoService PaginaContenidoService
+@inject ILogger<ContenidoPaginas> Logger
 
-<PageTitle>Contenido de paginas | SIGE-CDC</PageTitle>
+<PageTitle>Contenido de páginas | SIGE-CDC</PageTitle>
 
 <section class="page-banner">
     <div class="container page-banner__inner stack--tight">
-        <p class="eyebrow">Administracion</p>
-        <h1>Contenido de paginas y secciones.</h1>
-        <p class="lead">Cree, edite y publique informacion institucional visible en el sitio publico.</p>
+        <p class="eyebrow">Administración</p>
+        <h1>Contenido de páginas y secciones.</h1>
+        <p class="lead">Cree, edite y publique información institucional visible en el sitio público.</p>
     </div>
 </section>
 
@@ -30,12 +31,12 @@
 
                 <div class="form-grid">
                     <div class="field">
-                        <label for="codigoPagina">Codigo de pagina</label>
+                        <label for="codigoPagina">Código de página</label>
                         <InputText id="codigoPagina" class="form-control" @bind-Value="solicitud.CodigoPagina" />
                     </div>
 
                     <div class="field">
-                        <label for="titulo">Titulo</label>
+                        <label for="titulo">Título</label>
                         <InputText id="titulo" class="form-control" @bind-Value="solicitud.Titulo" />
                     </div>
 
@@ -46,13 +47,15 @@
 
                     <label class="checkbox-card field--span-2">
                         <InputCheckbox @bind-Value="solicitud.EstaPublicado" />
-                        <span>Publicado en el sitio publico</span>
+                        <span>Publicado en el sitio público</span>
                     </label>
                 </div>
 
                 <div class="form-actions mt-3">
-                    <button class="btn btn--primary" type="submit">Guardar contenido</button>
-                    <button class="btn btn--secondary" type="button" @onclick="PrepararNuevaPagina">Nuevo contenido</button>
+                    <button class="btn btn--primary" type="submit" disabled="@guardando">
+                        @(guardando ? "Guardando..." : "Guardar contenido")
+                    </button>
+                    <button class="btn btn--secondary" type="button" disabled="@guardando" @onclick="PrepararNuevaPagina">Nuevo contenido</button>
                 </div>
             </EditForm>
         </article>
@@ -60,8 +63,8 @@
         <article class="table-card">
             <div class="table-toolbar">
                 <div>
-                    <h2 class="card__title">Paginas registradas</h2>
-                    <p class="card__meta">Contenido activo disponible para gestion.</p>
+                    <h2 class="card__title">Páginas registradas</h2>
+                    <p class="card__meta">Contenido activo disponible para gestión.</p>
                 </div>
                 <span class="badge badge--info">@paginas.Count registros</span>
             </div>
@@ -70,14 +73,14 @@
             {
                 <div class="empty-state">
                     <strong>Cargando contenido</strong>
-                    <p class="text-muted">Estamos recuperando las paginas registradas.</p>
+                    <p class="text-muted">Estamos recuperando las páginas registradas.</p>
                 </div>
             }
             else if (paginas.Count == 0)
             {
                 <div class="empty-state">
                     <strong>No hay contenido registrado</strong>
-                    <p class="text-muted">Puede crear una pagina o seccion desde el formulario.</p>
+                    <p class="text-muted">Puede crear una página o sección desde el formulario.</p>
                 </div>
             }
             else
@@ -86,10 +89,10 @@
                     <table class="data-table">
                         <thead>
                             <tr>
-                                <th>Codigo</th>
-                                <th>Titulo</th>
+                                <th>Código</th>
+                                <th>Título</th>
                                 <th>Estado</th>
-                                <th>Actualizacion</th>
+                                <th>Actualización</th>
                                 <th>Acciones</th>
                             </tr>
                         </thead>
@@ -127,6 +130,7 @@
     private List<PaginaContenidoResumen> paginas = [];
     private SolicitudPaginaContenido solicitud = new();
     private bool cargando = true;
+    private bool guardando;
     private string? mensajeFormulario;
 
     private string TituloFormulario => solicitud.IdPaginaContenido == 0
@@ -141,12 +145,31 @@
     private async Task CargarPaginasAsync()
     {
         cargando = true;
-        paginas = [.. await PaginaContenidoService.ObtenerPaginasAsync()];
-        cargando = false;
+        try
+        {
+            paginas = [.. await PaginaContenidoService.ObtenerPaginasAsync()];
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudo cargar el contenido administrable.");
+            paginas = [];
+            mensajeFormulario = "No se pudo cargar el contenido. Intente nuevamente.";
+        }
+        finally
+        {
+            cargando = false;
+        }
     }
 
     private async Task GuardarPaginaAsync()
     {
+        if (guardando)
+        {
+            return;
+        }
+
+        guardando = true;
+
         try
         {
             await PaginaContenidoService.GuardarPaginaAsync(solicitud);
@@ -154,19 +177,40 @@
             PrepararNuevaPagina();
             await CargarPaginasAsync();
         }
-        catch (Exception ex)
+        catch (ArgumentException ex)
         {
             mensajeFormulario = ex.Message;
+        }
+        catch (InvalidOperationException ex)
+        {
+            mensajeFormulario = ex.Message;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudo guardar el contenido de página.");
+            mensajeFormulario = "No se pudo guardar el contenido. Intente nuevamente.";
+        }
+        finally
+        {
+            guardando = false;
         }
     }
 
     private async Task CambiarPublicacionAsync(PaginaContenidoResumen pagina)
     {
-        await PaginaContenidoService.CambiarPublicacionAsync(pagina.IdPaginaContenido, !pagina.EstaPublicado);
-        mensajeFormulario = pagina.EstaPublicado
-            ? "El contenido quedo oculto."
-            : "El contenido quedo publicado.";
-        await CargarPaginasAsync();
+        try
+        {
+            await PaginaContenidoService.CambiarPublicacionAsync(pagina.IdPaginaContenido, !pagina.EstaPublicado);
+            mensajeFormulario = pagina.EstaPublicado
+                ? "El contenido quedó oculto."
+                : "El contenido quedó publicado.";
+            await CargarPaginasAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudo cambiar la publicación del contenido {IdPaginaContenido}.", pagina.IdPaginaContenido);
+            mensajeFormulario = "No se pudo cambiar el estado de publicación. Intente nuevamente.";
+        }
     }
 
     private void EditarPagina(PaginaContenidoResumen pagina)

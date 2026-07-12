@@ -18,6 +18,8 @@ public sealed class SolicitudParametroPlanilla : IValidatableObject
     [Required(ErrorMessage = "Seleccione el tipo de parametro.")]
     public string TipoParametro { get; set; } = "Porcentaje";
 
+    public string? Naturaleza { get; set; }
+
     [Range(0, 999999999999.9999, ErrorMessage = "El valor numerico no puede ser negativo.")]
     public decimal? ValorDecimal { get; set; }
 

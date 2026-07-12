@@ -56,11 +56,17 @@
                     <DataAnnotationsValidator />
                     <ValidationSummary />
 
-                    <ParametroPlanillaFormularioCampos Solicitud="solicitud" TiposParametro="tiposParametro" />
+                    <ParametroPlanillaFormularioCampos Solicitud="solicitud"
+                                                       TiposParametro="tiposParametro"
+                                                       NaturalezasParametro="naturalezasParametro" />
 
                     <div class="form-actions">
                         <a class="btn btn--secondary" href="rrhh/parametros-planilla">Volver</a>
                         <div class="page-actions">
+                            <a class="btn btn--secondary"
+                               href="@($"rrhh/parametros-planilla/{IdParametroPlanilla}/asignaciones")">
+                                Asignaciones
+                            </a>
                             <button class="btn btn--danger"
                                     type="button"
                                     disabled="@NoPuedeDesactivar"
@@ -83,6 +89,7 @@
                 <div class="metric-list">
                     <div class="metric-row"><span>Nombre</span><strong>@(parametro?.Nombre ?? "-")</strong></div>
                     <div class="metric-row"><span>Tipo</span><strong>@(parametro?.TipoParametro ?? "-")</strong></div>
+                    <div class="metric-row"><span>Naturaleza</span><strong>@(parametro?.Naturaleza ?? "Referencia técnica")</strong></div>
                     <div class="metric-row"><span>Estado</span><strong>@(parametro?.EstadoRegistro ?? "-")</strong></div>
                     <div class="metric-row"><span>Editable</span><strong>@TextoEditable</strong></div>
                 </div>
@@ -102,6 +109,7 @@
     private SolicitudParametroPlanilla solicitud = new();
     private ParametroPlanillaDetalle? parametro;
     private IReadOnlyList<TipoParametroPlanillaOpcion> tiposParametro = [];
+    private IReadOnlyList<NaturalezaParametroPlanillaOpcion> naturalezasParametro = [];
     private bool cargando = true;
     private bool guardando;
     private bool desactivando;
@@ -125,6 +133,7 @@
         cargando = true;
 
         tiposParametro = await ParametroPlanillaService.ObtenerTiposParametroAsync();
+        naturalezasParametro = await ParametroPlanillaService.ObtenerNaturalezasParametroAsync();
         parametro = await ParametroPlanillaService.ObtenerParametroPorIdAsync(IdParametroPlanilla);
 
         if (parametro is not null)
@@ -135,6 +144,7 @@
                 Nombre = parametro.Nombre,
                 Descripcion = parametro.Descripcion,
                 TipoParametro = parametro.TipoParametro,
+                Naturaleza = parametro.Naturaleza,
                 ValorDecimal = parametro.ValorDecimal,
                 ValorTexto = parametro.ValorTexto,
                 FechaVigenciaInicio = parametro.FechaVigenciaInicio,

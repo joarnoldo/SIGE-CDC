@@ -1,0 +1,96 @@
+@page "/galeria"
+@using SIGECDC.Application.SitioPublico
+@inject IGaleriaService GaleriaService
+
+<PageTitle>Galería | SIGE-CDC</PageTitle>
+
+<section class="page-banner">
+    <div class="container page-banner__inner stack--tight">
+        <p class="eyebrow">Evidencia visual</p>
+        <h1>Galería</h1>
+        <p class="lead">Imágenes publicadas de proyectos, actividades y contenido institucional autorizado.</p>
+    </div>
+</section>
+
+<section class="section-shell">
+    <div class="container stack">
+        @if (cargando)
+        {
+            <div class="empty-state">
+                <strong>Cargando galería</strong>
+                <p class="text-muted">Estamos recuperando el contenido multimedia disponible.</p>
+            </div>
+        }
+        else if (galerias.Count == 0)
+        {
+            <div class="empty-state">
+                <strong>No hay galerías publicadas</strong>
+                <p class="text-muted">Las imágenes autorizadas aparecerán cuando la administración las publique.</p>
+            </div>
+        }
+        else
+        {
+            @foreach (var galeria in galerias)
+            {
+                <section class="stack">
+                    <div class="section-heading">
+                        <div class="section-heading__copy">
+                            <p class="eyebrow">Galería</p>
+                            <h2>@galeria.Nombre</h2>
+                            @if (!string.IsNullOrWhiteSpace(galeria.Descripcion))
+                            {
+                                <p class="lead">@galeria.Descripcion</p>
+                            }
+                        </div>
+                    </div>
+
+                    @if (galeria.Imagenes.Count == 0)
+                    {
+                        <div class="empty-state">
+                            <strong>Sin imágenes disponibles</strong>
+                            <p class="text-muted">Esta galería todavía no tiene imágenes activas.</p>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="content-grid">
+                            @foreach (var imagen in galeria.Imagenes)
+                            {
+                                <article class="card stack--tight">
+                                    <img class="media-thumb" src="@($"/galeria/imagenes/{imagen.IdImagenGaleria}")" alt="@TextoAlternativo(imagen)" />
+                                    <h3>@(string.IsNullOrWhiteSpace(imagen.Titulo) ? imagen.NombreOriginal : imagen.Titulo)</h3>
+                                    @if (!string.IsNullOrWhiteSpace(imagen.Descripcion))
+                                    {
+                                        <p>@imagen.Descripcion</p>
+                                    }
+                                </article>
+                            }
+                        </div>
+                    }
+                </section>
+            }
+        }
+    </div>
+</section>
+
+@code {
+    private IReadOnlyList<GaleriaDetalle> galerias = [];
+    private bool cargando = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            galerias = await GaleriaService.ObtenerPublicadasConImagenesAsync();
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private static string TextoAlternativo(ImagenGaleriaResumen imagen)
+    {
+        return string.IsNullOrWhiteSpace(imagen.Titulo) ? imagen.NombreOriginal : imagen.Titulo;
+    }
+}

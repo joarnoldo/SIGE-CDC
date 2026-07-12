@@ -6,4 +6,5 @@ public sealed record PeriodoPlanillaOpcion(
     string Nombre,
     DateTime FechaInicio,
     DateTime FechaFin,
-    string EstadoPlanilla);
+    string EstadoPlanilla,
+    bool EstaBloqueado);

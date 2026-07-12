@@ -156,7 +156,10 @@
                             @foreach (var incidencia in incidencias)
                             {
                                 <tr>
-                                    <td><strong>@incidencia.CodigoPeriodo</strong></td>
+                                    <td>
+                                        <strong>@incidencia.CodigoPeriodo</strong>
+                                        <p class="card__meta">@incidencia.EstadoPlanilla</p>
+                                    </td>
                                     <td>
                                         @incidencia.NombreColaborador
                                         <p class="card__meta">@incidencia.CodigoColaborador</p>
@@ -171,12 +174,17 @@
                                     <td><span class="badge @ClaseEstado(incidencia.EstadoRegistro)">@incidencia.EstadoRegistro</span></td>
                                     <td>
                                         <div class="table-actions">
-                                            <a href="@($"rrhh/incidencias-planilla/{incidencia.IdIncidenciaPlanilla}")">Editar</a>
-                                            <button type="button"
-                                                    disabled="@NoPuedeDesactivar(incidencia)"
-                                                    @onclick="() => DesactivarAsync(incidencia)">
-                                                Desactivar
-                                            </button>
+                                            <a href="@($"rrhh/incidencias-planilla/{incidencia.IdIncidenciaPlanilla}")">
+                                                @(incidencia.EstaBloqueada ? "Consultar" : "Editar")
+                                            </a>
+                                            @if (!incidencia.EstaBloqueada)
+                                            {
+                                                <button type="button"
+                                                        disabled="@NoPuedeDesactivar(incidencia)"
+                                                        @onclick="() => DesactivarAsync(incidencia)">
+                                                    Desactivar
+                                                </button>
+                                            }
                                         </div>
                                     </td>
                                 </tr>
@@ -284,7 +292,9 @@
 
     private bool NoPuedeDesactivar(IncidenciaPlanillaResumen incidencia)
     {
-        return desactivando || string.Equals(incidencia.EstadoRegistro, "Inactivo", StringComparison.OrdinalIgnoreCase);
+        return desactivando
+            || incidencia.EstaBloqueada
+            || string.Equals(incidencia.EstadoRegistro, "Inactivo", StringComparison.OrdinalIgnoreCase);
     }
 
     private static string ClaseEstado(string estado)

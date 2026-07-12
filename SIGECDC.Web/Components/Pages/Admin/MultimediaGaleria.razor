@@ -1,17 +1,20 @@
 @page "/admin/galeria"
 @using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Forms
 @using SIGECDC.Application.SitioPublico
 @inject IGaleriaService GaleriaService
+@inject AuthenticationStateProvider Autenticacion
+@inject ILogger<MultimediaGaleria> Logger
 @rendermode InteractiveServer
 @attribute [Authorize(Roles = "Administrador")]
 
-<PageTitle>Galeria - SIGE-CDC</PageTitle>
+<PageTitle>Galería - SIGE-CDC</PageTitle>
 
 <div class="page-frame">
     <div class="page-header">
-        <h1>Galeria</h1>
+        <h1>Galería</h1>
         <div class="page-actions">
-            <button class="btn btn--primary" @onclick="AbrirFormularioNuevo">Nueva galeria</button>
+            <button class="btn btn--primary" @onclick="AbrirFormularioNuevo">Nueva galería</button>
         </div>
     </div>
 
@@ -32,8 +35,8 @@
     else if (galerias.Count == 0)
     {
         <div class="empty-state">
-            <p>No hay galerias registradas.</p>
-            <button class="btn btn--primary" @onclick="AbrirFormularioNuevo">Nueva galeria</button>
+            <p>No hay galerías registradas.</p>
+            <button class="btn btn--primary" @onclick="AbrirFormularioNuevo">Nueva galería</button>
         </div>
     }
     else
@@ -44,8 +47,8 @@
                     <thead>
                         <tr>
                             <th>Nombre</th>
-                            <th>Descripcion</th>
-                            <th>Imagenes</th>
+                            <th>Descripción</th>
+                            <th>Imágenes</th>
                             <th>Estado</th>
                             <th></th>
                         </tr>
@@ -65,6 +68,7 @@
                                 <td>
                                     <div class="table-actions">
                                         <button @onclick="() => AbrirFormularioEditar(galeria)">Editar</button>
+                                        <button @onclick="() => AbrirImagenesAsync(galeria)">Imágenes</button>
                                         @if (galeria.EstaPublicado)
                                         {
                                             <button @onclick="() => Despublicar(galeria.IdGaleria)">Ocultar</button>
@@ -83,6 +87,76 @@
             </div>
         </div>
     }
+
+    @if (galeriaSeleccionada is not null)
+    {
+        <section class="form-section mt-3">
+            <div class="table-toolbar">
+                <div>
+                    <h2 class="card__title">Imágenes de @galeriaSeleccionada.Nombre</h2>
+                    <p class="card__meta">Archivos públicos autorizados para esta galería.</p>
+                </div>
+                <button class="btn btn--secondary" type="button" @onclick="CerrarImagenes">Cerrar</button>
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(mensajeImagen))
+            {
+                <div class="alert alert--info">@mensajeImagen</div>
+            }
+
+            <div class="form-grid">
+                <div class="field field--span-2">
+                    <label>Archivo</label>
+                    <InputFile OnChange="SeleccionarImagen" accept=".jpg,.jpeg,.png" />
+                    <span class="help-text">Seleccione desde su equipo la imagen que desea cargar en esta galería.</span>
+                    <span class="help-text">@TextoArchivoImagen</span>
+                </div>
+                <div class="field">
+                    <label>Título</label>
+                    <input @bind="imagenFormulario.Titulo" maxlength="150" />
+                </div>
+                <div class="field">
+                    <label>Orden</label>
+                    <input type="number" min="0" @bind="imagenFormulario.Orden" />
+                    <span class="help-text">Define la posición en que se mostrará la imagen dentro de la galería.</span>
+                </div>
+                <div class="field field--span-2">
+                    <label>Descripción</label>
+                    <textarea @bind="imagenFormulario.Descripcion" maxlength="300"></textarea>
+                </div>
+            </div>
+
+            <div class="form-actions mt-3">
+                <button class="btn btn--primary" type="button" @onclick="GuardarImagenAsync" disabled="@guardandoImagen">
+                    @(guardandoImagen ? "Adjuntando..." : "Adjuntar imagen")
+                </button>
+                <span class="help-text">Adjuntar imagen guarda el archivo seleccionado y sus datos para publicarlo en la galería.</span>
+            </div>
+
+            @if (imagenes.Count == 0)
+            {
+                <div class="empty-state">
+                    <strong>No hay imágenes asociadas</strong>
+                    <p class="text-muted">Adjunte una imagen para enriquecer la galería pública.</p>
+                </div>
+            }
+            else
+            {
+                <div class="content-grid mt-3">
+                    @foreach (var imagen in imagenes)
+                    {
+                        <article class="card stack--tight">
+                            <img class="media-thumb" src="@($"/admin/galeria/imagenes/{imagen.IdImagenGaleria}")" alt="@TextoAlternativo(imagen)" />
+                            <h3>@(string.IsNullOrWhiteSpace(imagen.Titulo) ? imagen.NombreOriginal : imagen.Titulo)</h3>
+                            <p>@(string.IsNullOrWhiteSpace(imagen.Descripcion) ? "Sin descripción" : imagen.Descripcion)</p>
+                            <p class="card__meta">Orden @imagen.Orden · @FormatoTamano(imagen.TamanoBytes)</p>
+                            <button type="button" @onclick="() => DesactivarImagenAsync(imagen.IdImagenGaleria)">Desactivar</button>
+                        </article>
+                    }
+                </div>
+            }
+        </section>
+    }
 </div>
 
 @if (mostrarFormulario)
@@ -90,7 +164,7 @@
     <div class="modal-backdrop-sige">
         <div class="card modal-card-sige">
             <div class="card__header">
-                <h5 class="card__title">@(idEditando == 0 ? "Nueva galeria" : "Editar galeria")</h5>
+                <h5 class="card__title">@(idEditando == 0 ? "Nueva galería" : "Editar galería")</h5>
                 <button type="button" class="btn-close" @onclick="CerrarFormulario"></button>
             </div>
 
@@ -105,7 +179,7 @@
             </div>
 
             <div class="form-group">
-                <label class="form-label">Descripcion</label>
+                <label class="form-label">Descripción</label>
                 <textarea class="form-control" @bind="formulario.Descripcion" rows="4" maxlength="500"></textarea>
             </div>
 
@@ -124,11 +198,22 @@
     private bool cargando = true;
     private bool mostrarFormulario;
     private bool guardando;
+    private bool guardandoImagen;
     private string? mensajeExito;
     private string? mensajeErrorGlobal;
     private string? mensajeErrorModal;
+    private string? mensajeImagen;
     private SolicitudGaleria formulario = new();
+    private SolicitudImagenGaleria imagenFormulario = new();
+    private GaleriaResumen? galeriaSeleccionada;
+    private IReadOnlyList<ImagenGaleriaResumen> imagenes = [];
+    private IBrowserFile? archivoImagen;
     private long idEditando;
+    private const long TamanoMaximoImagen = 10 * 1024 * 1024;
+
+    private string TextoArchivoImagen => archivoImagen is null
+        ? "Seleccione una imagen JPG o PNG de hasta 10 MB."
+        : $"{archivoImagen.Name} · {FormatoTamano(archivoImagen.Size)}";
 
     protected override async Task OnInitializedAsync()
     {
@@ -144,7 +229,8 @@
         }
         catch (Exception ex)
         {
-            mensajeErrorGlobal = $"Error al cargar galerias: {ex.Message}";
+            Logger.LogError(ex, "No se pudieron cargar las galerías.");
+            mensajeErrorGlobal = "No se pudieron cargar las galerías. Verifique la conexión e intente nuevamente.";
         }
         finally
         {
@@ -194,20 +280,29 @@
             if (idEditando == 0)
             {
                 await GaleriaService.RegistrarAsync(formulario);
-                mensajeExito = "Galeria registrada correctamente.";
+                mensajeExito = "Galería registrada correctamente.";
             }
             else
             {
                 await GaleriaService.ActualizarAsync(idEditando, formulario);
-                mensajeExito = "Galeria actualizada correctamente.";
+                mensajeExito = "Galería actualizada correctamente.";
             }
 
             mostrarFormulario = false;
             await CargarGalerias();
         }
-        catch (Exception ex)
+        catch (ArgumentException ex)
         {
             mensajeErrorModal = ex.Message;
+        }
+        catch (InvalidOperationException ex)
+        {
+            mensajeErrorModal = ex.Message;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudo guardar la galería {IdGaleria}.", idEditando);
+            mensajeErrorModal = "No se pudo guardar la galería. Intente nuevamente.";
         }
         finally
         {
@@ -217,17 +312,138 @@
 
     private async Task Publicar(long idGaleria)
     {
-        await EjecutarAccionAsync(() => GaleriaService.PublicarAsync(idGaleria), "Galeria publicada correctamente.");
+        await EjecutarAccionAsync(() => GaleriaService.PublicarAsync(idGaleria), "Galería publicada correctamente.");
     }
 
     private async Task Despublicar(long idGaleria)
     {
-        await EjecutarAccionAsync(() => GaleriaService.DespublicarAsync(idGaleria), "Galeria ocultada correctamente.");
+        await EjecutarAccionAsync(() => GaleriaService.DespublicarAsync(idGaleria), "Galería ocultada correctamente.");
     }
 
     private async Task Desactivar(long idGaleria)
     {
-        await EjecutarAccionAsync(() => GaleriaService.DesactivarAsync(idGaleria), "Galeria desactivada correctamente.");
+        await EjecutarAccionAsync(() => GaleriaService.DesactivarAsync(idGaleria), "Galería desactivada correctamente.");
+    }
+
+    private async Task AbrirImagenesAsync(GaleriaResumen galeria)
+    {
+        galeriaSeleccionada = galeria;
+        imagenFormulario = new SolicitudImagenGaleria { IdGaleria = galeria.IdGaleria };
+        archivoImagen = null;
+        mensajeImagen = null;
+        await CargarImagenesAsync();
+    }
+
+    private void CerrarImagenes()
+    {
+        galeriaSeleccionada = null;
+        imagenes = [];
+        archivoImagen = null;
+        mensajeImagen = null;
+    }
+
+    private void SeleccionarImagen(InputFileChangeEventArgs evento)
+    {
+        archivoImagen = evento.File;
+        mensajeImagen = null;
+    }
+
+    private async Task GuardarImagenAsync()
+    {
+        if (galeriaSeleccionada is null)
+        {
+            return;
+        }
+
+        if (archivoImagen is null)
+        {
+            mensajeImagen = "Seleccione una imagen para adjuntar.";
+            return;
+        }
+
+        guardandoImagen = true;
+        mensajeImagen = null;
+
+        try
+        {
+            using var solicitud = new SolicitudImagenGaleria
+            {
+                IdGaleria = galeriaSeleccionada.IdGaleria,
+                Titulo = imagenFormulario.Titulo,
+                Descripcion = imagenFormulario.Descripcion,
+                Orden = imagenFormulario.Orden,
+                NombreOriginal = archivoImagen.Name,
+                MimeType = archivoImagen.ContentType,
+                TamanoBytes = archivoImagen.Size,
+                Contenido = archivoImagen.OpenReadStream(TamanoMaximoImagen)
+            };
+
+            await GaleriaService.AdjuntarImagenAsync(solicitud, await ObtenerIdUsuarioActualAsync());
+            mensajeImagen = "Imagen adjuntada correctamente.";
+            imagenFormulario = new SolicitudImagenGaleria { IdGaleria = galeriaSeleccionada.IdGaleria };
+            archivoImagen = null;
+            await CargarImagenesAsync();
+            await CargarGalerias();
+        }
+        catch (ArgumentException ex)
+        {
+            mensajeImagen = ex.Message;
+        }
+        catch (InvalidOperationException ex)
+        {
+            mensajeImagen = ex.Message;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudo adjuntar una imagen a la galería {IdGaleria}.", galeriaSeleccionada.IdGaleria);
+            mensajeImagen = "No se pudo adjuntar la imagen. Intente nuevamente.";
+        }
+        finally
+        {
+            guardandoImagen = false;
+        }
+    }
+
+    private async Task DesactivarImagenAsync(long idImagenGaleria)
+    {
+        try
+        {
+            await GaleriaService.DesactivarImagenAsync(idImagenGaleria, await ObtenerIdUsuarioActualAsync());
+            mensajeImagen = "Imagen desactivada correctamente.";
+            await CargarImagenesAsync();
+            await CargarGalerias();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudo desactivar la imagen {IdImagenGaleria}.", idImagenGaleria);
+            mensajeImagen = "No se pudo desactivar la imagen. Intente nuevamente.";
+        }
+    }
+
+    private async Task CargarImagenesAsync()
+    {
+        if (galeriaSeleccionada is null)
+        {
+            imagenes = [];
+            return;
+        }
+
+        try
+        {
+            imagenes = await GaleriaService.ObtenerImagenesAsync(galeriaSeleccionada.IdGaleria);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudieron cargar las imágenes de la galería {IdGaleria}.", galeriaSeleccionada.IdGaleria);
+            imagenes = [];
+            mensajeImagen = "No se pudieron cargar las imágenes de la galería.";
+        }
+    }
+
+    private async Task<string?> ObtenerIdUsuarioActualAsync()
+    {
+        var estadoAutenticacion = await Autenticacion.GetAuthenticationStateAsync();
+        return estadoAutenticacion.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
     }
 
     private async Task EjecutarAccionAsync(Func<Task> accion, string mensaje)
@@ -240,7 +456,25 @@
         }
         catch (Exception ex)
         {
-            mensajeErrorGlobal = ex.Message;
+            Logger.LogError(ex, "No se pudo completar una acción sobre la galería.");
+            mensajeErrorGlobal = "No se pudo completar la acción sobre la galería. Intente nuevamente.";
         }
+    }
+
+    private static string TextoAlternativo(ImagenGaleriaResumen imagen)
+    {
+        return string.IsNullOrWhiteSpace(imagen.Titulo) ? imagen.NombreOriginal : imagen.Titulo;
+    }
+
+    private static string FormatoTamano(long? tamanoBytes)
+    {
+        if (tamanoBytes is null)
+        {
+            return "-";
+        }
+
+        return tamanoBytes < 1024 * 1024
+            ? $"{tamanoBytes.Value / 1024.0:N1} KB"
+            : $"{tamanoBytes.Value / (1024.0 * 1024.0):N1} MB";
     }
 }

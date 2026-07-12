@@ -382,6 +382,15 @@
     #d4dde2;
 }
 
+.media-thumb {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(199, 209, 216, 0.78);
+  background: #d4dde2;
+}
+
 .gallery-card__body {
   padding: 1rem;
 }

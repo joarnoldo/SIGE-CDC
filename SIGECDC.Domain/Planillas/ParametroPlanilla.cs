@@ -12,6 +12,8 @@ public sealed class ParametroPlanilla
 
     public string TipoParametro { get; set; } = TiposParametroPlanilla.Porcentaje;
 
+    public string? Naturaleza { get; set; }
+
     public decimal? ValorDecimal { get; set; }
 
     public string? ValorTexto { get; set; }
@@ -31,4 +33,8 @@ public sealed class ParametroPlanilla
     public string? ModificadoPor { get; set; }
 
     public string EstadoRegistro { get; set; } = "Activo";
+
+    public ICollection<ParametroPlanillaColaborador> AsignacionesColaborador { get; set; } = [];
+
+    public ICollection<ParametroPlanillaPeriodo> AsignacionesPeriodo { get; set; } = [];
 }

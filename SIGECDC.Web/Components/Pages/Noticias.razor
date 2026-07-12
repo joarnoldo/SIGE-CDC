@@ -1,0 +1,74 @@
+@page "/noticias"
+@using SIGECDC.Application.SitioPublico
+@inject INoticiaService NoticiaService
+
+<PageTitle>Noticias | SIGE-CDC</PageTitle>
+
+<section class="page-banner">
+    <div class="container page-banner__inner stack--tight">
+        <p class="eyebrow">Actualidad institucional</p>
+        <h1>Noticias</h1>
+        <p class="lead">Comunicados y novedades publicados por Canales y Drenajes del Caribe S.R.L.</p>
+    </div>
+</section>
+
+<section class="section-shell">
+    <div class="container">
+        @if (cargando)
+        {
+            <div class="empty-state">
+                <strong>Cargando noticias</strong>
+                <p class="text-muted">Estamos recuperando las publicaciones disponibles.</p>
+            </div>
+        }
+        else if (noticias.Count == 0)
+        {
+            <div class="empty-state">
+                <strong>No hay noticias publicadas</strong>
+                <p class="text-muted">Cuando existan novedades disponibles, aparecerán en esta sección.</p>
+            </div>
+        }
+        else
+        {
+            <div class="content-grid">
+                @foreach (var noticia in noticias)
+                {
+                    <article class="card stack--tight">
+                        <p class="card__meta">@TextoFecha(noticia)</p>
+                        <h2 class="card__title">@noticia.Titulo</h2>
+                        @if (!string.IsNullOrWhiteSpace(noticia.Resumen))
+                        {
+                            <p>@noticia.Resumen</p>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(noticia.Contenido))
+                        {
+                            <p>@noticia.Contenido</p>
+                        }
+                    </article>
+                }
+            </div>
+        }
+    </div>
+</section>
+
+@code {
+    private IReadOnlyList<NoticiaResumen> noticias = [];
+    private bool cargando = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            noticias = await NoticiaService.ObtenerPublicadasAsync();
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private static string TextoFecha(NoticiaResumen noticia)
+    {
+        return noticia.FechaPublicacion?.ToString("dd/MM/yyyy") ?? "Noticia publicada";
+    }
+}

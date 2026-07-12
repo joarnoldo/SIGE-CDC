@@ -18,6 +18,17 @@
             </InputSelect>
             <ValidationMessage For="() => Solicitud.TipoParametro" />
         </div>
+        <div class="field">
+            <label for="naturalezaParametro">Naturaleza</label>
+            <InputSelect id="naturalezaParametro" @bind-Value="Solicitud.Naturaleza">
+                <option value="">Referencia técnica / no aplica</option>
+                @foreach (var naturaleza in NaturalezasParametro)
+                {
+                    <option value="@naturaleza.Nombre">@naturaleza.Nombre</option>
+                }
+            </InputSelect>
+            <span class="help-text">Solo las deducciones y beneficios pueden asignarse a colaboradores o períodos.</span>
+        </div>
         <div class="field field--span-2">
             <label for="nombre">Nombre</label>
             <InputText id="nombre" @bind-Value="Solicitud.Nombre" autocomplete="off" />
@@ -42,6 +53,10 @@
                 <label for="valorDecimal">Valor numérico</label>
                 <InputNumber id="valorDecimal" @bind-Value="Solicitud.ValorDecimal" />
                 <ValidationMessage For="() => Solicitud.ValorDecimal" />
+                @if (EsPorcentaje)
+                {
+                    <span class="help-text">Ingrese el porcentaje en formato humano: 10 representa 10%.</span>
+                }
             </div>
         }
         <div class="field">
@@ -64,5 +79,10 @@
     [Parameter]
     public IReadOnlyList<TipoParametroPlanillaOpcion> TiposParametro { get; set; } = [];
 
+    [Parameter]
+    public IReadOnlyList<NaturalezaParametroPlanillaOpcion> NaturalezasParametro { get; set; } = [];
+
     private bool UsaValorTexto => string.Equals(Solicitud.TipoParametro, "Texto", StringComparison.OrdinalIgnoreCase);
+
+    private bool EsPorcentaje => string.Equals(Solicitud.TipoParametro, "Porcentaje", StringComparison.OrdinalIgnoreCase);
 }

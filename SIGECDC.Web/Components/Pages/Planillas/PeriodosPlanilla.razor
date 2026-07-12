@@ -1,0 +1,287 @@
+@page "/rrhh/periodos-planilla"
+@rendermode InteractiveServer
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Recursos Humanos")]
+@using SIGECDC.Application.Planillas
+@inject IPlanillaService PlanillaService
+@inject AuthenticationStateProvider Autenticacion
+@inject NavigationManager Navegacion
+@inject ILogger<PeriodosPlanilla> Logger
+
+<PageTitle>Períodos de planilla | SIGE-CDC</PageTitle>
+
+<section class="page-banner">
+    <div class="container page-banner__inner stack--tight">
+        <p class="eyebrow">Recursos Humanos / Planillas</p>
+        <h1>Períodos de planilla.</h1>
+        <p class="lead">Prepare un período de pago en Borrador y consulte su resultado una vez calculado.</p>
+    </div>
+</section>
+
+<section class="section-shell">
+    <div class="container stack">
+        @if (!string.IsNullOrWhiteSpace(mensajeEstado))
+        {
+            <div class="alert alert--@(mensajeEsError ? "danger" : "success")" role="alert">
+                <strong>@(mensajeEsError ? "No se pudo completar la acción" : "Acción completada")</strong>
+                <span>@mensajeEstado</span>
+            </div>
+        }
+
+        <div class="page-header">
+            <div>
+                <p class="eyebrow">Procesamiento de pago</p>
+                <h2>Gestión de períodos</h2>
+            </div>
+        </div>
+
+        <section class="kpi-grid">
+            <article class="stat-card">
+                <span class="stat-label">Períodos activos</span>
+                <strong class="stat-value">@periodos.Count</strong>
+                <span class="stat-delta">Disponibles para consulta</span>
+            </article>
+            <article class="stat-card">
+                <span class="stat-label">En Borrador</span>
+                <strong class="stat-value">@CantidadPorEstado("Borrador")</strong>
+                <span class="stat-delta">Pendientes de cálculo</span>
+            </article>
+            <article class="stat-card">
+                <span class="stat-label">Calculados</span>
+                <strong class="stat-value">@CantidadPorEstado("Calculada")</strong>
+                <span class="stat-delta">Listos para revisión</span>
+            </article>
+            <article class="stat-card">
+                <span class="stat-label">Neto calculado</span>
+                <strong class="stat-value">@TextoNetoCalculado</strong>
+                <span class="stat-delta">Suma de resultados visibles</span>
+            </article>
+        </section>
+
+        <section class="page-grid page-grid--wide">
+            <div class="page-main">
+                <article class="table-card">
+                    <div class="table-toolbar">
+                        <div>
+                            <h2 class="card__title">Períodos registrados</h2>
+                            <p class="card__meta">Estados de esta historia: Borrador y Calculada.</p>
+                        </div>
+                        <span class="badge badge--info">@periodos.Count</span>
+                    </div>
+
+                    @if (cargando)
+                    {
+                        <div class="empty-state">
+                            <strong>Cargando períodos</strong>
+                            <p class="text-muted">Estamos recuperando la información de planilla.</p>
+                        </div>
+                    }
+                    else if (periodos.Count == 0)
+                    {
+                        <div class="empty-state">
+                            <strong>No hay períodos registrados</strong>
+                            <p class="text-muted">Utilice el formulario para crear el primer período en Borrador.</p>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Código</th>
+                                        <th>Nombre</th>
+                                        <th>Periodicidad</th>
+                                        <th>Rango</th>
+                                        <th>Incidencias</th>
+                                        <th>Estado</th>
+                                        <th>Neto</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var periodo in periodos)
+                                    {
+                                        <tr>
+                                            <td><strong>@periodo.CodigoPeriodo</strong></td>
+                                            <td>@periodo.Nombre</td>
+                                            <td>@periodo.TipoPeriodo</td>
+                                            <td>@periodo.FechaInicio.ToString("dd/MM/yyyy") – @periodo.FechaFin.ToString("dd/MM/yyyy")</td>
+                                            <td>@periodo.CantidadIncidencias</td>
+                                            <td><span class="badge @ClaseEstado(periodo.EstadoPlanilla)">@periodo.EstadoPlanilla</span></td>
+                                            <td>@(periodo.TienePlanilla ? TextoMoneda(periodo.SalarioNetoTotal) : "—")</td>
+                                            <td>
+                                                <div class="table-actions">
+                                                    <a href="@($"rrhh/periodos-planilla/{periodo.IdPeriodoPlanilla}")">Detalle</a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </article>
+            </div>
+
+            <aside class="page-aside">
+                <EditForm Model="solicitud" OnValidSubmit="CrearPeriodoAsync" OnInvalidSubmit="LimpiarMensaje" class="form-section stack">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
+
+                    <div>
+                        <p class="eyebrow">Nuevo período</p>
+                        <h2>Registrar rango de pago</h2>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="field">
+                            <label for="codigoPeriodo">Código</label>
+                            <InputTextInmediato id="codigoPeriodo" @bind-Value="solicitud.CodigoPeriodo" />
+                            <ValidationMessage For="() => solicitud.CodigoPeriodo" />
+                        </div>
+                        <div class="field">
+                            <label for="tipoPeriodo">Periodicidad</label>
+                            <InputSelect id="tipoPeriodo" @bind-Value="solicitud.TipoPeriodo">
+                                <option value="Quincenal">Quincenal</option>
+                                <option value="Mensual">Mensual</option>
+                            </InputSelect>
+                            <ValidationMessage For="() => solicitud.TipoPeriodo" />
+                        </div>
+                        <div class="field field--span-2">
+                            <label for="nombrePeriodo">Nombre</label>
+                            <InputTextInmediato id="nombrePeriodo" @bind-Value="solicitud.Nombre" />
+                            <ValidationMessage For="() => solicitud.Nombre" />
+                        </div>
+                        <div class="field">
+                            <label for="fechaInicio">Fecha inicial</label>
+                            <InputDate id="fechaInicio" @bind-Value="solicitud.FechaInicio" />
+                            <ValidationMessage For="() => solicitud.FechaInicio" />
+                        </div>
+                        <div class="field">
+                            <label for="fechaFin">Fecha final</label>
+                            <InputDate id="fechaFin" @bind-Value="solicitud.FechaFin" />
+                            <ValidationMessage For="() => solicitud.FechaFin" />
+                        </div>
+                        <div class="field field--span-2">
+                            <label for="observaciones">Observaciones</label>
+                            <InputTextArea id="observaciones" @bind-Value="solicitud.Observaciones" />
+                            <ValidationMessage For="() => solicitud.Observaciones" />
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <span class="help-text">El período se guardará en estado Borrador.</span>
+                        <button class="btn btn--primary" type="submit" disabled="@guardando">
+                            @(guardando ? "Guardando..." : "Crear período")
+                        </button>
+                    </div>
+                </EditForm>
+            </aside>
+        </section>
+    </div>
+</section>
+
+@code {
+    private IReadOnlyList<PeriodoPlanillaResumen> periodos = [];
+    private SolicitudPeriodoPlanilla solicitud = NuevaSolicitud();
+    private bool cargando = true;
+    private bool guardando;
+    private bool mensajeEsError;
+    private string? mensajeEstado;
+
+    private string TextoNetoCalculado => TextoMoneda(periodos.Sum(periodo => periodo.SalarioNetoTotal));
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarPeriodosAsync();
+    }
+
+    private async Task CargarPeriodosAsync()
+    {
+        cargando = true;
+        try
+        {
+            periodos = await PlanillaService.ObtenerPeriodosAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudieron cargar los períodos de planilla.");
+            mensajeEsError = true;
+            mensajeEstado = "No se pudieron cargar los períodos de planilla.";
+            periodos = [];
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private async Task CrearPeriodoAsync()
+    {
+        guardando = true;
+        mensajeEstado = null;
+        mensajeEsError = false;
+
+        try
+        {
+            var idPeriodo = await PlanillaService.CrearPeriodoAsync(
+                solicitud,
+                await ObtenerIdUsuarioActualAsync());
+            Navegacion.NavigateTo($"rrhh/periodos-planilla/{idPeriodo}");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudo crear el período de planilla.");
+            mensajeEsError = true;
+            mensajeEstado = MensajeSeguro(ex, "No se pudo crear el período de planilla.");
+        }
+        finally
+        {
+            guardando = false;
+        }
+    }
+
+    private void LimpiarMensaje()
+    {
+        mensajeEstado = null;
+        mensajeEsError = false;
+    }
+
+    private int CantidadPorEstado(string estado)
+    {
+        return periodos.Count(periodo => string.Equals(
+            periodo.EstadoPlanilla,
+            estado,
+            StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static string ClaseEstado(string estado)
+    {
+        return string.Equals(estado, "Calculada", StringComparison.OrdinalIgnoreCase)
+            ? "badge--success"
+            : "badge--warning";
+    }
+
+    private static string TextoMoneda(decimal monto) => $"₡{monto:N2}";
+
+    private static SolicitudPeriodoPlanilla NuevaSolicitud()
+    {
+        return new SolicitudPeriodoPlanilla
+        {
+            FechaInicio = DateTime.Today,
+            FechaFin = DateTime.Today,
+            TipoPeriodo = "Quincenal"
+        };
+    }
+
+    private async Task<string?> ObtenerIdUsuarioActualAsync()
+    {
+        var estadoAutenticacion = await Autenticacion.GetAuthenticationStateAsync();
+        return estadoAutenticacion.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+    }
+
+    private static string MensajeSeguro(Exception ex, string mensajeGenerico)
+    {
+        return ex is ArgumentException or InvalidOperationException ? ex.Message : mensajeGenerico;
+    }
+}

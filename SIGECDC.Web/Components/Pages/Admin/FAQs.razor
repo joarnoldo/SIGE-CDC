@@ -2,6 +2,7 @@
 @using Microsoft.AspNetCore.Authorization
 @using SIGECDC.Application.SitioPublico
 @inject IFaqService FaqService
+@inject ILogger<FAQs> Logger
 @rendermode InteractiveServer
 @attribute [Authorize(Roles = "Administrador")]
 
@@ -148,7 +149,8 @@
         }
         catch (Exception ex)
         {
-            mensajeErrorGlobal = $"Error al cargar datos: {ex.Message}";
+            Logger.LogError(ex, "No se pudieron cargar las preguntas frecuentes.");
+            mensajeErrorGlobal = "No se pudieron cargar las preguntas frecuentes. Intente nuevamente.";
         }
         finally
         {
@@ -223,9 +225,18 @@
             mostrarFormulario = false;
             await CargarFaqs();
         }
-        catch (Exception ex)
+        catch (ArgumentException ex)
         {
             mensajeErrorModal = ex.Message;
+        }
+        catch (InvalidOperationException ex)
+        {
+            mensajeErrorModal = ex.Message;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudo guardar la pregunta frecuente {IdFAQ}.", idEditando);
+            mensajeErrorModal = "No se pudo guardar la pregunta frecuente. Intente nuevamente.";
         }
         finally
         {
@@ -258,7 +269,8 @@
         }
         catch (Exception ex)
         {
-            mensajeErrorGlobal = ex.Message;
+            Logger.LogError(ex, "No se pudo completar una acción sobre preguntas frecuentes.");
+            mensajeErrorGlobal = "No se pudo completar la acción. Intente nuevamente.";
         }
     }
 

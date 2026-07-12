@@ -20,6 +20,7 @@ public sealed class IncidenciaPlanillaService(ApplicationDbContext contexto) : I
         var consulta = contexto.IncidenciasPlanilla
             .AsNoTracking()
             .Include(incidencia => incidencia.PeriodoPlanilla)
+                .ThenInclude(periodo => periodo!.EstadoPlanilla)
             .Include(incidencia => incidencia.Colaborador)
             .Include(incidencia => incidencia.TipoIncidenciaPlanilla)
             .AsQueryable();
@@ -52,6 +53,9 @@ public sealed class IncidenciaPlanillaService(ApplicationDbContext contexto) : I
                 incidencia.IdIncidenciaPlanilla,
                 incidencia.IdPeriodoPlanilla,
                 CodigoPeriodo = incidencia.PeriodoPlanilla != null ? incidencia.PeriodoPlanilla.CodigoPeriodo : string.Empty,
+                EstadoPlanilla = incidencia.PeriodoPlanilla != null && incidencia.PeriodoPlanilla.EstadoPlanilla != null
+                    ? incidencia.PeriodoPlanilla.EstadoPlanilla.Nombre
+                    : string.Empty,
                 incidencia.IdColaborador,
                 CodigoColaborador = incidencia.Colaborador != null ? incidencia.Colaborador.CodigoColaborador : string.Empty,
                 Nombre = incidencia.Colaborador != null ? incidencia.Colaborador.Nombre : string.Empty,
@@ -74,6 +78,8 @@ public sealed class IncidenciaPlanillaService(ApplicationDbContext contexto) : I
                 IdIncidenciaPlanilla = incidencia.IdIncidenciaPlanilla,
                 IdPeriodoPlanilla = incidencia.IdPeriodoPlanilla,
                 CodigoPeriodo = incidencia.CodigoPeriodo,
+                EstadoPlanilla = incidencia.EstadoPlanilla,
+                EstaBloqueada = FlujoEstadosPlanilla.EstaBloqueada(incidencia.EstadoPlanilla),
                 IdColaborador = incidencia.IdColaborador,
                 CodigoColaborador = incidencia.CodigoColaborador,
                 NombreColaborador = ConstruirNombreCompleto(incidencia.Nombre, incidencia.PrimerApellido, incidencia.SegundoApellido),
@@ -96,6 +102,7 @@ public sealed class IncidenciaPlanillaService(ApplicationDbContext contexto) : I
         var incidencia = await contexto.IncidenciasPlanilla
             .AsNoTracking()
             .Include(registro => registro.PeriodoPlanilla)
+                .ThenInclude(periodo => periodo!.EstadoPlanilla)
             .Include(registro => registro.Colaborador)
             .Include(registro => registro.TipoIncidenciaPlanilla)
             .Where(registro => registro.IdIncidenciaPlanilla == idIncidenciaPlanilla)
@@ -104,6 +111,9 @@ public sealed class IncidenciaPlanillaService(ApplicationDbContext contexto) : I
                 registro.IdIncidenciaPlanilla,
                 registro.IdPeriodoPlanilla,
                 CodigoPeriodo = registro.PeriodoPlanilla != null ? registro.PeriodoPlanilla.CodigoPeriodo : string.Empty,
+                EstadoPlanilla = registro.PeriodoPlanilla != null && registro.PeriodoPlanilla.EstadoPlanilla != null
+                    ? registro.PeriodoPlanilla.EstadoPlanilla.Nombre
+                    : string.Empty,
                 FechaInicioPeriodo = registro.PeriodoPlanilla != null ? registro.PeriodoPlanilla.FechaInicio : default,
                 FechaFinPeriodo = registro.PeriodoPlanilla != null ? registro.PeriodoPlanilla.FechaFin : default,
                 registro.IdColaborador,
@@ -133,6 +143,8 @@ public sealed class IncidenciaPlanillaService(ApplicationDbContext contexto) : I
             IdIncidenciaPlanilla = incidencia.IdIncidenciaPlanilla,
             IdPeriodoPlanilla = incidencia.IdPeriodoPlanilla,
             CodigoPeriodo = incidencia.CodigoPeriodo,
+            EstadoPlanilla = incidencia.EstadoPlanilla,
+            EstaBloqueada = FlujoEstadosPlanilla.EstaBloqueada(incidencia.EstadoPlanilla),
             FechaInicioPeriodo = incidencia.FechaInicioPeriodo,
             FechaFinPeriodo = incidencia.FechaFinPeriodo,
             IdColaborador = incidencia.IdColaborador,
@@ -163,7 +175,10 @@ public sealed class IncidenciaPlanillaService(ApplicationDbContext contexto) : I
                 periodo.Nombre,
                 periodo.FechaInicio,
                 periodo.FechaFin,
-                periodo.EstadoPlanilla != null ? periodo.EstadoPlanilla.Nombre : string.Empty))
+                periodo.EstadoPlanilla != null ? periodo.EstadoPlanilla.Nombre : string.Empty,
+                periodo.EstadoPlanilla != null
+                    && (periodo.EstadoPlanilla.Nombre == EstadosPlanilla.Aprobada
+                        || periodo.EstadoPlanilla.Nombre == EstadosPlanilla.Cerrada)))
             .ToListAsync(cancellationToken);
     }
 
@@ -240,6 +255,8 @@ public sealed class IncidenciaPlanillaService(ApplicationDbContext contexto) : I
         CancellationToken cancellationToken = default)
     {
         var incidencia = await contexto.IncidenciasPlanilla
+            .Include(registro => registro.PeriodoPlanilla)
+                .ThenInclude(periodo => periodo!.EstadoPlanilla)
             .FirstOrDefaultAsync(
                 registro => registro.IdIncidenciaPlanilla == idIncidenciaPlanilla
                     && registro.EstadoRegistro == EstadoActivo,
@@ -249,6 +266,8 @@ public sealed class IncidenciaPlanillaService(ApplicationDbContext contexto) : I
         {
             throw new InvalidOperationException("No se encontro la incidencia solicitada o ya esta inactiva.");
         }
+
+        ValidarPeriodoNoBloqueado(incidencia.PeriodoPlanilla);
 
         var datos = await ValidarSolicitudAsync(solicitud, cancellationToken);
 
@@ -269,6 +288,8 @@ public sealed class IncidenciaPlanillaService(ApplicationDbContext contexto) : I
         CancellationToken cancellationToken = default)
     {
         var incidencia = await contexto.IncidenciasPlanilla
+            .Include(registro => registro.PeriodoPlanilla)
+                .ThenInclude(periodo => periodo!.EstadoPlanilla)
             .FirstOrDefaultAsync(
                 registro => registro.IdIncidenciaPlanilla == idIncidenciaPlanilla
                     && registro.EstadoRegistro == EstadoActivo,
@@ -278,6 +299,8 @@ public sealed class IncidenciaPlanillaService(ApplicationDbContext contexto) : I
         {
             throw new InvalidOperationException("No se encontro la incidencia solicitada o ya esta inactiva.");
         }
+
+        ValidarPeriodoNoBloqueado(incidencia.PeriodoPlanilla);
 
         incidencia.EstadoRegistro = EstadoInactivo;
         await contexto.SaveChangesAsync(cancellationToken);
@@ -291,6 +314,7 @@ public sealed class IncidenciaPlanillaService(ApplicationDbContext contexto) : I
 
         var periodo = await contexto.PeriodosPlanilla
             .AsNoTracking()
+            .Include(registro => registro.EstadoPlanilla)
             .FirstOrDefaultAsync(
                 periodo => periodo.IdPeriodoPlanilla == datos.IdPeriodoPlanilla
                     && periodo.EstadoRegistro == EstadoActivo,
@@ -300,6 +324,8 @@ public sealed class IncidenciaPlanillaService(ApplicationDbContext contexto) : I
         {
             throw new ArgumentException("El periodo seleccionado no esta disponible.");
         }
+
+        ValidarPeriodoNoBloqueado(periodo);
 
         if (datos.FechaIncidencia < periodo.FechaInicio.Date || datos.FechaIncidencia > periodo.FechaFin.Date)
         {
@@ -331,6 +357,20 @@ public sealed class IncidenciaPlanillaService(ApplicationDbContext contexto) : I
         }
 
         return datos;
+    }
+
+    private static void ValidarPeriodoNoBloqueado(PeriodoPlanilla? periodo)
+    {
+        if (periodo is null)
+        {
+            throw new ArgumentException("El período seleccionado no está disponible.");
+        }
+
+        if (FlujoEstadosPlanilla.EstaBloqueada(periodo.EstadoPlanilla?.Nombre))
+        {
+            throw new InvalidOperationException(
+                $"El período está en estado {periodo.EstadoPlanilla!.Nombre} y no permite modificar incidencias.");
+        }
     }
 
     private static string ConstruirNombreCompleto(string nombre, string primerApellido, string? segundoApellido)

@@ -39,61 +39,11 @@
             </div>
 
             <div class="faq-contacto">
-                <p>Si necesita informacion adicional, puede escribirnos desde el <a href="/contacto">formulario de contacto</a>.</p>
+                <p>Si necesita información adicional, puede escribirnos desde el <a href="/contacto">formulario de contacto</a>.</p>
             </div>
         }
     </div>
 </section>
-
-<style>
-    .faq-lista {
-        max-width: 800px;
-        margin: 2rem auto;
-    }
-
-    .faq-item {
-        border-bottom: 1px solid #e5e7eb;
-        padding: 0.25rem 0;
-    }
-
-    .faq-pregunta {
-        width: 100%;
-        background: none;
-        border: none;
-        padding: 1rem 0;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        font-size: 1rem;
-        font-weight: 600;
-        color: #1e3a5f;
-        cursor: pointer;
-        text-align: left;
-        gap: 1rem;
-    }
-
-    .faq-pregunta:hover {
-        color: #2563eb;
-    }
-
-    .faq-icono {
-        font-size: 1.4rem;
-        font-weight: 300;
-        flex-shrink: 0;
-    }
-
-    .faq-respuesta {
-        padding: 0.5rem 0 1rem;
-        color: #4b5563;
-        line-height: 1.7;
-    }
-
-    .faq-contacto {
-        margin-top: 2rem;
-        text-align: center;
-        color: #6b7280;
-    }
-</style>
 
 @code {
     private List<FaqResumen> faqs = [];

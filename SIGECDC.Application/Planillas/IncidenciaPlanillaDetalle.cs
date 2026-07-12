@@ -8,6 +8,10 @@ public sealed class IncidenciaPlanillaDetalle
 
     public string CodigoPeriodo { get; set; } = string.Empty;
 
+    public string EstadoPlanilla { get; set; } = string.Empty;
+
+    public bool EstaBloqueada { get; set; }
+
     public DateTime FechaInicioPeriodo { get; set; }
 
     public DateTime FechaFinPeriodo { get; set; }

@@ -54,8 +54,20 @@ public sealed class AlmacenamientoArchivosLocal(string rutaBase) : IAlmacenamien
 
         Directory.CreateDirectory(Path.GetDirectoryName(rutaCompleta)!);
 
-        await using var destino = File.Create(rutaCompleta);
-        await contenido.CopyToAsync(destino, cancellationToken);
+        try
+        {
+            await using var destino = File.Create(rutaCompleta);
+            await contenido.CopyToAsync(destino, cancellationToken);
+        }
+        catch
+        {
+            if (File.Exists(rutaCompleta))
+            {
+                File.Delete(rutaCompleta);
+            }
+
+            throw;
+        }
 
         return new ArchivoGuardado(nombreAlmacenado, rutaRelativa, mimeType, tamanoBytes);
     }
@@ -71,6 +83,19 @@ public sealed class AlmacenamientoArchivosLocal(string rutaBase) : IAlmacenamien
 
         Stream archivo = File.OpenRead(rutaCompleta);
         return Task.FromResult(archivo);
+    }
+
+    public Task EliminarAsync(string rutaRelativa, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var rutaCompleta = ObtenerRutaCompleta(rutaRelativa);
+
+        if (File.Exists(rutaCompleta))
+        {
+            File.Delete(rutaCompleta);
+        }
+
+        return Task.CompletedTask;
     }
 
     private string ObtenerRutaCompleta(string rutaRelativa)
