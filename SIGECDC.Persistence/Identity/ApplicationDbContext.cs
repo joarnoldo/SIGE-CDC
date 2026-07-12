@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using SIGECDC.Domain.Activos;
 using SIGECDC.Domain.Auditoria;
 using SIGECDC.Domain.Operaciones;
 using SIGECDC.Domain.Planillas;
@@ -34,6 +35,12 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<DetallePlanilla> DetallesPlanilla => Set<DetallePlanilla>();
     public DbSet<IncidenciaPlanilla> IncidenciasPlanilla => Set<IncidenciaPlanilla>();
     public DbSet<BitacoraAuditoria> BitacoraAuditoria => Set<BitacoraAuditoria>();
+
+    public DbSet<EstadoActivo> EstadosActivo => Set<EstadoActivo>();
+
+    public DbSet<Activo> Activos => Set<Activo>();
+
+    public DbSet<AsignacionActivoProyecto> AsignacionesActivoProyecto => Set<AsignacionActivoProyecto>();
 
     public DbSet<PaginaContenido> PaginasContenido => Set<PaginaContenido>();
 
@@ -1390,6 +1397,123 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
 
             entidad.HasIndex(pagina => pagina.EstaPublicado)
                 .HasDatabaseName("IX_PaginaContenido_EstaPublicado");
+        });
+
+        builder.Entity<EstadoActivo>(entidad =>
+        {
+            entidad.ToTable("EstadoActivo");
+
+            entidad.HasKey(estado => estado.IdEstadoActivo);
+
+            entidad.Property(estado => estado.IdEstadoActivo)
+                .ValueGeneratedOnAdd();
+
+            entidad.Property(estado => estado.Nombre)
+                .HasMaxLength(50)
+                .IsRequired();
+
+            entidad.Property(estado => estado.Descripcion)
+                .HasMaxLength(255);
+
+            entidad.Property(estado => estado.EstadoRegistro)
+                .HasColumnType("enum('Activo','Inactivo')")
+                .HasDefaultValue(EstadosRegistro.Activo)
+                .IsRequired();
+
+            entidad.HasIndex(estado => estado.Nombre)
+                .IsUnique()
+                .HasDatabaseName("UX_EstadoActivo_Nombre");
+        });
+
+        builder.Entity<Activo>(entidad =>
+        {
+            entidad.ToTable("Activo");
+
+            entidad.HasKey(activo => activo.IdActivo);
+
+            entidad.Property(activo => activo.IdActivo)
+                .ValueGeneratedOnAdd();
+
+            entidad.Property(activo => activo.CodigoActivo)
+                .HasMaxLength(30)
+                .IsRequired();
+
+            entidad.Property(activo => activo.NombreActivo)
+                .HasMaxLength(150)
+                .IsRequired();
+
+            entidad.Property(activo => activo.EstadoRegistro)
+                .HasColumnType("enum('Activo','Inactivo')")
+                .HasDefaultValue(EstadosRegistro.Activo)
+                .IsRequired();
+
+            entidad.HasIndex(activo => activo.CodigoActivo)
+                .IsUnique()
+                .HasDatabaseName("UX_Activo_CodigoActivo");
+
+            entidad.HasIndex(activo => activo.NombreActivo)
+                .HasDatabaseName("IX_Activo_NombreActivo");
+
+            entidad.HasIndex(activo => activo.IdEstadoActivo)
+                .HasDatabaseName("IX_Activo_IdEstadoActivo");
+
+            entidad.HasOne(activo => activo.EstadoActivo)
+                .WithMany()
+                .HasForeignKey(activo => activo.IdEstadoActivo)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_Activo_EstadoActivo");
+        });
+
+        builder.Entity<AsignacionActivoProyecto>(entidad =>
+        {
+            entidad.ToTable("AsignacionActivoProyecto");
+
+            entidad.HasKey(asignacion => asignacion.IdAsignacionActivoProyecto);
+
+            entidad.Property(asignacion => asignacion.IdAsignacionActivoProyecto)
+                .ValueGeneratedOnAdd();
+
+            entidad.Property(asignacion => asignacion.Observaciones)
+                .HasMaxLength(500);
+
+            entidad.Property(asignacion => asignacion.AsignadoPor)
+                .HasMaxLength(255);
+
+            entidad.Property(asignacion => asignacion.FechaAsignacion)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .IsRequired();
+
+            entidad.Property(asignacion => asignacion.EstadoRegistro)
+                .HasColumnType("enum('Activo','Inactivo')")
+                .HasDefaultValue(EstadosRegistro.Activo)
+                .IsRequired();
+
+            entidad.HasIndex(asignacion => asignacion.IdActivo)
+                .HasDatabaseName("IX_AsignacionActivoProyecto_IdActivo");
+
+            entidad.HasIndex(asignacion => asignacion.IdProyecto)
+                .HasDatabaseName("IX_AsignacionActivoProyecto_IdProyecto");
+
+            entidad.HasIndex(asignacion => new { asignacion.FechaInicio, asignacion.FechaFin })
+                .HasDatabaseName("IX_AsignacionActivoProyecto_Fechas");
+
+            entidad.HasOne(asignacion => asignacion.Activo)
+                .WithMany()
+                .HasForeignKey(asignacion => asignacion.IdActivo)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_AsignacionActivoProyecto_Activo");
+
+            entidad.HasOne(asignacion => asignacion.Proyecto)
+                .WithMany()
+                .HasForeignKey(asignacion => asignacion.IdProyecto)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_AsignacionActivoProyecto_Proyecto");
+
+            entidad.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(asignacion => asignacion.AsignadoPor)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_AsignacionActivoProyecto_AsignadoPor");
         });
 
         builder.Entity<EstadoProyecto>(entidad =>

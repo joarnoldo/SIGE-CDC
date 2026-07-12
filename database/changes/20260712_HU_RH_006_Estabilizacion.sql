@@ -3,12 +3,15 @@
    Base de datos: SIGE_CDC_DB
 
    IMPORTANTE:
-   - Script DDL separado del script oficial.
+   - Script histórico de actualización para bases creadas antes de
+     consolidar HU-RH-006 en ScriptDB_SIGE_CDC_Corregido.sql.
+   - No ejecutar sobre una base nueva creada con el script maestro
+     consolidado, porque la estructura ya estará presente.
    - No se ejecuta automáticamente ni mediante migraciones.
    - Respaldar la base y revisar el bloque de prevalidación antes
      de aplicarlo manualmente en MySQL Workbench.
-   - Ejecutar una sola vez sobre una base creada con el script
-     oficial vigente al 2026-07-12.
+   - Ejecutar una sola vez únicamente sobre una base heredada que
+     todavía no contenga las columnas y tablas de este cambio.
    ============================================================ */
 
 USE SIGE_CDC_DB;

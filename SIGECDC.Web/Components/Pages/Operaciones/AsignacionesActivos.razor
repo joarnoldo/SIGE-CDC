@@ -1,0 +1,394 @@
+@page "/operaciones/asignaciones-activos"
+@rendermode InteractiveServer
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Operaciones")]
+@using SIGECDC.Application.Activos
+@using SIGECDC.Application.Operaciones
+@inject IAsignacionActivoProyectoService AsignacionService
+@inject IProyectoService ProyectoService
+@inject AuthenticationStateProvider Autenticacion
+@inject ILogger<AsignacionesActivos> Logger
+
+<PageTitle>Asignación de activos | SIGE-CDC</PageTitle>
+
+<header class="page-header">
+    <div>
+        <p class="eyebrow">Operaciones / Asignaciones</p>
+        <h1>Asignación de activos a proyectos</h1>
+        <p class="page-summary">Valide la disponibilidad por fechas y consulte la agenda de maquinaria asignada.</p>
+    </div>
+</header>
+
+<section class="section-shell">
+    <div class="container stack">
+        @if (!string.IsNullOrWhiteSpace(mensajeEstado))
+        {
+            <div class="alert alert--@(mensajeEsError ? "danger" : "success")" role="alert">
+                <strong>@(mensajeEsError ? "No se pudo completar la acción" : "Acción completada")</strong>
+                <span>@mensajeEstado</span>
+            </div>
+        }
+
+        <section class="metric-grid" aria-label="Resumen de asignaciones">
+            <article class="metric-card">
+                <span>Asignaciones en agenda</span>
+                <strong>@asignaciones.Count</strong>
+                <small>Para el rango consultado</small>
+            </article>
+            <article class="metric-card">
+                <span>Activos disponibles</span>
+                <strong>@activosDisponibles.Count</strong>
+                <small>Sin conflictos en el rango de la nueva asignación</small>
+            </article>
+            <article class="metric-card">
+                <span>Proyectos disponibles</span>
+                <strong>@proyectos.Count</strong>
+                <small>Registros activos</small>
+            </article>
+        </section>
+
+        <section class="page-grid">
+            <div class="page-main stack">
+                <article class="table-card stack">
+                    <div class="card__header">
+                        <div>
+                            <p class="eyebrow">Calendario de maquinaria</p>
+                            <h2>Asignaciones por proyecto y período</h2>
+                        </div>
+                    </div>
+
+                    <div class="form-grid">
+                        <div>
+                            <label for="calendario-inicio">Desde</label>
+                            <input id="calendario-inicio" type="date" @bind="fechaCalendarioInicio" @bind:format="yyyy-MM-dd" />
+                        </div>
+                        <div>
+                            <label for="calendario-fin">Hasta</label>
+                            <input id="calendario-fin" type="date" @bind="fechaCalendarioFin" @bind:format="yyyy-MM-dd" />
+                        </div>
+                        <div>
+                            <label for="calendario-proyecto">Proyecto</label>
+                            <select id="calendario-proyecto" @bind="idProyectoFiltro">
+                                <option value="0">Todos los proyectos</option>
+                                @foreach (var proyecto in proyectos)
+                                {
+                                    <option value="@proyecto.IdProyecto">@proyecto.CodigoProyecto · @proyecto.NombreProyecto</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="form-actions">
+                            <button class="btn btn--secondary" type="button" disabled="@cargandoAgenda" @onclick="CargarAgendaAsync">
+                                @(cargandoAgenda ? "Consultando..." : "Consultar calendario")
+                            </button>
+                        </div>
+                    </div>
+
+                    @if (cargando)
+                    {
+                        <p class="text-muted">Cargando asignaciones...</p>
+                    }
+                    else if (asignaciones.Count == 0)
+                    {
+                        <div class="empty-state">
+                            <strong>No hay asignaciones en el rango consultado.</strong>
+                            <p>Puede ampliar las fechas o registrar una nueva asignación disponible.</p>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Activo</th>
+                                        <th>Proyecto</th>
+                                        <th>Inicio</th>
+                                        <th>Fin</th>
+                                        <th>Estado del activo</th>
+                                        <th>Observaciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var asignacion in asignaciones)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <strong>@asignacion.CodigoActivo</strong>
+                                                <div class="text-muted">@asignacion.NombreActivo</div>
+                                            </td>
+                                            <td>
+                                                <strong>@asignacion.CodigoProyecto</strong>
+                                                <div class="text-muted">@asignacion.NombreProyecto</div>
+                                            </td>
+                                            <td>@asignacion.FechaInicio.ToString("dd/MM/yyyy")</td>
+                                            <td>@asignacion.FechaFin.ToString("dd/MM/yyyy")</td>
+                                            <td><span class="badge badge--info">@asignacion.EstadoActivo</span></td>
+                                            <td>@(string.IsNullOrWhiteSpace(asignacion.Observaciones) ? "—" : asignacion.Observaciones)</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </article>
+            </div>
+
+            <aside class="page-aside">
+                <EditForm Model="solicitud" OnValidSubmit="CrearAsignacionAsync" OnInvalidSubmit="LimpiarMensaje" class="form-section stack">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
+
+                    <div>
+                        <p class="eyebrow">Nueva asignación</p>
+                        <h2>Reservar activo</h2>
+                        <p class="text-muted">Las fechas incluyen el día inicial y el día final.</p>
+                    </div>
+
+                    <div class="form-grid">
+                        <div>
+                            <label for="asignacion-inicio">Fecha inicial</label>
+                            <InputDate id="asignacion-inicio" @bind-Value="solicitud.FechaInicio" />
+                            <ValidationMessage For="() => solicitud.FechaInicio" />
+                        </div>
+                        <div>
+                            <label for="asignacion-fin">Fecha final</label>
+                            <InputDate id="asignacion-fin" @bind-Value="solicitud.FechaFin" />
+                            <ValidationMessage For="() => solicitud.FechaFin" />
+                        </div>
+                    </div>
+
+                    <button class="btn btn--secondary" type="button" disabled="@consultandoDisponibilidad" @onclick="ActualizarDisponibilidadAsync">
+                        @(consultandoDisponibilidad ? "Validando..." : "Validar disponibilidad")
+                    </button>
+
+                    <div>
+                        <label for="asignacion-activo">Activo disponible</label>
+                        <InputSelect id="asignacion-activo" @bind-Value="solicitud.IdActivo">
+                            <option value="0">Seleccione un activo</option>
+                            @foreach (var activo in activosDisponibles)
+                            {
+                                <option value="@activo.IdActivo">@activo.CodigoActivo · @activo.NombreActivo (@activo.EstadoActivo)</option>
+                            }
+                        </InputSelect>
+                        <ValidationMessage For="() => solicitud.IdActivo" />
+                        @if (activosDisponibles.Count == 0)
+                        {
+                            <p class="help-text">No hay activos disponibles para el rango indicado.</p>
+                        }
+                    </div>
+
+                    <div>
+                        <label for="asignacion-proyecto">Proyecto</label>
+                        <InputSelect id="asignacion-proyecto" @bind-Value="solicitud.IdProyecto">
+                            <option value="0">Seleccione un proyecto</option>
+                            @foreach (var proyecto in proyectos)
+                            {
+                                <option value="@proyecto.IdProyecto">@proyecto.CodigoProyecto · @proyecto.NombreProyecto</option>
+                            }
+                        </InputSelect>
+                        <ValidationMessage For="() => solicitud.IdProyecto" />
+                    </div>
+
+                    <div>
+                        <label for="asignacion-observaciones">Observaciones</label>
+                        <InputTextAreaInmediato id="asignacion-observaciones" @bind-Value="solicitud.Observaciones" rows="4" />
+                        <ValidationMessage For="() => solicitud.Observaciones" />
+                    </div>
+
+                    <button class="btn btn--primary" type="submit" disabled="@guardando">
+                        @(guardando ? "Guardando..." : "Guardar asignación")
+                    </button>
+                </EditForm>
+            </aside>
+        </section>
+    </div>
+</section>
+
+@code {
+    private List<ProyectoResumen> proyectos = [];
+    private List<ActivoAsignacionOpcion> activosDisponibles = [];
+    private List<AsignacionActivoProyectoResumen> asignaciones = [];
+    private SolicitudAsignacionActivoProyecto solicitud = NuevaSolicitud();
+    private DateTime fechaCalendarioInicio = PrimerDiaMesActual();
+    private DateTime fechaCalendarioFin = UltimoDiaMesActual();
+    private long idProyectoFiltro;
+    private bool cargando = true;
+    private bool cargandoAgenda;
+    private bool consultandoDisponibilidad;
+    private bool guardando;
+    private bool mensajeEsError;
+    private string? mensajeEstado;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            proyectos = (await ProyectoService.ObtenerProyectosAsync()).ToList();
+            await ActualizarDisponibilidadAsync(mostrarMensaje: false);
+            await CargarAgendaAsync(mostrarMensaje: false);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudo cargar la agenda de asignaciones de activos.");
+            mensajeEsError = true;
+            mensajeEstado = "No se pudo cargar la información de asignaciones.";
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private Task CargarAgendaAsync()
+    {
+        return CargarAgendaAsync(mostrarMensaje: true);
+    }
+
+    private async Task CargarAgendaAsync(bool mostrarMensaje)
+    {
+        cargandoAgenda = true;
+
+        try
+        {
+            asignaciones = (await AsignacionService.ObtenerAsignacionesAsync(
+                fechaCalendarioInicio,
+                fechaCalendarioFin,
+                idProyectoFiltro > 0 ? idProyectoFiltro : null)).ToList();
+
+            if (mostrarMensaje)
+            {
+                mensajeEsError = false;
+                mensajeEstado = $"Se encontraron {asignaciones.Count} asignaciones en el rango consultado.";
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudo consultar el calendario de activos.");
+            mensajeEsError = true;
+            mensajeEstado = MensajeSeguro(ex, "No se pudo consultar el calendario de activos.");
+        }
+        finally
+        {
+            cargandoAgenda = false;
+        }
+    }
+
+    private Task ActualizarDisponibilidadAsync()
+    {
+        return ActualizarDisponibilidadAsync(mostrarMensaje: true);
+    }
+
+    private async Task ActualizarDisponibilidadAsync(bool mostrarMensaje)
+    {
+        consultandoDisponibilidad = true;
+
+        try
+        {
+            if (!solicitud.FechaInicio.HasValue || !solicitud.FechaFin.HasValue)
+            {
+                throw new ArgumentException("Las fechas inicial y final son obligatorias.");
+            }
+
+            activosDisponibles = (await AsignacionService.ObtenerActivosDisponiblesAsync(
+                solicitud.FechaInicio.Value,
+                solicitud.FechaFin.Value)).ToList();
+
+            if (!activosDisponibles.Any(activo => activo.IdActivo == solicitud.IdActivo))
+            {
+                solicitud.IdActivo = 0;
+            }
+
+            if (mostrarMensaje)
+            {
+                mensajeEsError = false;
+                mensajeEstado = $"Hay {activosDisponibles.Count} activos disponibles para el rango indicado.";
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudo validar la disponibilidad de activos.");
+            mensajeEsError = true;
+            mensajeEstado = MensajeSeguro(ex, "No se pudo validar la disponibilidad de activos.");
+            activosDisponibles = [];
+            solicitud.IdActivo = 0;
+        }
+        finally
+        {
+            consultandoDisponibilidad = false;
+        }
+    }
+
+    private async Task CrearAsignacionAsync()
+    {
+        if (guardando)
+        {
+            return;
+        }
+
+        guardando = true;
+        mensajeEstado = null;
+        mensajeEsError = false;
+
+        try
+        {
+            await AsignacionService.CrearAsignacionAsync(
+                solicitud,
+                await ObtenerIdUsuarioActualAsync());
+
+            fechaCalendarioInicio = solicitud.FechaInicio!.Value.Date;
+            fechaCalendarioFin = solicitud.FechaFin!.Value.Date;
+            idProyectoFiltro = solicitud.IdProyecto;
+            solicitud.IdActivo = 0;
+            solicitud.Observaciones = null;
+            await CargarAgendaAsync(mostrarMensaje: false);
+            await ActualizarDisponibilidadAsync(mostrarMensaje: false);
+            mensajeEstado = "La asignación fue registrada correctamente.";
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudo registrar la asignación del activo.");
+            mensajeEsError = true;
+            mensajeEstado = MensajeSeguro(ex, "No se pudo registrar la asignación. Revise los datos e intente nuevamente.");
+        }
+        finally
+        {
+            guardando = false;
+        }
+    }
+
+    private void LimpiarMensaje()
+    {
+        mensajeEstado = null;
+        mensajeEsError = false;
+    }
+
+    private async Task<string> ObtenerIdUsuarioActualAsync()
+    {
+        var estadoAutenticacion = await Autenticacion.GetAuthenticationStateAsync();
+        return estadoAutenticacion.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+            ?? throw new InvalidOperationException("No se pudo identificar al usuario actual.");
+    }
+
+    private static SolicitudAsignacionActivoProyecto NuevaSolicitud()
+    {
+        return new SolicitudAsignacionActivoProyecto
+        {
+            FechaInicio = DateTime.Today,
+            FechaFin = DateTime.Today.AddDays(7)
+        };
+    }
+
+    private static DateTime PrimerDiaMesActual()
+    {
+        return new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+    }
+
+    private static DateTime UltimoDiaMesActual()
+    {
+        return PrimerDiaMesActual().AddMonths(1).AddDays(-1);
+    }
+
+    private static string MensajeSeguro(Exception ex, string mensajeGenerico)
+    {
+        return ex is ArgumentException or InvalidOperationException ? ex.Message : mensajeGenerico;
+    }
+}

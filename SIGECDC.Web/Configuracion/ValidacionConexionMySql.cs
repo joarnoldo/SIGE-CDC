@@ -13,6 +13,9 @@ public static class ValidacionConexionMySql
         "AspNetUserRoles",
         "EstadoProyecto",
         "Proyecto",
+        "EstadoActivo",
+        "Activo",
+        "AsignacionActivoProyecto",
         "Galeria",
         "ImagenGaleria",
         "DocumentoArchivo",
@@ -59,6 +62,7 @@ public static class ValidacionConexionMySql
             await ValidarCatalogosRequeridosAsync(conexion);
             await ValidarEstructuraParametrosPlanillaAsync(conexion);
             await ValidarEstructuraPlanillaAsync(conexion);
+            await ValidarEstructuraAsignacionesActivoAsync(conexion);
 
             var periodosActivos = await EjecutarConteoAsync(
                 conexion,
@@ -99,7 +103,8 @@ public static class ValidacionConexionMySql
             WHERE table_schema = DATABASE()
               AND table_name IN (
                   'AspNetUsers', 'AspNetRoles', 'AspNetUserRoles', 'EstadoProyecto',
-                  'Proyecto', 'Galeria', 'ImagenGaleria', 'DocumentoArchivo',
+                  'Proyecto', 'EstadoActivo', 'Activo', 'AsignacionActivoProyecto',
+                  'Galeria', 'ImagenGaleria', 'DocumentoArchivo',
                   'TipoDocumento', 'EstadoPlanilla', 'TipoIncidenciaPlanilla',
                   'PeriodoPlanilla', 'Planilla', 'DetallePlanilla', 'IncidenciaPlanilla',
                   'ParametroPlanilla', 'ParametroPlanillaColaborador',
@@ -170,6 +175,65 @@ public static class ValidacionConexionMySql
         {
             throw new InvalidOperationException(
                 "Los estados Borrador y Calculada deben existir y estar activos para HU-RH-005.");
+        }
+    }
+
+    private static async Task ValidarEstructuraAsignacionesActivoAsync(System.Data.Common.DbConnection conexion)
+    {
+        var columnasAsignacion = await EjecutarConteoAsync(
+            conexion,
+            """
+            SELECT COUNT(*)
+            FROM information_schema.columns
+            WHERE table_schema = DATABASE()
+              AND table_name = 'AsignacionActivoProyecto'
+              AND column_name IN (
+                  'IdAsignacionActivoProyecto', 'IdActivo', 'IdProyecto',
+                  'FechaInicio', 'FechaFin', 'Observaciones', 'AsignadoPor',
+                  'FechaAsignacion', 'EstadoRegistro');
+            """);
+
+        if (columnasAsignacion != 9)
+        {
+            throw new InvalidOperationException(
+                "La tabla AsignacionActivoProyecto no contiene la estructura oficial requerida para HU-ACT-005.");
+        }
+
+        var relacionesAsignacion = await EjecutarConteoAsync(
+            conexion,
+            """
+            SELECT COUNT(*)
+            FROM information_schema.table_constraints
+            WHERE constraint_schema = DATABASE()
+              AND table_name = 'AsignacionActivoProyecto'
+              AND constraint_type = 'FOREIGN KEY'
+              AND constraint_name IN (
+                  'FK_AsignacionActivoProyecto_Activo',
+                  'FK_AsignacionActivoProyecto_Proyecto',
+                  'FK_AsignacionActivoProyecto_AsignadoPor');
+            """);
+
+        if (relacionesAsignacion != 3)
+        {
+            throw new InvalidOperationException(
+                "Faltan relaciones oficiales en AsignacionActivoProyecto para activo, proyecto o usuario responsable.");
+        }
+
+        var estadosActivo = await EjecutarConteoAsync(
+            conexion,
+            """
+            SELECT COUNT(*)
+            FROM EstadoActivo
+            WHERE Nombre IN (
+                'Disponible', 'Asignado', 'En mantenimiento',
+                'Fuera de servicio', 'Dado de baja')
+              AND EstadoRegistro = 'Activo';
+            """);
+
+        if (estadosActivo != 5)
+        {
+            throw new InvalidOperationException(
+                "Los cinco estados oficiales de activo deben existir y estar activos para HU-ACT-005.");
         }
     }
 

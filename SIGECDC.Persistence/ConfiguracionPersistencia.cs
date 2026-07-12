@@ -1,10 +1,12 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using SIGECDC.Application.Activos;
 using SIGECDC.Application.Auditoria;
 using SIGECDC.Application.Operaciones;
 using SIGECDC.Application.Planillas;
 using SIGECDC.Application.RecursosHumanos;
 using SIGECDC.Application.SitioPublico;
+using SIGECDC.Persistence.Activos;
 using SIGECDC.Persistence.Auditoria;
 using SIGECDC.Persistence.Identity;
 using SIGECDC.Persistence.Operaciones;
@@ -40,6 +42,7 @@ public static class ConfiguracionPersistencia
         servicios.AddScoped<IParametroPlanillaService, ParametroPlanillaService>();
         servicios.AddScoped<IIncidenciaPlanillaService, IncidenciaPlanillaService>();
         servicios.AddScoped<IPlanillaService, PlanillaService>();
+        servicios.AddScoped<IAsignacionActivoProyectoService, AsignacionActivoProyectoService>();
         servicios.AddScoped<IHistorialSistemaService, HistorialSistemaService>();
 
         return servicios;
