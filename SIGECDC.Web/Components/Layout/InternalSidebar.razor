@@ -66,10 +66,11 @@
 
             <AuthorizeView Roles="Administrador,Operaciones" Context="operacionesContext">
                 <Authorized>
-                    <details class="sidebar-section" open="@EsSeccionActiva("operaciones/proyectos", "operaciones/asignaciones-activos")">
+                    <details class="sidebar-section" open="@EsSeccionActiva("operaciones/proyectos", "operaciones/activos", "operaciones/asignaciones-activos")">
                         <summary>Operaciones</summary>
                         <nav class="sidebar-nav" aria-label="Operaciones">
                             <NavLink href="operaciones/proyectos" ActiveClass="is-active">Gestión de proyectos</NavLink>
+                            <NavLink href="operaciones/activos" ActiveClass="is-active">Gestión de activos</NavLink>
                             <AuthorizeView Roles="Operaciones" Context="asignacionesContext">
                                 <Authorized>
                                     <NavLink href="operaciones/asignaciones-activos" ActiveClass="is-active">Asignación de activos</NavLink>
