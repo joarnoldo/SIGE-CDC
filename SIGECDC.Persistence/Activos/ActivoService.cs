@@ -1,6 +1,8 @@
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using SIGECDC.Application.Activos;
 using SIGECDC.Domain.Activos;
+using SIGECDC.Domain.Auditoria;
 using SIGECDC.Domain.SitioPublico;
 using SIGECDC.Persistence.Identity;
 
@@ -98,6 +100,26 @@ public sealed class ActivoService(ApplicationDbContext contexto) : IActivoServic
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyList<EstadoActivoOpcion>> ObtenerEstadosActivoAsync(
+        CancellationToken cancellationToken = default)
+    {
+        return await contexto.EstadosActivo
+            .AsNoTracking()
+            .Where(estado => estado.EstadoRegistro == EstadosRegistro.Activo
+                && (estado.Nombre == EstadosActivo.Disponible
+                    || estado.Nombre == EstadosActivo.Asignado
+                    || estado.Nombre == EstadosActivo.EnMantenimiento
+                    || estado.Nombre == EstadosActivo.FueraDeServicio
+                    || estado.Nombre == EstadosActivo.DadoDeBaja))
+            .OrderBy(estado => estado.IdEstadoActivo)
+            .Select(estado => new EstadoActivoOpcion
+            {
+                IdEstadoActivo = estado.IdEstadoActivo,
+                Nombre = estado.Nombre
+            })
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<long> RegistrarActivoAsync(
         SolicitudRegistroActivo solicitud,
         string idUsuarioActual,
@@ -181,11 +203,157 @@ public sealed class ActivoService(ApplicationDbContext contexto) : IActivoServic
         return activoNuevo.IdActivo;
     }
 
+    public async Task ActualizarEstadoUbicacionAsync(
+        SolicitudActualizacionEstadoUbicacion solicitud,
+        string idUsuarioActual,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(solicitud);
+
+        if (solicitud.IdActivo <= 0)
+        {
+            throw new ArgumentException("Seleccione un activo.");
+        }
+
+        if (solicitud.IdEstadoActivo <= 0)
+        {
+            throw new ArgumentException("Seleccione un estado.");
+        }
+
+        var ubicacionNueva = LimpiarTextoOpcional(solicitud.UbicacionActual, 150, "La ubicación");
+        var idUsuario = LimpiarIdUsuarioObligatorio(idUsuarioActual);
+
+        var usuarioExiste = await contexto.Users
+            .AsNoTracking()
+            .AnyAsync(usuario => usuario.Id == idUsuario, cancellationToken);
+
+        if (!usuarioExiste)
+        {
+            throw new InvalidOperationException("No se encontró al usuario responsable de la actualización.");
+        }
+
+        var activo = await contexto.Activos
+            .Include(registro => registro.EstadoActivo)
+            .FirstOrDefaultAsync(registro => registro.IdActivo == solicitud.IdActivo
+                && registro.EstadoRegistro == EstadosRegistro.Activo, cancellationToken)
+            ?? throw new InvalidOperationException("No se encontró el activo seleccionado.");
+
+        var estadoNuevo = await contexto.EstadosActivo
+            .AsNoTracking()
+            .FirstOrDefaultAsync(estado => estado.IdEstadoActivo == solicitud.IdEstadoActivo
+                && estado.EstadoRegistro == EstadosRegistro.Activo, cancellationToken)
+            ?? throw new InvalidOperationException("No se encontró el estado seleccionado.");
+
+        var tieneAsignacionNoFinalizada = await contexto.AsignacionesActivoProyecto
+            .AsNoTracking()
+            .AnyAsync(asignacion => asignacion.IdActivo == activo.IdActivo
+                && asignacion.EstadoRegistro == EstadosRegistro.Activo
+                && asignacion.FechaFin >= DateTime.Today, cancellationToken);
+
+        var estadoAnterior = activo.EstadoActivo?.Nombre;
+        var ubicacionAnterior = activo.UbicacionActual;
+        ReglasEstadoActivo.ValidarTransicion(
+            estadoAnterior,
+            estadoNuevo.Nombre,
+            tieneAsignacionNoFinalizada);
+
+        if (string.Equals(estadoAnterior, estadoNuevo.Nombre, StringComparison.OrdinalIgnoreCase)
+            && string.Equals(ubicacionAnterior, ubicacionNueva, StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException("No se detectaron cambios de estado o ubicación.");
+        }
+
+        var fechaCambio = DateTime.Now;
+        activo.IdEstadoActivo = estadoNuevo.IdEstadoActivo;
+        activo.UbicacionActual = ubicacionNueva;
+        activo.FechaModificacion = fechaCambio;
+        activo.ModificadoPor = idUsuario;
+
+        contexto.BitacoraAuditoria.Add(new BitacoraAuditoria
+        {
+            IdUsuario = idUsuario,
+            FechaHora = fechaCambio,
+            Accion = "Actualización de estado y ubicación",
+            Entidad = "Activo",
+            IdRegistro = activo.IdActivo.ToString(),
+            ValoresAnteriores = JsonSerializer.Serialize(new
+            {
+                Estado = estadoAnterior,
+                Ubicacion = ubicacionAnterior
+            }),
+            ValoresNuevos = JsonSerializer.Serialize(new
+            {
+                Estado = estadoNuevo.Nombre,
+                Ubicacion = ubicacionNueva
+            }),
+            Observacion = ConstruirDescripcionCambio(
+                estadoAnterior,
+                estadoNuevo.Nombre,
+                ubicacionAnterior,
+                ubicacionNueva)
+        });
+
+        await contexto.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<TrazabilidadActivoResumen>> ObtenerTrazabilidadActivoAsync(
+        long idActivo,
+        CancellationToken cancellationToken = default)
+    {
+        if (idActivo <= 0)
+        {
+            return [];
+        }
+
+        return await contexto.BitacoraAuditoria
+            .AsNoTracking()
+            .Where(registro => registro.Entidad == "Activo"
+                && registro.IdRegistro == idActivo.ToString()
+                && registro.Accion == "Actualización de estado y ubicación")
+            .OrderByDescending(registro => registro.FechaHora)
+            .Take(100)
+            .Select(registro => new TrazabilidadActivoResumen
+            {
+                FechaHora = registro.FechaHora,
+                IdUsuario = registro.IdUsuario,
+                DescripcionCambio = registro.Observacion ?? "Cambio de estado o ubicación registrado."
+            })
+            .ToListAsync(cancellationToken);
+    }
+
     private static string LimpiarIdUsuarioObligatorio(string idUsuario)
     {
         return string.IsNullOrWhiteSpace(idUsuario)
             ? throw new ArgumentException("No se pudo identificar al usuario que registra el activo.")
             : idUsuario.Trim();
+    }
+
+    private static string? LimpiarTextoOpcional(string? valor, int longitudMaxima, string nombreCampo)
+    {
+        if (string.IsNullOrWhiteSpace(valor))
+        {
+            return null;
+        }
+
+        var limpio = valor.Trim();
+        if (limpio.Length > longitudMaxima)
+        {
+            throw new ArgumentException($"{nombreCampo} no puede superar {longitudMaxima} caracteres.");
+        }
+
+        return limpio;
+    }
+
+    private static string ConstruirDescripcionCambio(
+        string? estadoAnterior,
+        string estadoNuevo,
+        string? ubicacionAnterior,
+        string? ubicacionNueva)
+    {
+        var anterior = string.IsNullOrWhiteSpace(estadoAnterior) ? "Sin estado" : estadoAnterior;
+        var ubicacionPrev = string.IsNullOrWhiteSpace(ubicacionAnterior) ? "Sin ubicación" : ubicacionAnterior;
+        var ubicacionActual = string.IsNullOrWhiteSpace(ubicacionNueva) ? "Sin ubicación" : ubicacionNueva;
+        return $"Estado: {anterior} → {estadoNuevo}. Ubicación: {ubicacionPrev} → {ubicacionActual}.";
     }
 
     private sealed record DatosRegistroActivoLimpios(

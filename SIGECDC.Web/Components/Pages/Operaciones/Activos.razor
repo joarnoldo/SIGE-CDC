@@ -194,20 +194,132 @@
     </div>
 </section>
 
+<section class="section-shell">
+    <div class="container admin-grid">
+        <article class="form-section">
+            <h2>Actualizar estado y ubicación</h2>
+            <p class="card__meta">Los cambios se registran en la bitácora del activo.</p>
+
+            @if (!string.IsNullOrWhiteSpace(mensajeActualizacion))
+            {
+                <div class="alert alert--info">@mensajeActualizacion</div>
+            }
+
+            <EditForm Model="solicitudActualizacion" OnValidSubmit="ActualizarEstadoUbicacionAsync">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <div class="form-grid">
+                    <div class="field field--span-2">
+                        <label for="activoActualizacion">Activo</label>
+                        <InputSelect id="activoActualizacion"
+                                     class="form-control"
+                                     @bind-Value="solicitudActualizacion.IdActivo"
+                                     @bind-Value:after="OnActivoActualizacionChangedAsync">
+                            <option value="0">Seleccione un activo</option>
+                            @foreach (var activo in activos)
+                            {
+                                <option value="@activo.IdActivo">@activo.CodigoActivo - @activo.NombreActivo</option>
+                            }
+                        </InputSelect>
+                    </div>
+
+                    <div class="field">
+                        <label for="estadoActualizacion">Estado</label>
+                        <InputSelect id="estadoActualizacion" class="form-control" @bind-Value="solicitudActualizacion.IdEstadoActivo">
+                            <option value="0">Seleccione un estado</option>
+                            @foreach (var estado in estadosActivo)
+                            {
+                                <option value="@estado.IdEstadoActivo">@estado.Nombre</option>
+                            }
+                        </InputSelect>
+                    </div>
+
+                    <div class="field">
+                        <label for="ubicacionActualizacion">Ubicación actual</label>
+                        <InputText id="ubicacionActualizacion" class="form-control" @bind-Value="solicitudActualizacion.UbicacionActual" />
+                    </div>
+                </div>
+
+                <div class="form-actions mt-3">
+                    <button class="btn btn--primary" type="submit" disabled="@actualizando">
+                        @(actualizando ? "Actualizando..." : "Guardar estado y ubicación")
+                    </button>
+                </div>
+            </EditForm>
+        </article>
+
+        <article class="table-card">
+            <div class="table-toolbar">
+                <div>
+                    <h2 class="card__title">Trazabilidad del activo</h2>
+                    <p class="card__meta">Historial de cambios de estado y ubicación.</p>
+                </div>
+                <span class="badge badge--info">@trazabilidad.Count cambios</span>
+            </div>
+
+            @if (solicitudActualizacion.IdActivo <= 0)
+            {
+                <div class="empty-state">
+                    <strong>Seleccione un activo</strong>
+                    <p class="text-muted">El historial se mostrará al seleccionar el activo.</p>
+                </div>
+            }
+            else if (trazabilidad.Count == 0)
+            {
+                <div class="empty-state">
+                    <strong>Sin cambios registrados</strong>
+                    <p class="text-muted">Este activo aún no tiene trazabilidad de estado o ubicación.</p>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Usuario</th>
+                                <th>Cambio</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var cambio in trazabilidad)
+                            {
+                                <tr>
+                                    <td>@cambio.FechaHora.ToString("dd/MM/yyyy HH:mm")</td>
+                                    <td>@(string.IsNullOrWhiteSpace(cambio.IdUsuario) ? "Sin usuario" : cambio.IdUsuario)</td>
+                                    <td>@cambio.DescripcionCambio</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </article>
+    </div>
+</section>
+
 @code {
     private List<ActivoResumen> activos = [];
     private List<TipoActivoOpcion> tiposActivo = [];
     private List<CategoriaActivoOpcion> categoriasActivo = [];
+    private List<EstadoActivoOpcion> estadosActivo = [];
+    private List<TrazabilidadActivoResumen> trazabilidad = [];
     private SolicitudRegistroActivo solicitudRegistro = new();
+    private SolicitudActualizacionEstadoUbicacion solicitudActualizacion = new();
     private bool cargando = true;
     private bool guardando;
+    private bool actualizando;
     private string? mensajeFormulario;
+    private string? mensajeActualizacion;
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
             tiposActivo = [.. await ActivoService.ObtenerTiposActivoAsync()];
+            estadosActivo = [.. await ActivoService.ObtenerEstadosActivoAsync()];
             await CargarActivosAsync();
         }
         catch (Exception ex)
@@ -283,6 +395,66 @@
         solicitudRegistro = new SolicitudRegistroActivo();
         categoriasActivo = [];
         mensajeFormulario = null;
+    }
+
+    private async Task OnActivoActualizacionChangedAsync()
+    {
+        mensajeActualizacion = null;
+        var activo = activos.FirstOrDefault(registro => registro.IdActivo == solicitudActualizacion.IdActivo);
+        if (activo is null)
+        {
+            solicitudActualizacion.IdEstadoActivo = 0;
+            solicitudActualizacion.UbicacionActual = null;
+            trazabilidad = [];
+            return;
+        }
+
+        solicitudActualizacion.IdEstadoActivo = activo.IdEstadoActivo;
+        solicitudActualizacion.UbicacionActual = activo.UbicacionActual;
+        await CargarTrazabilidadAsync();
+    }
+
+    private async Task ActualizarEstadoUbicacionAsync()
+    {
+        if (actualizando)
+        {
+            return;
+        }
+
+        actualizando = true;
+        mensajeActualizacion = null;
+
+        try
+        {
+            await ActivoService.ActualizarEstadoUbicacionAsync(
+                solicitudActualizacion,
+                await ObtenerIdUsuarioActualAsync());
+            await CargarActivosAsync();
+            await OnActivoActualizacionChangedAsync();
+            mensajeActualizacion = "El estado y la ubicación se actualizaron correctamente.";
+        }
+        catch (ArgumentException ex)
+        {
+            mensajeActualizacion = ex.Message;
+        }
+        catch (InvalidOperationException ex)
+        {
+            mensajeActualizacion = ex.Message;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudo actualizar el activo {IdActivo}.", solicitudActualizacion.IdActivo);
+            mensajeActualizacion = "No se pudo actualizar el activo. Intente nuevamente.";
+        }
+        finally
+        {
+            actualizando = false;
+        }
+    }
+
+    private async Task CargarTrazabilidadAsync()
+    {
+        trazabilidad = [.. await ActivoService.ObtenerTrazabilidadActivoAsync(solicitudActualizacion.IdActivo)];
     }
 
     private async Task<string> ObtenerIdUsuarioActualAsync()
