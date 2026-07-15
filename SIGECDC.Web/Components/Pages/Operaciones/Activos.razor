@@ -3,6 +3,7 @@
 @rendermode InteractiveServer
 @using SIGECDC.Application.Activos
 @inject IActivoService ActivoService
+@inject IAsignacionActivoProyectoService AsignacionActivoProyectoService
 @inject AuthenticationStateProvider Autenticacion
 @inject ILogger<Activos> Logger
 
@@ -300,19 +301,136 @@
     </div>
 </section>
 
+<section class="section-shell">
+    <div class="container admin-grid">
+        <article class="form-section">
+            <h2>Consultar disponibilidad</h2>
+            <p class="card__meta">La disponibilidad considera el estado actual y los traslapes de asignaciones en el rango indicado.</p>
+
+            @if (!string.IsNullOrWhiteSpace(mensajeDisponibilidad))
+            {
+                <div class="alert alert--info">@mensajeDisponibilidad</div>
+            }
+
+            <EditForm Model="filtroDisponibilidad" OnValidSubmit="ConsultarDisponibilidadAsync">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <div class="form-grid">
+                    <div class="field">
+                        <label for="fechaInicioDisponibilidad">Fecha inicial</label>
+                        <InputDate id="fechaInicioDisponibilidad" class="form-control" @bind-Value="filtroDisponibilidad.FechaInicio" />
+                    </div>
+
+                    <div class="field">
+                        <label for="fechaFinDisponibilidad">Fecha final</label>
+                        <InputDate id="fechaFinDisponibilidad" class="form-control" @bind-Value="filtroDisponibilidad.FechaFin" />
+                    </div>
+
+                    <div class="field field--span-2">
+                        <label for="estadoDisponibilidad">Estado</label>
+                        <InputSelect id="estadoDisponibilidad" class="form-control" @bind-Value="filtroDisponibilidad.IdEstadoActivo">
+                            <option value="">Todos los estados</option>
+                            @foreach (var estado in estadosActivo)
+                            {
+                                <option value="@estado.IdEstadoActivo">@estado.Nombre</option>
+                            }
+                        </InputSelect>
+                    </div>
+                </div>
+
+                <div class="form-actions mt-3">
+                    <button class="btn btn--primary" type="submit" disabled="@consultandoDisponibilidad">
+                        @(consultandoDisponibilidad ? "Consultando..." : "Consultar disponibilidad")
+                    </button>
+                </div>
+            </EditForm>
+        </article>
+
+        <article class="table-card">
+            <div class="table-toolbar">
+                <div>
+                    <h2 class="card__title">Disponibilidad por rango</h2>
+                    <p class="card__meta">Resultado según el estado y las asignaciones vigentes.</p>
+                </div>
+                <span class="badge badge--info">@disponibilidad.Count activos</span>
+            </div>
+
+            @if (!consultaDisponibilidadRealizada)
+            {
+                <div class="empty-state">
+                    <strong>Defina el rango de consulta</strong>
+                    <p class="text-muted">Seleccione las fechas y, opcionalmente, filtre por estado.</p>
+                </div>
+            }
+            else if (disponibilidad.Count == 0)
+            {
+                <div class="empty-state">
+                    <strong>Sin resultados</strong>
+                    <p class="text-muted">No se encontraron activos para los filtros seleccionados.</p>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Código</th>
+                                <th>Activo</th>
+                                <th>Tipo / Categoría</th>
+                                <th>Estado</th>
+                                <th>Ubicación</th>
+                                <th>Disponibilidad</th>
+                                <th>Motivo</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var activo in disponibilidad)
+                            {
+                                <tr>
+                                    <td>@activo.CodigoActivo</td>
+                                    <td>@activo.NombreActivo</td>
+                                    <td>
+                                        <small>@activo.TipoActivo</small><br />
+                                        <small>@activo.CategoriaActivo</small>
+                                    </td>
+                                    <td><span class="badge badge--info">@activo.EstadoActivo</span></td>
+                                    <td>@(string.IsNullOrWhiteSpace(activo.UbicacionActual) ? "-" : activo.UbicacionActual)</td>
+                                    <td>
+                                        <span class="badge @(activo.EstaDisponible ? "badge--success" : "badge--danger")">
+                                            @(activo.EstaDisponible ? "Disponible" : "No disponible")
+                                        </span>
+                                    </td>
+                                    <td>@activo.MotivoDisponibilidad</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </article>
+    </div>
+</section>
+
 @code {
     private List<ActivoResumen> activos = [];
     private List<TipoActivoOpcion> tiposActivo = [];
     private List<CategoriaActivoOpcion> categoriasActivo = [];
     private List<EstadoActivoOpcion> estadosActivo = [];
     private List<TrazabilidadActivoResumen> trazabilidad = [];
+    private List<DisponibilidadActivoResumen> disponibilidad = [];
     private SolicitudRegistroActivo solicitudRegistro = new();
     private SolicitudActualizacionEstadoUbicacion solicitudActualizacion = new();
+    private FiltroDisponibilidadActivo filtroDisponibilidad = CrearFiltroDisponibilidadInicial();
     private bool cargando = true;
     private bool guardando;
     private bool actualizando;
+    private bool consultandoDisponibilidad;
+    private bool consultaDisponibilidadRealizada;
     private string? mensajeFormulario;
     private string? mensajeActualizacion;
+    private string? mensajeDisponibilidad;
 
     protected override async Task OnInitializedAsync()
     {
@@ -455,6 +573,52 @@
     private async Task CargarTrazabilidadAsync()
     {
         trazabilidad = [.. await ActivoService.ObtenerTrazabilidadActivoAsync(solicitudActualizacion.IdActivo)];
+    }
+
+    private async Task ConsultarDisponibilidadAsync()
+    {
+        if (consultandoDisponibilidad)
+        {
+            return;
+        }
+
+        consultandoDisponibilidad = true;
+        mensajeDisponibilidad = null;
+
+        try
+        {
+            disponibilidad = [.. await AsignacionActivoProyectoService.ConsultarDisponibilidadAsync(filtroDisponibilidad)];
+            consultaDisponibilidadRealizada = true;
+            mensajeDisponibilidad = disponibilidad.Count == 0
+                ? "No se encontraron activos para el rango y estado seleccionados."
+                : $"Se encontraron {disponibilidad.Count} activos para el rango consultado.";
+        }
+        catch (ArgumentException ex)
+        {
+            disponibilidad = [];
+            consultaDisponibilidadRealizada = false;
+            mensajeDisponibilidad = ex.Message;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudo consultar la disponibilidad de activos.");
+            disponibilidad = [];
+            consultaDisponibilidadRealizada = false;
+            mensajeDisponibilidad = "No se pudo consultar la disponibilidad. Intente nuevamente.";
+        }
+        finally
+        {
+            consultandoDisponibilidad = false;
+        }
+    }
+
+    private static FiltroDisponibilidadActivo CrearFiltroDisponibilidadInicial()
+    {
+        return new FiltroDisponibilidadActivo
+        {
+            FechaInicio = DateTime.Today,
+            FechaFin = DateTime.Today.AddDays(7)
+        };
     }
 
     private async Task<string> ObtenerIdUsuarioActualAsync()

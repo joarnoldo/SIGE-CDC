@@ -56,4 +56,30 @@ public sealed class ReglasAsignacionActivoTests
 
         Assert.Contains("no se encuentra disponible", excepcion.Message, StringComparison.OrdinalIgnoreCase);
     }
+
+    [Theory]
+    [InlineData(EstadosActivo.Disponible, false, true)]
+    [InlineData(EstadosActivo.Asignado, false, true)]
+    [InlineData(EstadosActivo.Disponible, true, false)]
+    [InlineData(EstadosActivo.Asignado, true, false)]
+    [InlineData(EstadosActivo.EnMantenimiento, false, false)]
+    [InlineData(EstadosActivo.FueraDeServicio, false, false)]
+    [InlineData(EstadosActivo.DadoDeBaja, false, false)]
+    public void EstaDisponible_CombinaEstadoYTraslape(
+        string estado,
+        bool tieneConflicto,
+        bool esperado)
+    {
+        Assert.Equal(esperado, ReglasAsignacionActivo.EstaDisponible(estado, tieneConflicto));
+    }
+
+    [Fact]
+    public void DescribirDisponibilidad_ConTraslape_ExplicaLaAsignacionVigente()
+    {
+        var motivo = ReglasAsignacionActivo.DescribirDisponibilidad(
+            EstadosActivo.Disponible,
+            tieneConflictoDeAsignacion: true);
+
+        Assert.Contains("asignación vigente", motivo, StringComparison.OrdinalIgnoreCase);
+    }
 }
