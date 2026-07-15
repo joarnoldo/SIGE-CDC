@@ -64,27 +64,53 @@ public sealed class AsignacionActivoProyectoService(ApplicationDbContext context
         var inicio = fechaInicio.Date;
         var fin = fechaFin.Date;
 
-        return await contexto.Activos
-            .AsNoTracking()
-            .Where(activo => activo.EstadoRegistro == EstadosRegistro.Activo
-                && activo.EstadoActivo != null
-                && activo.EstadoActivo.EstadoRegistro == EstadosRegistro.Activo
-                && (activo.EstadoActivo.Nombre == EstadosActivo.Disponible
-                    || activo.EstadoActivo.Nombre == EstadosActivo.Asignado)
-                && !contexto.AsignacionesActivoProyecto.Any(asignacion =>
-                    asignacion.IdActivo == activo.IdActivo
-                    && asignacion.EstadoRegistro == EstadosRegistro.Activo
-                    && asignacion.FechaInicio <= fin
-                    && asignacion.FechaFin >= inicio))
+        return await CrearConsultaDisponibilidad(inicio, fin, idEstadoActivo: null)
+            .Where(activo => (activo.EstadoActivo == EstadosActivo.Disponible
+                    || activo.EstadoActivo == EstadosActivo.Asignado)
+                && !activo.TieneConflictoDeAsignacion)
             .OrderBy(activo => activo.CodigoActivo)
             .Select(activo => new ActivoAsignacionOpcion
             {
                 IdActivo = activo.IdActivo,
                 CodigoActivo = activo.CodigoActivo,
                 NombreActivo = activo.NombreActivo,
-                EstadoActivo = activo.EstadoActivo == null ? "Sin estado" : activo.EstadoActivo.Nombre
+                EstadoActivo = activo.EstadoActivo
             })
             .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<DisponibilidadActivoResumen>> ConsultarDisponibilidadAsync(
+        FiltroDisponibilidadActivo filtro,
+        CancellationToken cancellationToken = default)
+    {
+        var datos = DatosFiltroDisponibilidad.DesdeFiltro(filtro);
+
+        var activos = await CrearConsultaDisponibilidad(
+                datos.FechaInicio,
+                datos.FechaFin,
+                datos.IdEstadoActivo)
+            .OrderBy(activo => activo.CodigoActivo)
+            .ToListAsync(cancellationToken);
+
+        return activos
+            .Select(activo => new DisponibilidadActivoResumen
+            {
+                IdActivo = activo.IdActivo,
+                CodigoActivo = activo.CodigoActivo,
+                NombreActivo = activo.NombreActivo,
+                TipoActivo = activo.TipoActivo,
+                CategoriaActivo = activo.CategoriaActivo,
+                IdEstadoActivo = activo.IdEstadoActivo,
+                EstadoActivo = activo.EstadoActivo,
+                UbicacionActual = activo.UbicacionActual,
+                EstaDisponible = ReglasAsignacionActivo.EstaDisponible(
+                    activo.EstadoActivo,
+                    activo.TieneConflictoDeAsignacion),
+                MotivoDisponibilidad = ReglasAsignacionActivo.DescribirDisponibilidad(
+                    activo.EstadoActivo,
+                    activo.TieneConflictoDeAsignacion)
+            })
+            .ToList();
     }
 
     public async Task<long> CrearAsignacionAsync(
@@ -177,6 +203,89 @@ public sealed class AsignacionActivoProyectoService(ApplicationDbContext context
         return string.IsNullOrWhiteSpace(idUsuario)
             ? throw new ArgumentException("No se pudo identificar al usuario que realiza la asignación.")
             : idUsuario.Trim();
+    }
+
+    private IQueryable<DisponibilidadActivoDatos> CrearConsultaDisponibilidad(
+        DateTime fechaInicio,
+        DateTime fechaFin,
+        int? idEstadoActivo)
+    {
+        var consulta = contexto.Activos
+            .AsNoTracking()
+            .Where(activo => activo.EstadoRegistro == EstadosRegistro.Activo
+                && activo.EstadoActivo != null
+                && activo.EstadoActivo.EstadoRegistro == EstadosRegistro.Activo);
+
+        if (idEstadoActivo.HasValue)
+        {
+            consulta = consulta.Where(activo => activo.IdEstadoActivo == idEstadoActivo.Value);
+        }
+
+        return consulta.Select(activo => new DisponibilidadActivoDatos
+        {
+            IdActivo = activo.IdActivo,
+            CodigoActivo = activo.CodigoActivo,
+            NombreActivo = activo.NombreActivo,
+            TipoActivo = activo.TipoActivo == null ? "Sin tipo" : activo.TipoActivo.Nombre,
+            CategoriaActivo = activo.CategoriaActivo == null ? "Sin categoría" : activo.CategoriaActivo.Nombre,
+            IdEstadoActivo = activo.IdEstadoActivo,
+            EstadoActivo = activo.EstadoActivo == null ? "Sin estado" : activo.EstadoActivo.Nombre,
+            UbicacionActual = activo.UbicacionActual,
+            TieneConflictoDeAsignacion = contexto.AsignacionesActivoProyecto.Any(asignacion =>
+                asignacion.IdActivo == activo.IdActivo
+                && asignacion.EstadoRegistro == EstadosRegistro.Activo
+                && asignacion.FechaInicio <= fechaFin
+                && asignacion.FechaFin >= fechaInicio)
+        });
+    }
+
+    private sealed class DisponibilidadActivoDatos
+    {
+        public long IdActivo { get; set; }
+
+        public string CodigoActivo { get; set; } = string.Empty;
+
+        public string NombreActivo { get; set; } = string.Empty;
+
+        public string TipoActivo { get; set; } = string.Empty;
+
+        public string CategoriaActivo { get; set; } = string.Empty;
+
+        public int IdEstadoActivo { get; set; }
+
+        public string EstadoActivo { get; set; } = string.Empty;
+
+        public string? UbicacionActual { get; set; }
+
+        public bool TieneConflictoDeAsignacion { get; set; }
+    }
+
+    private sealed record DatosFiltroDisponibilidad(
+        DateTime FechaInicio,
+        DateTime FechaFin,
+        int? IdEstadoActivo)
+    {
+        public static DatosFiltroDisponibilidad DesdeFiltro(FiltroDisponibilidadActivo filtro)
+        {
+            ArgumentNullException.ThrowIfNull(filtro);
+
+            if (!filtro.FechaInicio.HasValue || !filtro.FechaFin.HasValue)
+            {
+                throw new ArgumentException("Las fechas inicial y final son obligatorias.");
+            }
+
+            if (filtro.IdEstadoActivo.HasValue && filtro.IdEstadoActivo.Value <= 0)
+            {
+                throw new ArgumentException("El estado seleccionado no es válido.");
+            }
+
+            ReglasAsignacionActivo.ValidarRango(filtro.FechaInicio.Value, filtro.FechaFin.Value);
+
+            return new DatosFiltroDisponibilidad(
+                filtro.FechaInicio.Value.Date,
+                filtro.FechaFin.Value.Date,
+                filtro.IdEstadoActivo);
+        }
     }
 
     private sealed record DatosAsignacionLimpios(

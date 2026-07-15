@@ -1,8 +1,6 @@
-using SIGECDC.Domain.SitioPublico;
+namespace SIGECDC.Application.Activos;
 
-namespace SIGECDC.Domain.Activos;
-
-public sealed class Activo
+public sealed class ActivoResumen
 {
     public long IdActivo { get; set; }
 
@@ -12,11 +10,11 @@ public sealed class Activo
 
     public int IdTipoActivo { get; set; }
 
-    public TipoActivo? TipoActivo { get; set; }
+    public string TipoActivo { get; set; } = string.Empty;
 
     public int IdCategoriaActivo { get; set; }
 
-    public CategoriaActivo? CategoriaActivo { get; set; }
+    public string CategoriaActivo { get; set; } = string.Empty;
 
     public string? Marca { get; set; }
 
@@ -36,17 +34,7 @@ public sealed class Activo
 
     public int IdEstadoActivo { get; set; }
 
-    public EstadoActivo? EstadoActivo { get; set; }
+    public string EstadoActivo { get; set; } = string.Empty;
 
     public string? Observaciones { get; set; }
-
-    public DateTime FechaCreacion { get; set; }
-
-    public string? CreadoPor { get; set; }
-
-    public DateTime? FechaModificacion { get; set; }
-
-    public string? ModificadoPor { get; set; }
-
-    public string EstadoRegistro { get; set; } = EstadosRegistro.Activo;
 }

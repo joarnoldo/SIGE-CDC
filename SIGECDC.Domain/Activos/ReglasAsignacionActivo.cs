@@ -25,6 +25,23 @@ public static class ReglasAsignacionActivo
         }
     }
 
+    public static bool EstaDisponible(string? estado, bool tieneConflictoDeAsignacion)
+    {
+        return EsEstadoAsignable(estado) && !tieneConflictoDeAsignacion;
+    }
+
+    public static string DescribirDisponibilidad(string? estado, bool tieneConflictoDeAsignacion)
+    {
+        if (!EsEstadoAsignable(estado))
+        {
+            return $"No disponible por estado {estado ?? "Sin estado"}.";
+        }
+
+        return tieneConflictoDeAsignacion
+            ? "No disponible por una asignación vigente en el rango consultado."
+            : "Disponible para el rango consultado.";
+    }
+
     public static bool HayTraslape(
         DateTime fechaInicioExistente,
         DateTime fechaFinExistente,
