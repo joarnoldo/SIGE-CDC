@@ -38,6 +38,10 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
 
     public DbSet<EstadoActivo> EstadosActivo => Set<EstadoActivo>();
 
+    public DbSet<TipoActivo> TiposActivo => Set<TipoActivo>();
+
+    public DbSet<CategoriaActivo> CategoriasActivo => Set<CategoriaActivo>();
+
     public DbSet<Activo> Activos => Set<Activo>();
 
     public DbSet<AsignacionActivoProyecto> AsignacionesActivoProyecto => Set<AsignacionActivoProyecto>();
@@ -1425,6 +1429,66 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                 .HasDatabaseName("UX_EstadoActivo_Nombre");
         });
 
+        builder.Entity<TipoActivo>(entidad =>
+        {
+            entidad.ToTable("TipoActivo");
+
+            entidad.HasKey(tipo => tipo.IdTipoActivo);
+
+            entidad.Property(tipo => tipo.IdTipoActivo)
+                .ValueGeneratedOnAdd();
+
+            entidad.Property(tipo => tipo.Nombre)
+                .HasMaxLength(100)
+                .IsRequired();
+
+            entidad.Property(tipo => tipo.Descripcion)
+                .HasMaxLength(255);
+
+            entidad.Property(tipo => tipo.EstadoRegistro)
+                .HasColumnType("enum('Activo','Inactivo')")
+                .HasDefaultValue(EstadosRegistro.Activo)
+                .IsRequired();
+
+            entidad.HasIndex(tipo => tipo.Nombre)
+                .IsUnique()
+                .HasDatabaseName("UX_TipoActivo_Nombre");
+        });
+
+        builder.Entity<CategoriaActivo>(entidad =>
+        {
+            entidad.ToTable("CategoriaActivo");
+
+            entidad.HasKey(categoria => categoria.IdCategoriaActivo);
+
+            entidad.Property(categoria => categoria.IdCategoriaActivo)
+                .ValueGeneratedOnAdd();
+
+            entidad.Property(categoria => categoria.Nombre)
+                .HasMaxLength(100)
+                .IsRequired();
+
+            entidad.Property(categoria => categoria.Descripcion)
+                .HasMaxLength(255);
+
+            entidad.Property(categoria => categoria.EstadoRegistro)
+                .HasColumnType("enum('Activo','Inactivo')")
+                .HasDefaultValue(EstadosRegistro.Activo)
+                .IsRequired();
+
+            entidad.HasIndex(categoria => categoria.IdTipoActivo)
+                .HasDatabaseName("IX_CategoriaActivo_IdTipoActivo");
+
+            entidad.HasIndex(categoria => categoria.Nombre)
+                .HasDatabaseName("IX_CategoriaActivo_Nombre");
+
+            entidad.HasOne(categoria => categoria.TipoActivo)
+                .WithMany()
+                .HasForeignKey(categoria => categoria.IdTipoActivo)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_CategoriaActivo_TipoActivo");
+        });
+
         builder.Entity<Activo>(entidad =>
         {
             entidad.ToTable("Activo");
@@ -1442,6 +1506,45 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                 .HasMaxLength(150)
                 .IsRequired();
 
+            entidad.Property(activo => activo.Marca)
+                .HasMaxLength(100);
+
+            entidad.Property(activo => activo.Modelo)
+                .HasMaxLength(100);
+
+            entidad.Property(activo => activo.NumeroSerie)
+                .HasMaxLength(100);
+
+            entidad.Property(activo => activo.Placa)
+                .HasMaxLength(30);
+
+            entidad.Property(activo => activo.Descripcion)
+                .HasMaxLength(500);
+
+            entidad.Property(activo => activo.FechaAdquisicion)
+                .HasColumnType("date");
+
+            entidad.Property(activo => activo.ValorAdquisicion)
+                .HasPrecision(18, 2);
+
+            entidad.Property(activo => activo.UbicacionActual)
+                .HasMaxLength(150);
+
+            entidad.Property(activo => activo.Observaciones)
+                .HasMaxLength(500);
+
+            entidad.Property(activo => activo.FechaCreacion)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .IsRequired();
+
+            entidad.Property(activo => activo.CreadoPor)
+                .HasMaxLength(255);
+
+            entidad.Property(activo => activo.FechaModificacion);
+
+            entidad.Property(activo => activo.ModificadoPor)
+                .HasMaxLength(255);
+
             entidad.Property(activo => activo.EstadoRegistro)
                 .HasColumnType("enum('Activo','Inactivo')")
                 .HasDefaultValue(EstadosRegistro.Activo)
@@ -1454,8 +1557,26 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             entidad.HasIndex(activo => activo.NombreActivo)
                 .HasDatabaseName("IX_Activo_NombreActivo");
 
+            entidad.HasIndex(activo => activo.IdTipoActivo)
+                .HasDatabaseName("IX_Activo_IdTipoActivo");
+
+            entidad.HasIndex(activo => activo.IdCategoriaActivo)
+                .HasDatabaseName("IX_Activo_IdCategoriaActivo");
+
             entidad.HasIndex(activo => activo.IdEstadoActivo)
                 .HasDatabaseName("IX_Activo_IdEstadoActivo");
+
+            entidad.HasOne(activo => activo.TipoActivo)
+                .WithMany()
+                .HasForeignKey(activo => activo.IdTipoActivo)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_Activo_TipoActivo");
+
+            entidad.HasOne(activo => activo.CategoriaActivo)
+                .WithMany()
+                .HasForeignKey(activo => activo.IdCategoriaActivo)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_Activo_CategoriaActivo");
 
             entidad.HasOne(activo => activo.EstadoActivo)
                 .WithMany()

@@ -1,0 +1,325 @@
+@page "/operaciones/activos"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Administrador,Operaciones")]
+@rendermode InteractiveServer
+@using SIGECDC.Application.Activos
+@inject IActivoService ActivoService
+@inject ILogger<Activos> Logger
+
+<PageTitle>Activos | SIGE-CDC</PageTitle>
+
+<section class="page-banner">
+    <div class="container page-banner__inner stack--tight">
+        <p class="eyebrow">Operaciones</p>
+        <h1>Gestion de activos.</h1>
+        <p class="lead">Registre y consulte los activos institucionales, su estado y ubicacion.</p>
+    </div>
+</section>
+
+<section class="section-shell">
+    <div class="container admin-grid">
+        <article class="form-section">
+            <h2>@TituloFormulario</h2>
+
+            @if (!string.IsNullOrWhiteSpace(mensajeFormulario))
+            {
+                <div class="alert alert--info">@mensajeFormulario</div>
+            }
+
+            <EditForm Model="solicitud" OnValidSubmit="GuardarActivoAsync">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <div class="form-grid">
+                    <div class="field">
+                        <label for="codigoActivo">Codigo</label>
+                        <InputText id="codigoActivo" class="form-control" @bind-Value="solicitud.CodigoActivo" />
+                    </div>
+
+                    <div class="field">
+                        <label for="nombreActivo">Nombre del activo</label>
+                        <InputText id="nombreActivo" class="form-control" @bind-Value="solicitud.NombreActivo" />
+                    </div>
+
+                    <div class="field">
+                        <label for="tipoActivo">Tipo de activo</label>
+                        <select id="tipoActivo" class="form-control" @bind="solicitud.IdTipoActivo" @bind:after="OnTipoActivoChangedAsync">
+                            <option value="">Seleccione un tipo</option>
+                            @foreach (var tipo in tiposActivo)
+                            {
+                                <option value="@tipo.IdTipoActivo">@tipo.Nombre</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="field">
+                        <label for="categoriaActivo">Categoria</label>
+                        <select id="categoriaActivo" class="form-control" @bind="solicitud.IdCategoriaActivo">
+                            <option value="">Seleccione una categoria</option>
+                            @foreach (var categoria in categoriasActivo)
+                            {
+                                <option value="@categoria.IdCategoriaActivo">@categoria.Nombre</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="field">
+                        <label for="marca">Marca</label>
+                        <InputText id="marca" class="form-control" @bind-Value="solicitud.Marca" />
+                    </div>
+
+                    <div class="field">
+                        <label for="modelo">Modelo</label>
+                        <InputText id="modelo" class="form-control" @bind-Value="solicitud.Modelo" />
+                    </div>
+
+                    <div class="field">
+                        <label for="numeroSerie">Numero de serie</label>
+                        <InputText id="numeroSerie" class="form-control" @bind-Value="solicitud.NumeroSerie" />
+                    </div>
+
+                    <div class="field">
+                        <label for="placa">Placa</label>
+                        <InputText id="placa" class="form-control" @bind-Value="solicitud.Placa" />
+                    </div>
+
+                    <div class="field">
+                        <label for="fechaAdquisicion">Fecha de adquisicion</label>
+                        <InputDate id="fechaAdquisicion" class="form-control" @bind-Value="solicitud.FechaAdquisicion" />
+                    </div>
+
+                    <div class="field">
+                        <label for="valorAdquisicion">Valor de adquisicion</label>
+                        <InputNumber id="valorAdquisicion" class="form-control" @bind-Value="solicitud.ValorAdquisicion" />
+                    </div>
+
+                    <div class="field">
+                        <label for="ubicacionActual">Ubicacion actual</label>
+                        <InputText id="ubicacionActual" class="form-control" @bind-Value="solicitud.UbicacionActual" />
+                    </div>
+
+                    <div class="field">
+                        <label for="estadoActivo">Estado</label>
+                        <InputSelect id="estadoActivo" class="form-control" @bind-Value="solicitud.IdEstadoActivo">
+                            <option value="">Seleccione un estado</option>
+                            @foreach (var estado in estadosActivo)
+                            {
+                                <option value="@estado.IdEstadoActivo">@estado.Nombre</option>
+                            }
+                        </InputSelect>
+                    </div>
+
+                    <div class="field field--span-2">
+                        <label for="descripcion">Descripcion</label>
+                        <InputTextArea id="descripcion" class="form-control" @bind-Value="solicitud.Descripcion" />
+                    </div>
+
+                    <div class="field field--span-2">
+                        <label for="observaciones">Observaciones</label>
+                        <InputTextArea id="observaciones" class="form-control" @bind-Value="solicitud.Observaciones" />
+                    </div>
+                </div>
+
+                <div class="form-actions mt-3">
+                    <button class="btn btn--primary" type="submit" disabled="@guardando">
+                        @(guardando ? "Guardando..." : "Guardar activo")
+                    </button>
+                    <button class="btn btn--secondary" type="button" disabled="@guardando" @onclick="PrepararNuevoActivo">Nuevo activo</button>
+                </div>
+            </EditForm>
+        </article>
+
+        <article class="table-card">
+            <div class="table-toolbar">
+                <div>
+                    <h2 class="card__title">Activos registrados</h2>
+                    <p class="card__meta">Inventario vigente de activos institucionales.</p>
+                </div>
+                <span class="badge badge--info">@activos.Count activos</span>
+            </div>
+
+            @if (cargando)
+            {
+                <div class="empty-state">
+                    <strong>Cargando activos</strong>
+                    <p class="text-muted">Estamos recuperando los registros de activos.</p>
+                </div>
+            }
+            else if (activos.Count == 0)
+            {
+                <div class="empty-state">
+                    <strong>No hay activos registrados</strong>
+                    <p class="text-muted">Registre el primer activo desde el formulario.</p>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Codigo</th>
+                                <th>Activo</th>
+                                <th>Tipo / Categoria</th>
+                                <th>Marca / Modelo</th>
+                                <th>Serie / Placa</th>
+                                <th>Ubicacion</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var activo in activos)
+                            {
+                                <tr>
+                                    <td>@activo.CodigoActivo</td>
+                                    <td>
+                                        <strong>@activo.NombreActivo</strong>
+                                        <p class="card__meta">@activo.Descripcion</p>
+                                    </td>
+                                    <td>
+                                        <small>@activo.TipoActivo</small><br />
+                                        <small>@activo.CategoriaActivo</small>
+                                    </td>
+                                    <td>
+                                        <small>@(string.IsNullOrWhiteSpace(activo.Marca) ? "-" : activo.Marca)</small><br />
+                                        <small>@(string.IsNullOrWhiteSpace(activo.Modelo) ? "-" : activo.Modelo)</small>
+                                    </td>
+                                    <td>
+                                        <small>S: @(string.IsNullOrWhiteSpace(activo.NumeroSerie) ? "-" : activo.NumeroSerie)</small><br />
+                                        <small>P: @(string.IsNullOrWhiteSpace(activo.Placa) ? "-" : activo.Placa)</small>
+                                    </td>
+                                    <td>@(string.IsNullOrWhiteSpace(activo.UbicacionActual) ? "-" : activo.UbicacionActual)</td>
+                                    <td><span class="badge badge--accent">@activo.EstadoActivo</span></td>
+                                    <td>
+                                        <div class="table-actions">
+                                            <button type="button" @onclick="() => EditarActivo(activo)">Editar</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </article>
+    </div>
+</section>
+
+@code {
+    private List<ActivoResumen> activos = [];
+    private List<TipoActivoOpcion> tiposActivo = [];
+    private List<CategoriaActivoOpcion> categoriasActivo = [];
+    private List<EstadoActivoOpcion> estadosActivo = [];
+    private SolicitudActivo solicitud = new();
+    private bool cargando = true;
+    private bool guardando;
+    private string? mensajeFormulario;
+
+    private string TituloFormulario => solicitud.IdActivo == 0
+        ? "Nuevo activo"
+        : "Editar activo";
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            tiposActivo = [.. await ActivoService.ObtenerTiposActivoAsync()];
+            estadosActivo = [.. await ActivoService.ObtenerEstadosActivoAsync()];
+            await CargarActivosAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudo cargar la gestión de activos.");
+            mensajeFormulario = "No se pudo cargar la información de activos. Verifique la conexión e intente nuevamente.";
+            cargando = false;
+        }
+    }
+
+    private async Task CargarActivosAsync()
+    {
+        cargando = true;
+        activos = [.. await ActivoService.ObtenerActivosAsync()];
+        cargando = false;
+    }
+
+    private async Task OnTipoActivoChangedAsync()
+    {
+        solicitud.IdCategoriaActivo = null;
+        var idTipo = solicitud.IdTipoActivo ?? 0;
+        if (idTipo > 0)
+        {
+            categoriasActivo = [.. await ActivoService.ObtenerCategoriasPorTipoAsync(idTipo)];
+        }
+        else
+        {
+            categoriasActivo = [];
+        }
+    }
+
+    private async Task CargarCategoriasAsync(int idTipoActivo)
+    {
+        categoriasActivo = [.. await ActivoService.ObtenerCategoriasPorTipoAsync(idTipoActivo)];
+    }
+
+    private async Task GuardarActivoAsync()
+    {
+        if (guardando)
+        {
+            return;
+        }
+
+        guardando = true;
+        mensajeFormulario = null;
+
+        try
+        {
+            await ActivoService.GuardarActivoAsync(solicitud);
+            PrepararNuevoActivo();
+            mensajeFormulario = "Activo guardado correctamente.";
+            await CargarActivosAsync();
+        }
+        catch (ArgumentException ex)
+        {
+            mensajeFormulario = ex.Message;
+        }
+        catch (InvalidOperationException ex)
+        {
+            mensajeFormulario = ex.Message;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudo guardar el activo {CodigoActivo}.", solicitud.CodigoActivo);
+            mensajeFormulario = "No se pudo guardar el activo. Intente nuevamente y, si el problema continúa, revise la configuración de la base de datos.";
+        }
+        finally
+        {
+            guardando = false;
+        }
+    }
+
+    private void EditarActivo(ActivoResumen activo)
+    {
+        solicitud = new SolicitudActivo
+        {
+            IdActivo = activo.IdActivo,
+            CodigoActivo = activo.CodigoActivo,
+            NombreActivo = activo.NombreActivo,
+            Marca = activo.Marca,
+            Modelo = activo.Modelo,
+            NumeroSerie = activo.NumeroSerie,
+            Placa = activo.Placa,
+            Descripcion = activo.Descripcion,
+            UbicacionActual = activo.UbicacionActual,
+            IdEstadoActivo = activo.IdEstadoActivo == 0 ? null : activo.IdEstadoActivo,
+            Observaciones = activo.Observaciones
+        };
+        mensajeFormulario = null;
+    }
+
+    private void PrepararNuevoActivo()
+    {
+        solicitud = new SolicitudActivo();
+        categoriasActivo = [];
+        mensajeFormulario = null;
+    }
+}
