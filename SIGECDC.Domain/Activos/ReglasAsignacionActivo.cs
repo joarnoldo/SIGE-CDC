@@ -12,8 +12,12 @@ public static class ReglasAsignacionActivo
 
     public static bool EsEstadoAsignable(string? estado)
     {
-        return string.Equals(estado, EstadosActivo.Disponible, StringComparison.OrdinalIgnoreCase)
-            || string.Equals(estado, EstadosActivo.Asignado, StringComparison.OrdinalIgnoreCase);
+        return string.Equals(estado, EstadosActivo.Disponible, StringComparison.OrdinalIgnoreCase);
+    }
+
+    public static bool EsEstadoCompatibleConAsignacionVigente(string? estado)
+    {
+        return string.Equals(estado, EstadosActivo.Asignado, StringComparison.OrdinalIgnoreCase);
     }
 
     public static void ValidarEstadoAsignable(string? estado)

@@ -27,7 +27,8 @@ public static class ReglasEstadoActivo
             throw new InvalidOperationException("Un activo dado de baja no puede regresar a un estado operativo.");
         }
 
-        if (tieneAsignacionNoFinalizada && !ReglasAsignacionActivo.EsEstadoAsignable(estadoNuevo))
+        if (tieneAsignacionNoFinalizada
+            && !ReglasAsignacionActivo.EsEstadoCompatibleConAsignacionVigente(estadoNuevo))
         {
             throw new InvalidOperationException(
                 "El activo posee una asignación activa o futura y no puede pasar a un estado incompatible.");

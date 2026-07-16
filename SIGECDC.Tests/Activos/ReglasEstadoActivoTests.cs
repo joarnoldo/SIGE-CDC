@@ -40,14 +40,22 @@ public sealed class ReglasEstadoActivoTests
                 tieneAsignacionNoFinalizada: true));
     }
 
-    [Theory]
-    [InlineData(EstadosActivo.Disponible)]
-    [InlineData(EstadosActivo.Asignado)]
-    public void ValidarTransicion_ConAsignacionNoFinalizada_PermiteEstadosAsignables(string estadoNuevo)
+    [Fact]
+    public void ValidarTransicion_ConAsignacionNoFinalizada_PermiteSoloAsignado()
     {
         ReglasEstadoActivo.ValidarTransicion(
             EstadosActivo.Asignado,
-            estadoNuevo,
+            EstadosActivo.Asignado,
             tieneAsignacionNoFinalizada: true);
+    }
+
+    [Fact]
+    public void ValidarTransicion_ConAsignacionNoFinalizada_RechazaDisponible()
+    {
+        Assert.Throws<InvalidOperationException>(() =>
+            ReglasEstadoActivo.ValidarTransicion(
+                EstadosActivo.Asignado,
+                EstadosActivo.Disponible,
+                tieneAsignacionNoFinalizada: true));
     }
 }

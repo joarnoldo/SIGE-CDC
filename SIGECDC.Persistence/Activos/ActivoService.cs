@@ -309,7 +309,8 @@ public sealed class ActivoService(ApplicationDbContext contexto) : IActivoServic
             .AsNoTracking()
             .Where(registro => registro.Entidad == "Activo"
                 && registro.IdRegistro == idActivo.ToString()
-                && registro.Accion == "Actualización de estado y ubicación")
+                && (registro.Accion == "Actualización de estado y ubicación"
+                    || registro.Accion == "Actualización de estado por asignación"))
             .OrderByDescending(registro => registro.FechaHora)
             .Take(100)
             .Select(registro => new TrazabilidadActivoResumen

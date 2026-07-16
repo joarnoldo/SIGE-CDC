@@ -30,7 +30,7 @@ public sealed class ReglasAsignacionActivoTests
 
     [Theory]
     [InlineData(EstadosActivo.Disponible, true)]
-    [InlineData(EstadosActivo.Asignado, true)]
+    [InlineData(EstadosActivo.Asignado, false)]
     [InlineData(EstadosActivo.EnMantenimiento, false)]
     [InlineData(EstadosActivo.FueraDeServicio, false)]
     [InlineData(EstadosActivo.DadoDeBaja, false)]
@@ -38,6 +38,21 @@ public sealed class ReglasAsignacionActivoTests
     public void EsEstadoAsignable_RespetaLosEstadosOperativos(string? estado, bool esperado)
     {
         Assert.Equal(esperado, ReglasAsignacionActivo.EsEstadoAsignable(estado));
+    }
+
+    [Theory]
+    [InlineData(EstadosActivo.Disponible, false)]
+    [InlineData(EstadosActivo.Asignado, true)]
+    [InlineData(EstadosActivo.EnMantenimiento, false)]
+    [InlineData(EstadosActivo.FueraDeServicio, false)]
+    [InlineData(EstadosActivo.DadoDeBaja, false)]
+    public void EsEstadoCompatibleConAsignacionVigente_SoloPermiteAsignado(
+        string estado,
+        bool esperado)
+    {
+        Assert.Equal(
+            esperado,
+            ReglasAsignacionActivo.EsEstadoCompatibleConAsignacionVigente(estado));
     }
 
     [Fact]
@@ -59,7 +74,7 @@ public sealed class ReglasAsignacionActivoTests
 
     [Theory]
     [InlineData(EstadosActivo.Disponible, false, true)]
-    [InlineData(EstadosActivo.Asignado, false, true)]
+    [InlineData(EstadosActivo.Asignado, false, false)]
     [InlineData(EstadosActivo.Disponible, true, false)]
     [InlineData(EstadosActivo.Asignado, true, false)]
     [InlineData(EstadosActivo.EnMantenimiento, false, false)]

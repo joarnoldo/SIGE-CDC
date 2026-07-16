@@ -14,6 +14,8 @@ public static class ValidacionConexionMySql
         "EstadoProyecto",
         "Proyecto",
         "EstadoActivo",
+        "TipoActivo",
+        "CategoriaActivo",
         "Activo",
         "AsignacionActivoProyecto",
         "Galeria",
@@ -103,7 +105,8 @@ public static class ValidacionConexionMySql
             WHERE table_schema = DATABASE()
               AND table_name IN (
                   'AspNetUsers', 'AspNetRoles', 'AspNetUserRoles', 'EstadoProyecto',
-                  'Proyecto', 'EstadoActivo', 'Activo', 'AsignacionActivoProyecto',
+                  'Proyecto', 'EstadoActivo', 'TipoActivo', 'CategoriaActivo',
+                  'Activo', 'AsignacionActivoProyecto',
                   'Galeria', 'ImagenGaleria', 'DocumentoArchivo',
                   'TipoDocumento', 'EstadoPlanilla', 'TipoIncidenciaPlanilla',
                   'PeriodoPlanilla', 'Planilla', 'DetallePlanilla', 'IncidenciaPlanilla',

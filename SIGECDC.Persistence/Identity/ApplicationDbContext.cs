@@ -1607,6 +1607,14 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             entidad.Property(asignacion => asignacion.IdAsignacionActivoProyecto)
                 .ValueGeneratedOnAdd();
 
+            entidad.Property(asignacion => asignacion.FechaInicio)
+                .HasColumnType("date")
+                .IsRequired();
+
+            entidad.Property(asignacion => asignacion.FechaFin)
+                .HasColumnType("date")
+                .IsRequired();
+
             entidad.Property(asignacion => asignacion.Observaciones)
                 .HasMaxLength(500);
 
