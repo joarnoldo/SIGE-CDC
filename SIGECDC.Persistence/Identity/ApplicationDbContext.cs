@@ -1479,9 +1479,8 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             entidad.HasIndex(categoria => categoria.IdTipoActivo)
                 .HasDatabaseName("IX_CategoriaActivo_IdTipoActivo");
 
-            entidad.HasIndex(categoria => new { categoria.IdTipoActivo, categoria.Nombre })
-                .IsUnique()
-                .HasDatabaseName("UX_CategoriaActivo_Tipo_Nombre");
+            entidad.HasIndex(categoria => categoria.Nombre)
+                .HasDatabaseName("IX_CategoriaActivo_Nombre");
 
             entidad.HasOne(categoria => categoria.TipoActivo)
                 .WithMany()
