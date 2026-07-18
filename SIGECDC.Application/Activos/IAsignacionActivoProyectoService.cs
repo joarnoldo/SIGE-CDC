@@ -13,6 +13,10 @@ public interface IAsignacionActivoProyectoService
         DateTime fechaFin,
         CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyList<DisponibilidadActivoResumen>> ConsultarDisponibilidadAsync(
+        FiltroDisponibilidadActivo filtro,
+        CancellationToken cancellationToken = default);
+
     Task<long> CrearAsignacionAsync(
         SolicitudAsignacionActivoProyecto solicitud,
         string idUsuarioActual,

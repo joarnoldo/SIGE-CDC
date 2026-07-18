@@ -1583,6 +1583,18 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                 .HasForeignKey(activo => activo.IdEstadoActivo)
                 .OnDelete(DeleteBehavior.Restrict)
                 .HasConstraintName("FK_Activo_EstadoActivo");
+
+            entidad.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(activo => activo.CreadoPor)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_Activo_CreadoPor");
+
+            entidad.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(activo => activo.ModificadoPor)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_Activo_ModificadoPor");
         });
 
         builder.Entity<AsignacionActivoProyecto>(entidad =>
@@ -1593,6 +1605,14 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
 
             entidad.Property(asignacion => asignacion.IdAsignacionActivoProyecto)
                 .ValueGeneratedOnAdd();
+
+            entidad.Property(asignacion => asignacion.FechaInicio)
+                .HasColumnType("date")
+                .IsRequired();
+
+            entidad.Property(asignacion => asignacion.FechaFin)
+                .HasColumnType("date")
+                .IsRequired();
 
             entidad.Property(asignacion => asignacion.Observaciones)
                 .HasMaxLength(500);

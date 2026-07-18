@@ -26,5 +26,7 @@ public sealed class MapeoAsignacionActivoTests
         Assert.Equal("AsignacionActivoProyecto", entidadAsignacion.GetTableName());
         Assert.Equal(3, entidadAsignacion.GetForeignKeys().Count());
         Assert.NotNull(entidadAsignacion.FindProperty(nameof(AsignacionActivoProyecto.AsignadoPor)));
+        Assert.Equal("date", entidadAsignacion.FindProperty(nameof(AsignacionActivoProyecto.FechaInicio))?.GetColumnType());
+        Assert.Equal("date", entidadAsignacion.FindProperty(nameof(AsignacionActivoProyecto.FechaFin))?.GetColumnType());
     }
 }

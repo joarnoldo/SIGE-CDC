@@ -12,8 +12,12 @@ public static class ReglasAsignacionActivo
 
     public static bool EsEstadoAsignable(string? estado)
     {
-        return string.Equals(estado, EstadosActivo.Disponible, StringComparison.OrdinalIgnoreCase)
-            || string.Equals(estado, EstadosActivo.Asignado, StringComparison.OrdinalIgnoreCase);
+        return string.Equals(estado, EstadosActivo.Disponible, StringComparison.OrdinalIgnoreCase);
+    }
+
+    public static bool EsEstadoCompatibleConAsignacionVigente(string? estado)
+    {
+        return string.Equals(estado, EstadosActivo.Asignado, StringComparison.OrdinalIgnoreCase);
     }
 
     public static void ValidarEstadoAsignable(string? estado)
@@ -23,6 +27,23 @@ public static class ReglasAsignacionActivo
             throw new InvalidOperationException(
                 $"El activo está en estado {estado ?? "Sin estado"} y no se encuentra disponible para asignación.");
         }
+    }
+
+    public static bool EstaDisponible(string? estado, bool tieneConflictoDeAsignacion)
+    {
+        return EsEstadoAsignable(estado) && !tieneConflictoDeAsignacion;
+    }
+
+    public static string DescribirDisponibilidad(string? estado, bool tieneConflictoDeAsignacion)
+    {
+        if (!EsEstadoAsignable(estado))
+        {
+            return $"No disponible por estado {estado ?? "Sin estado"}.";
+        }
+
+        return tieneConflictoDeAsignacion
+            ? "No disponible por una asignación vigente en el rango consultado."
+            : "Disponible para el rango consultado.";
     }
 
     public static bool HayTraslape(
