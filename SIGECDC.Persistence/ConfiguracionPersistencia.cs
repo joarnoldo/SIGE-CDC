@@ -45,7 +45,8 @@ public static class ConfiguracionPersistencia
         servicios.AddScoped<IActivoService, ActivoService>();
         servicios.AddScoped<IAsignacionActivoProyectoService, AsignacionActivoProyectoService>();
         servicios.AddScoped<IHistorialSistemaService, HistorialSistemaService>();
+		servicios.AddScoped<IMantenimientoService, MantenimientoService>();
 
-        return servicios;
+		return servicios;
     }
 }

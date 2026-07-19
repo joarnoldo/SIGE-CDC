@@ -46,7 +46,11 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
 
     public DbSet<AsignacionActivoProyecto> AsignacionesActivoProyecto => Set<AsignacionActivoProyecto>();
 
-    public DbSet<PaginaContenido> PaginasContenido => Set<PaginaContenido>();
+	public DbSet<EstadoMantenimiento> EstadosMantenimiento => Set<EstadoMantenimiento>();
+
+	public DbSet<Mantenimiento> Mantenimientos => Set<Mantenimiento>();
+
+	public DbSet<PaginaContenido> PaginasContenido => Set<PaginaContenido>();
 
     public DbSet<EstadoProyecto> EstadosProyecto => Set<EstadoProyecto>();
 
@@ -54,23 +58,111 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
 
     public DbSet<ProyectoPublicado> ProyectosPublicados => Set<ProyectoPublicado>();
 
-    protected override void OnModelCreating(ModelBuilder builder)
-    {
-        base.OnModelCreating(builder);
+	protected override void OnModelCreating(ModelBuilder builder)
+	{
+		base.OnModelCreating(builder);
 
-        builder.Entity<ApplicationUser>(entidad =>
-        {
-            entidad.Property(usuario => usuario.EstadoRegistro)
-                .HasColumnType("enum('Activo','Inactivo')")
-                .HasDefaultValue(EstadosRegistro.Activo)
-                .IsRequired();
+		builder.Entity<ApplicationUser>(entidad =>
+		{
+			entidad.Property(usuario => usuario.EstadoRegistro)
+				.HasColumnType("enum('Activo','Inactivo')")
+				.HasDefaultValue(EstadosRegistro.Activo)
+				.IsRequired();
 
-            entidad.Property(usuario => usuario.FechaCreacion)
-                .HasDefaultValueSql("CURRENT_TIMESTAMP")
-                .IsRequired();
-        });
+			entidad.Property(usuario => usuario.FechaCreacion)
+				.HasDefaultValueSql("CURRENT_TIMESTAMP")
+				.IsRequired();
+		});
 
-        builder.Entity<ConsultaContacto>(entidad =>
+		builder.Entity<Mantenimiento>(entidad =>
+		{
+			entidad.ToTable("Mantenimiento");
+
+			entidad.HasKey(mantenimiento => mantenimiento.IdMantenimiento);
+
+			entidad.Property(mantenimiento => mantenimiento.IdMantenimiento)
+				.ValueGeneratedOnAdd();
+
+			entidad.Property(mantenimiento => mantenimiento.TipoMantenimiento)
+				.HasColumnType("enum('Preventivo','Correctivo')")
+				.IsRequired();
+
+			entidad.Property(mantenimiento => mantenimiento.FechaProgramada)
+				.HasColumnType("date")
+				.IsRequired();
+
+			entidad.Property(mantenimiento => mantenimiento.FechaInicio);
+
+			entidad.Property(mantenimiento => mantenimiento.FechaFin);
+
+			entidad.Property(mantenimiento => mantenimiento.Descripcion)
+				.HasMaxLength(500);
+
+			entidad.Property(mantenimiento => mantenimiento.CostoEstimado)
+				.HasPrecision(18, 2);
+
+			entidad.Property(mantenimiento => mantenimiento.CostoReal)
+				.HasPrecision(18, 2);
+
+			entidad.Property(mantenimiento => mantenimiento.TiempoFueraServicioHoras)
+				.HasPrecision(18, 2);
+
+			entidad.Property(mantenimiento => mantenimiento.Resultado)
+				.HasMaxLength(500);
+
+			entidad.Property(mantenimiento => mantenimiento.Responsable)
+				.HasMaxLength(150);
+
+			entidad.Property(mantenimiento => mantenimiento.FechaCreacion)
+				.HasDefaultValueSql("CURRENT_TIMESTAMP")
+				.IsRequired();
+
+			entidad.Property(mantenimiento => mantenimiento.CreadoPor)
+				.HasMaxLength(255);
+
+			entidad.Property(mantenimiento => mantenimiento.FechaModificacion);
+
+			entidad.Property(mantenimiento => mantenimiento.ModificadoPor)
+				.HasMaxLength(255);
+
+			entidad.Property(mantenimiento => mantenimiento.EstadoRegistro)
+				.HasColumnType("enum('Activo','Inactivo')")
+				.HasDefaultValue(EstadosRegistro.Activo)
+				.IsRequired();
+
+			entidad.HasIndex(mantenimiento => mantenimiento.IdActivo)
+				.HasDatabaseName("IX_Mantenimiento_IdActivo");
+
+			entidad.HasIndex(mantenimiento => mantenimiento.IdProyecto)
+				.HasDatabaseName("IX_Mantenimiento_IdProyecto");
+
+			entidad.HasIndex(mantenimiento => mantenimiento.IdEstadoMantenimiento)
+				.HasDatabaseName("IX_Mantenimiento_IdEstadoMantenimiento");
+
+			entidad.HasIndex(mantenimiento => mantenimiento.FechaProgramada)
+				.HasDatabaseName("IX_Mantenimiento_FechaProgramada");
+
+			entidad.HasOne(mantenimiento => mantenimiento.Activo)
+				.WithMany()
+				.HasForeignKey(mantenimiento => mantenimiento.IdActivo)
+				.OnDelete(DeleteBehavior.Restrict)
+				.HasConstraintName("FK_Mantenimiento_Activo");
+
+			entidad.HasOne(mantenimiento => mantenimiento.Proyecto)
+				.WithMany()
+				.HasForeignKey(mantenimiento => mantenimiento.IdProyecto)
+				.OnDelete(DeleteBehavior.SetNull)
+				.HasConstraintName("FK_Mantenimiento_Proyecto");
+
+			entidad.HasOne(mantenimiento => mantenimiento.EstadoMantenimiento)
+				.WithMany()
+				.HasForeignKey(mantenimiento => mantenimiento.IdEstadoMantenimiento)
+				.OnDelete(DeleteBehavior.Restrict)
+				.HasConstraintName("FK_Mantenimiento_EstadoMantenimiento");
+		});
+
+
+		builder.Entity<ConsultaContacto>(entidad =>
         {
             entidad.ToTable("ConsultaContacto");
 
@@ -333,6 +425,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                 .OnDelete(DeleteBehavior.Restrict)
                 .HasConstraintName("FK_ImagenGaleria_DocumentoArchivo");
         });
+
         builder.Entity<EstadoLaboral>(entidad =>
         {
             entidad.ToTable("EstadoLaboral");
@@ -1657,7 +1750,33 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                 .HasConstraintName("FK_AsignacionActivoProyecto_AsignadoPor");
         });
 
-        builder.Entity<EstadoProyecto>(entidad =>
+		builder.Entity<EstadoMantenimiento>(entidad =>
+		{
+			entidad.ToTable("EstadoMantenimiento");
+
+			entidad.HasKey(estado => estado.IdEstadoMantenimiento);
+
+			entidad.Property(estado => estado.IdEstadoMantenimiento)
+				.ValueGeneratedOnAdd();
+
+			entidad.Property(estado => estado.Nombre)
+				.HasMaxLength(50)
+				.IsRequired();
+
+			entidad.Property(estado => estado.Descripcion)
+				.HasMaxLength(255);
+
+			entidad.Property(estado => estado.EstadoRegistro)
+				.HasColumnType("enum('Activo','Inactivo')")
+				.HasDefaultValue(EstadosRegistro.Activo)
+				.IsRequired();
+
+			entidad.HasIndex(estado => estado.Nombre)
+				.IsUnique()
+				.HasDatabaseName("UX_EstadoMantenimiento_Nombre");
+		});
+
+		builder.Entity<EstadoProyecto>(entidad =>
         {
             entidad.ToTable("EstadoProyecto");
 
