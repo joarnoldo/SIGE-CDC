@@ -4,7 +4,11 @@ public interface IProyectoPublicadoService
 {
     Task<IReadOnlyList<ProyectoPublicadoResumen>> ObtenerProyectosAsync(CancellationToken cancellationToken = default);
 
-    Task<IReadOnlyList<ProyectoPublicadoResumen>> ObtenerProyectosPublicadosAsync(CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<ProyectoPortafolioResumen>> ObtenerProyectosPublicadosAsync(
+        string? estadoVisual = null,
+        CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<string>> ObtenerEstadosPublicadosAsync(CancellationToken cancellationToken = default);
 
     Task GuardarProyectoPublicadoAsync(SolicitudProyectoPublicado solicitud, CancellationToken cancellationToken = default);
 

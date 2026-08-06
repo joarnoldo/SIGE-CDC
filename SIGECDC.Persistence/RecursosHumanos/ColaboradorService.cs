@@ -1,5 +1,8 @@
+using System.Data;
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using SIGECDC.Application.RecursosHumanos;
+using SIGECDC.Domain.Auditoria;
 using SIGECDC.Domain.RecursosHumanos;
 using SIGECDC.Persistence.Identity;
 
@@ -8,6 +11,8 @@ namespace SIGECDC.Persistence.RecursosHumanos;
 public sealed class ColaboradorService(ApplicationDbContext contexto) : IColaboradorService
 {
     private const string EstadoRegistroActivo = "Activo";
+    private const string RolEmpleado = "Empleado";
+    private const string EntidadAuditoria = "Colaborador";
 
     public async Task<IReadOnlyList<ColaboradorResumen>> ObtenerColaboradoresAsync(
         string? busqueda = null,
@@ -123,6 +128,11 @@ public sealed class ColaboradorService(ApplicationDbContext contexto) : IColabor
                 Departamento = colaborador.Departamento != null ? colaborador.Departamento.Nombre : string.Empty,
                 IdPuesto = colaborador.IdPuesto,
                 Puesto = colaborador.Puesto != null ? colaborador.Puesto.Nombre : string.Empty,
+                IdUsuario = colaborador.IdUsuario,
+                CuentaUsuario = contexto.Users
+                    .Where(usuario => usuario.Id == colaborador.IdUsuario)
+                    .Select(usuario => usuario.UserName ?? usuario.Email ?? usuario.Id)
+                    .FirstOrDefault(),
                 Observaciones = colaborador.Observaciones
             })
             .FirstOrDefaultAsync(cancellationToken);
@@ -165,11 +175,50 @@ public sealed class ColaboradorService(ApplicationDbContext contexto) : IColabor
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<long> RegistrarColaboradorAsync(
-        SolicitudColaborador solicitud,
-        string? idUsuarioActual = null,
+    public async Task<IReadOnlyList<CuentaEmpleadoOpcion>> ObtenerCuentasEmpleadoDisponiblesAsync(
+        long idColaborador,
         CancellationToken cancellationToken = default)
     {
+        var colaboradorExiste = await contexto.Colaboradores
+            .AsNoTracking()
+            .AnyAsync(colaborador => colaborador.IdColaborador == idColaborador
+                && colaborador.EstadoRegistro == EstadoRegistroActivo,
+                cancellationToken);
+
+        if (!colaboradorExiste)
+        {
+            throw new InvalidOperationException("No se encontró el colaborador solicitado.");
+        }
+
+        var idsUsuariosEmpleado = contexto.UserRoles
+            .Join(
+                contexto.Roles,
+                usuarioRol => usuarioRol.RoleId,
+                rol => rol.Id,
+                (usuarioRol, rol) => new { usuarioRol.UserId, rol.Name })
+            .Where(registro => registro.Name == RolEmpleado)
+            .Select(registro => registro.UserId);
+
+        return await contexto.Users
+            .AsNoTracking()
+            .Where(usuario => usuario.EstadoRegistro == EstadoRegistroActivo
+                && idsUsuariosEmpleado.Contains(usuario.Id)
+                && !contexto.Colaboradores.Any(colaborador =>
+                    colaborador.IdUsuario == usuario.Id
+                    && colaborador.IdColaborador != idColaborador))
+            .OrderBy(usuario => usuario.UserName)
+            .Select(usuario => new CuentaEmpleadoOpcion(
+                usuario.Id,
+                usuario.UserName ?? usuario.Email ?? usuario.Id))
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<long> RegistrarColaboradorAsync(
+        SolicitudColaborador solicitud,
+        string idUsuarioActual,
+        CancellationToken cancellationToken = default)
+    {
+        var idUsuario = LimpiarIdUsuarioObligatorio(idUsuarioActual);
         var datos = await ValidarSolicitudAsync(solicitud, null, cancellationToken);
 
         var colaborador = new Colaborador
@@ -191,22 +240,49 @@ public sealed class ColaboradorService(ApplicationDbContext contexto) : IColabor
             IdPuesto = solicitud.IdPuesto,
             Observaciones = datos.Observaciones,
             FechaCreacion = DateTime.Now,
-            CreadoPor = idUsuarioActual,
+            CreadoPor = idUsuario,
             EstadoRegistro = EstadoRegistroActivo
         };
 
-        contexto.Colaboradores.Add(colaborador);
-        await contexto.SaveChangesAsync(cancellationToken);
+        await using var transaccion = await contexto.Database.BeginTransactionAsync(
+            IsolationLevel.ReadCommitted,
+            cancellationToken);
 
-        return colaborador.IdColaborador;
+        try
+        {
+            contexto.Colaboradores.Add(colaborador);
+            await contexto.SaveChangesAsync(cancellationToken);
+
+            contexto.BitacoraAuditoria.Add(new BitacoraAuditoria
+            {
+                IdUsuario = idUsuario,
+                FechaHora = colaborador.FechaCreacion,
+                Accion = "CREAR_COLABORADOR",
+                Entidad = EntidadAuditoria,
+                IdRegistro = colaborador.IdColaborador.ToString(),
+                ValoresNuevos = SerializarSnapshot(colaborador),
+                Observacion = "Expediente de colaborador creado; los valores personales protegidos no se almacenan en la bitácora."
+            });
+
+            await contexto.SaveChangesAsync(cancellationToken);
+            await transaccion.CommitAsync(cancellationToken);
+            return colaborador.IdColaborador;
+        }
+        catch
+        {
+            await transaccion.RollbackAsync(CancellationToken.None);
+            contexto.ChangeTracker.Clear();
+            throw;
+        }
     }
 
     public async Task ActualizarColaboradorAsync(
         long idColaborador,
         SolicitudColaborador solicitud,
-        string? idUsuarioActual = null,
+        string idUsuarioActual,
         CancellationToken cancellationToken = default)
     {
+        var idUsuario = LimpiarIdUsuarioObligatorio(idUsuarioActual);
         var colaborador = await contexto.Colaboradores
             .FirstOrDefaultAsync(
                 colaborador => colaborador.IdColaborador == idColaborador
@@ -219,6 +295,8 @@ public sealed class ColaboradorService(ApplicationDbContext contexto) : IColabor
         }
 
         var datos = await ValidarSolicitudAsync(solicitud, idColaborador, cancellationToken);
+        var valoresAnteriores = SerializarSnapshot(colaborador);
+        var camposProtegidosModificados = ObtenerCamposProtegidosModificados(colaborador, datos);
 
         colaborador.CodigoColaborador = datos.CodigoColaborador;
         colaborador.TipoIdentificacion = datos.TipoIdentificacion;
@@ -237,16 +315,29 @@ public sealed class ColaboradorService(ApplicationDbContext contexto) : IColabor
         colaborador.IdPuesto = solicitud.IdPuesto;
         colaborador.Observaciones = datos.Observaciones;
         colaborador.FechaModificacion = DateTime.Now;
-        colaborador.ModificadoPor = idUsuarioActual;
+        colaborador.ModificadoPor = idUsuario;
+
+        contexto.BitacoraAuditoria.Add(new BitacoraAuditoria
+        {
+            IdUsuario = idUsuario,
+            FechaHora = colaborador.FechaModificacion.Value,
+            Accion = "ACTUALIZAR_COLABORADOR",
+            Entidad = EntidadAuditoria,
+            IdRegistro = colaborador.IdColaborador.ToString(),
+            ValoresAnteriores = valoresAnteriores,
+            ValoresNuevos = SerializarSnapshot(colaborador, camposProtegidosModificados),
+            Observacion = "Expediente de colaborador actualizado; los valores personales protegidos no se almacenan en la bitácora."
+        });
 
         await contexto.SaveChangesAsync(cancellationToken);
     }
 
     public async Task DesactivarColaboradorAsync(
         long idColaborador,
-        string? idUsuarioActual = null,
+        string idUsuarioActual,
         CancellationToken cancellationToken = default)
     {
+        var idUsuario = LimpiarIdUsuarioObligatorio(idUsuarioActual);
         var colaborador = await contexto.Colaboradores
             .FirstOrDefaultAsync(
                 colaborador => colaborador.IdColaborador == idColaborador
@@ -270,17 +361,120 @@ public sealed class ColaboradorService(ApplicationDbContext contexto) : IColabor
             throw new InvalidOperationException("No existe un estado laboral Inactivo disponible.");
         }
 
+        var valoresAnteriores = SerializarSnapshot(colaborador);
         colaborador.IdEstadoLaboral = estadoInactivo.IdEstadoLaboral;
         colaborador.FechaModificacion = DateTime.Now;
-        colaborador.ModificadoPor = idUsuarioActual;
+        colaborador.ModificadoPor = idUsuario;
+
+        contexto.BitacoraAuditoria.Add(new BitacoraAuditoria
+        {
+            IdUsuario = idUsuario,
+            FechaHora = colaborador.FechaModificacion.Value,
+            Accion = "DESACTIVAR_COLABORADOR",
+            Entidad = EntidadAuditoria,
+            IdRegistro = colaborador.IdColaborador.ToString(),
+            ValoresAnteriores = valoresAnteriores,
+            ValoresNuevos = SerializarSnapshot(colaborador),
+            Observacion = "Colaborador marcado con el estado laboral Inactivo."
+        });
 
         await contexto.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task AsignarPuestoYDepartamentoAsync(
-        SolicitudAsignarColaborador solicitud,
+    public async Task VincularCuentaEmpleadoAsync(
+        long idColaborador,
+        SolicitudVinculoCuentaColaborador solicitud,
+        string idUsuarioActual,
         CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(solicitud);
+        var idUsuarioActor = LimpiarIdUsuarioObligatorio(idUsuarioActual);
+
+        var colaborador = await contexto.Colaboradores
+            .FirstOrDefaultAsync(registro => registro.IdColaborador == idColaborador
+                && registro.EstadoRegistro == EstadoRegistroActivo,
+                cancellationToken)
+            ?? throw new InvalidOperationException("No se encontró el colaborador solicitado.");
+
+        var idUsuario = string.IsNullOrWhiteSpace(solicitud.IdUsuario)
+            ? null
+            : solicitud.IdUsuario.Trim();
+
+        if (idUsuario is not null)
+        {
+            if (idUsuario.Length > 255)
+            {
+                throw new ArgumentException("La cuenta seleccionada no es válida.");
+            }
+
+            var cuentaValida = await contexto.Users
+                .AsNoTracking()
+                .AnyAsync(usuario => usuario.Id == idUsuario
+                    && usuario.EstadoRegistro == EstadoRegistroActivo
+                    && contexto.UserRoles.Any(usuarioRol => usuarioRol.UserId == usuario.Id
+                        && contexto.Roles.Any(rol => rol.Id == usuarioRol.RoleId
+                            && rol.Name == RolEmpleado)),
+                    cancellationToken);
+
+            if (!cuentaValida)
+            {
+                throw new InvalidOperationException(
+                    "Solo se puede vincular una cuenta activa con el rol Empleado.");
+            }
+
+            var vinculadaAOtroColaborador = await contexto.Colaboradores
+                .AsNoTracking()
+                .AnyAsync(registro => registro.IdUsuario == idUsuario
+                    && registro.IdColaborador != idColaborador,
+                    cancellationToken);
+
+            if (vinculadaAOtroColaborador)
+            {
+                throw new InvalidOperationException(
+                    "La cuenta seleccionada ya está vinculada con otro colaborador.");
+            }
+        }
+
+        var valoresAnteriores = SerializarSnapshot(colaborador);
+        colaborador.IdUsuario = idUsuario;
+        colaborador.FechaModificacion = DateTime.Now;
+        colaborador.ModificadoPor = idUsuarioActor;
+
+        contexto.BitacoraAuditoria.Add(new BitacoraAuditoria
+        {
+            IdUsuario = idUsuarioActor,
+            FechaHora = colaborador.FechaModificacion.Value,
+            Accion = idUsuario is null
+                ? "DESVINCULAR_CUENTA_COLABORADOR"
+                : "VINCULAR_CUENTA_COLABORADOR",
+            Entidad = EntidadAuditoria,
+            IdRegistro = colaborador.IdColaborador.ToString(),
+            ValoresAnteriores = valoresAnteriores,
+            ValoresNuevos = SerializarSnapshot(colaborador),
+            Observacion = idUsuario is null
+                ? "Cuenta Empleado desvinculada del colaborador."
+                : "Cuenta Empleado vinculada al colaborador."
+        });
+
+        try
+        {
+            await contexto.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException excepcion) when (EsVinculoCuentaDuplicado(excepcion))
+        {
+            contexto.ChangeTracker.Clear();
+            throw new InvalidOperationException(
+                "No fue posible vincular la cuenta porque ya está asignada a otro colaborador.",
+                excepcion);
+        }
+    }
+
+    public async Task AsignarPuestoYDepartamentoAsync(
+        SolicitudAsignarColaborador solicitud,
+        string idUsuarioActual,
+        CancellationToken cancellationToken = default)
+    {
+        var idUsuario = LimpiarIdUsuarioObligatorio(idUsuarioActual);
         var colaborador = await contexto.Colaboradores
             .FirstOrDefaultAsync(
                 colaborador => colaborador.IdColaborador == solicitud.IdColaborador
@@ -311,9 +505,23 @@ public sealed class ColaboradorService(ApplicationDbContext contexto) : IColabor
             throw new ArgumentException("El puesto seleccionado no esta disponible para el departamento indicado.");
         }
 
+        var valoresAnteriores = SerializarSnapshot(colaborador);
         colaborador.IdDepartamento = solicitud.IdDepartamento;
         colaborador.IdPuesto = solicitud.IdPuesto;
         colaborador.FechaModificacion = DateTime.Now;
+        colaborador.ModificadoPor = idUsuario;
+
+        contexto.BitacoraAuditoria.Add(new BitacoraAuditoria
+        {
+            IdUsuario = idUsuario,
+            FechaHora = colaborador.FechaModificacion.Value,
+            Accion = "ASIGNAR_PUESTO_DEPARTAMENTO",
+            Entidad = EntidadAuditoria,
+            IdRegistro = colaborador.IdColaborador.ToString(),
+            ValoresAnteriores = valoresAnteriores,
+            ValoresNuevos = SerializarSnapshot(colaborador),
+            Observacion = "Puesto y departamento del colaborador actualizados."
+        });
 
         await contexto.SaveChangesAsync(cancellationToken);
     }
@@ -405,12 +613,96 @@ public sealed class ColaboradorService(ApplicationDbContext contexto) : IColabor
         }
     }
 
+    private static bool EsVinculoCuentaDuplicado(DbUpdateException excepcion)
+    {
+        var detalle = excepcion.GetBaseException().Message;
+        return detalle.Contains("UX_Colaborador_IdUsuario", StringComparison.OrdinalIgnoreCase)
+            || detalle.Contains("Duplicate entry", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string LimpiarIdUsuarioObligatorio(string idUsuarioActual)
+    {
+        if (string.IsNullOrWhiteSpace(idUsuarioActual))
+        {
+            throw new ArgumentException("No fue posible identificar al usuario responsable.");
+        }
+
+        var idUsuario = idUsuarioActual.Trim();
+        if (idUsuario.Length > 255)
+        {
+            throw new ArgumentException("El identificador del usuario responsable no es válido.");
+        }
+
+        return idUsuario;
+    }
+
+    private static string SerializarSnapshot(
+        Colaborador colaborador,
+        IReadOnlyList<string>? camposProtegidosModificados = null)
+    {
+        return JsonSerializer.Serialize(new SnapshotAuditableColaborador(
+            colaborador.CodigoColaborador,
+            colaborador.FechaIngreso,
+            colaborador.FechaSalida,
+            colaborador.IdEstadoLaboral,
+            colaborador.IdDepartamento,
+            colaborador.IdPuesto,
+            colaborador.IdUsuario,
+            colaborador.EstadoRegistro,
+            camposProtegidosModificados is { Count: > 0 }
+                ? camposProtegidosModificados
+                : null));
+    }
+
+    private static IReadOnlyList<string> ObtenerCamposProtegidosModificados(
+        Colaborador colaborador,
+        DatosColaboradorLimpios datos)
+    {
+        var campos = new List<string>();
+
+        AgregarSiCambio(campos, "TipoIdentificacion", colaborador.TipoIdentificacion, datos.TipoIdentificacion);
+        AgregarSiCambio(campos, "Identificacion", colaborador.Identificacion, datos.Identificacion);
+        AgregarSiCambio(campos, "Nombre", colaborador.Nombre, datos.Nombre);
+        AgregarSiCambio(campos, "PrimerApellido", colaborador.PrimerApellido, datos.PrimerApellido);
+        AgregarSiCambio(campos, "SegundoApellido", colaborador.SegundoApellido, datos.SegundoApellido);
+        AgregarSiCambio(campos, "FechaNacimiento", colaborador.FechaNacimiento, datos.FechaNacimiento);
+        AgregarSiCambio(campos, "CorreoElectronico", colaborador.CorreoElectronico, datos.CorreoElectronico);
+        AgregarSiCambio(campos, "Telefono", colaborador.Telefono, datos.Telefono);
+        AgregarSiCambio(campos, "Direccion", colaborador.Direccion, datos.Direccion);
+        AgregarSiCambio(campos, "Observaciones", colaborador.Observaciones, datos.Observaciones);
+
+        return campos;
+    }
+
+    private static void AgregarSiCambio<T>(
+        ICollection<string> campos,
+        string nombreCampo,
+        T valorAnterior,
+        T valorNuevo)
+    {
+        if (!EqualityComparer<T>.Default.Equals(valorAnterior, valorNuevo))
+        {
+            campos.Add(nombreCampo);
+        }
+    }
+
     private static string ConstruirNombreCompleto(string nombre, string primerApellido, string? segundoApellido)
     {
         return string.IsNullOrWhiteSpace(segundoApellido)
             ? $"{nombre} {primerApellido}"
             : $"{nombre} {primerApellido} {segundoApellido}";
     }
+
+    private sealed record SnapshotAuditableColaborador(
+        string CodigoColaborador,
+        DateTime FechaIngreso,
+        DateTime? FechaSalida,
+        int IdEstadoLaboral,
+        int IdDepartamento,
+        int IdPuesto,
+        string? IdUsuario,
+        string EstadoRegistro,
+        IReadOnlyList<string>? CamposProtegidosModificados);
 
     private sealed record DatosColaboradorLimpios(
         string CodigoColaborador,

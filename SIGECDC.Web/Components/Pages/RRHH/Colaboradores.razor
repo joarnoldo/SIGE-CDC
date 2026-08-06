@@ -281,9 +281,10 @@
         };
     }
 
-    private async Task<string?> ObtenerIdUsuarioActualAsync()
+    private async Task<string> ObtenerIdUsuarioActualAsync()
     {
         var estadoAutenticacion = await Autenticacion.GetAuthenticationStateAsync();
-        return estadoAutenticacion.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        return estadoAutenticacion.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+            ?? throw new InvalidOperationException("No se pudo identificar al usuario actual.");
     }
 }

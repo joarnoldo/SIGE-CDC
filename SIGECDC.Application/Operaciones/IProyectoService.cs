@@ -8,5 +8,8 @@ public interface IProyectoService
 
     Task<ProyectoResumen?> ObtenerProyectoPorIdAsync(long idProyecto, CancellationToken cancellationToken = default);
 
-    Task GuardarProyectoAsync(SolicitudProyecto solicitud, CancellationToken cancellationToken = default);
+    Task GuardarProyectoAsync(
+        SolicitudProyecto solicitud,
+        string idUsuarioActual,
+        CancellationToken cancellationToken = default);
 }

@@ -1,0 +1,183 @@
+@page "/rrhh/forecast"
+@rendermode InteractiveServer
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Recursos Humanos")]
+@using SIGECDC.Application.Forecast
+@using SIGECDC.Domain.Forecast
+@inject IForecastEscenarioService ForecastEscenarioService
+@inject AuthenticationStateProvider Autenticacion
+@inject ILogger<EscenariosForecast> Logger
+
+<PageTitle>Escenarios forecast | SIGE-CDC</PageTitle>
+
+<section class="page-banner">
+    <div class="container page-banner__inner stack--tight">
+        <p class="eyebrow">Recursos Humanos / Forecast</p>
+        <h1>Escenarios de forecast.</h1>
+        <p class="lead">Prepare y consulte definiciones reproducibles basadas en períodos futuros y planillas históricas aprobadas.</p>
+    </div>
+</section>
+
+<section class="section-shell">
+    <div class="container stack">
+        @if (!string.IsNullOrWhiteSpace(mensajeError))
+        {
+            <div class="alert alert--danger" role="alert">
+                <strong>No se pudieron cargar los escenarios</strong>
+                <span>@mensajeError</span>
+            </div>
+        }
+
+        <div class="page-header">
+            <div>
+                <p class="eyebrow">Definiciones persistidas</p>
+                <h2>Escenarios disponibles</h2>
+            </div>
+            <div class="page-actions">
+                <a class="btn btn--secondary" href="rrhh/forecast/comparar">Comparar escenarios</a>
+                <a class="btn btn--primary" href="rrhh/forecast/nuevo">Nuevo escenario</a>
+            </div>
+        </div>
+
+        <section class="kpi-grid">
+            <article class="stat-card">
+                <span class="stat-label">Escenarios activos</span>
+                <strong class="stat-value">@escenarios.Count</strong>
+                <span class="stat-delta">Disponibles para consulta</span>
+            </article>
+            <article class="stat-card">
+                <span class="stat-label">En borrador</span>
+                <strong class="stat-value">@CantidadBorradores</strong>
+                <span class="stat-delta">Pendientes de configuración</span>
+            </article>
+            <article class="stat-card">
+                <span class="stat-label">Períodos definidos</span>
+                <strong class="stat-value">@escenarios.Sum(escenario => escenario.CantidadPeriodos)</strong>
+                <span class="stat-delta">Rangos futuros persistidos</span>
+            </article>
+            <article class="stat-card">
+                <span class="stat-label">Fuentes históricas</span>
+                <strong class="stat-value">@escenarios.Sum(escenario => escenario.CantidadFuentesHistoricas)</strong>
+                <span class="stat-delta">Planillas vinculadas</span>
+            </article>
+        </section>
+
+        <article class="table-card">
+            <div class="table-toolbar">
+                <div>
+                    <h2 class="card__title">Escenarios registrados</h2>
+                    <p class="card__meta">Consulte configuraciones, resultados y escenarios guardados disponibles para comparación.</p>
+                </div>
+                <span class="badge badge--info">@escenarios.Count</span>
+            </div>
+
+            @if (cargando)
+            {
+                <div class="empty-state">
+                    <strong>Cargando escenarios</strong>
+                    <p class="text-muted">Estamos recuperando las definiciones de forecast.</p>
+                </div>
+            }
+            else if (escenarios.Count == 0)
+            {
+                <div class="empty-state">
+                    <strong>No hay escenarios registrados</strong>
+                    <p class="text-muted">Cree el primer borrador con sus períodos y fuentes históricas.</p>
+                    <a class="btn btn--primary" href="rrhh/forecast/nuevo">Crear escenario</a>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Escenario</th>
+                                <th>Rango</th>
+                                <th>Períodos</th>
+                                <th>Fuentes</th>
+                                <th>Estado</th>
+                                <th>Creación</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var escenario in escenarios)
+                            {
+                                <tr>
+                                    <td><strong>@escenario.Nombre</strong></td>
+                                    <td>@TextoRango(escenario.FechaInicioProyeccion, escenario.FechaFinProyeccion)</td>
+                                    <td>@escenario.CantidadPeriodos</td>
+                                    <td>@escenario.CantidadFuentesHistoricas</td>
+                                    <td><span class="badge @ClaseEstado(escenario.EstadoEscenario)">@escenario.EstadoEscenario</span></td>
+                                    <td>@escenario.FechaCreacion.ToString("dd/MM/yyyy HH:mm")</td>
+                                    <td>
+                                        <div class="table-actions">
+                                            <a href="@($"rrhh/forecast/{escenario.IdForecastEscenario}")">Detalle</a>
+                                            @if (EsComparable(escenario))
+                                            {
+                                                <a href="@($"rrhh/forecast/comparar?base={escenario.IdForecastEscenario}")">Comparar</a>
+                                            }
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </article>
+    </div>
+</section>
+
+@code {
+    private IReadOnlyList<EscenarioForecastResumen> escenarios = [];
+    private bool cargando = true;
+    private string? mensajeError;
+
+    private int CantidadBorradores => escenarios.Count(escenario => string.Equals(
+        escenario.EstadoEscenario,
+        EstadosEscenarioForecast.Borrador,
+        StringComparison.OrdinalIgnoreCase));
+
+    private static bool EsComparable(EscenarioForecastResumen escenario) =>
+        escenario.FechaCalculo.HasValue
+        && escenario.EstadoEscenario is EstadosEscenarioForecast.Guardado
+            or EstadosEscenarioForecast.Comparado;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            escenarios = await ForecastEscenarioService.ObtenerEscenariosAsync(
+                await ObtenerIdUsuarioActualAsync());
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudieron cargar los escenarios forecast.");
+            escenarios = [];
+            mensajeError = "No se pudieron cargar los escenarios de forecast.";
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private async Task<string> ObtenerIdUsuarioActualAsync()
+    {
+        var estadoAutenticacion = await Autenticacion.GetAuthenticationStateAsync();
+        return estadoAutenticacion.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+            ?? throw new UnauthorizedAccessException("No fue posible autorizar la cuenta actual.");
+    }
+
+    private static string TextoRango(DateTime inicio, DateTime fin) =>
+        $"{inicio:dd/MM/yyyy} – {fin:dd/MM/yyyy}";
+
+    private static string ClaseEstado(string estado) => estado switch
+    {
+        EstadosEscenarioForecast.Calculado or EstadosEscenarioForecast.Guardado => "badge--success",
+        EstadosEscenarioForecast.Comparado => "badge--info",
+        EstadosEscenarioForecast.Anulado => "badge--danger",
+        _ => "badge--warning"
+    };
+}

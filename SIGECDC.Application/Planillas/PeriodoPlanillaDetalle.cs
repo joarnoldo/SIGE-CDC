@@ -34,5 +34,9 @@ public sealed class PeriodoPlanillaDetalle
 
     public decimal SalarioNetoTotal { get; set; }
 
+    public int CantidadColillas { get; set; }
+
+    public int CantidadColillasPendientes { get; set; }
+
     public IReadOnlyList<DetallePlanillaResumen> Detalles { get; set; } = [];
 }

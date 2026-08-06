@@ -67,8 +67,10 @@ public sealed class AsignacionActivoProyectoService(ApplicationDbContext context
         var fin = fechaFin.Date;
 
         return await CrearConsultaDisponibilidad(inicio, fin, idEstadoActivo: null)
-            .Where(activo => activo.EstadoActivo == EstadosActivo.Disponible
-                && !activo.TieneRestriccionDeAsignacion)
+            .Where(activo => (activo.EstadoActivo == EstadosActivo.Disponible
+                    || activo.EstadoActivo == EstadosActivo.Asignado)
+                && !activo.TieneRestriccionDeAsignacion
+                && !activo.TieneMantenimientoEnProceso)
             .OrderBy(activo => activo.CodigoActivo)
             .Select(activo => new ActivoAsignacionOpcion
             {
@@ -106,10 +108,12 @@ public sealed class AsignacionActivoProyectoService(ApplicationDbContext context
                 UbicacionActual = activo.UbicacionActual,
                 EstaDisponible = ReglasAsignacionActivo.EstaDisponible(
                     activo.EstadoActivo,
-                    activo.TieneRestriccionDeAsignacion),
+                    activo.TieneRestriccionDeAsignacion,
+                    activo.TieneMantenimientoEnProceso),
                 MotivoDisponibilidad = ReglasAsignacionActivo.DescribirDisponibilidad(
                     activo.EstadoActivo,
-                    activo.TieneRestriccionDeAsignacion)
+                    activo.TieneRestriccionDeAsignacion,
+                    activo.TieneMantenimientoEnProceso)
             })
             .ToList();
     }
@@ -153,9 +157,8 @@ public sealed class AsignacionActivoProyectoService(ApplicationDbContext context
                 .AsNoTracking()
                 .Where(asignacion => asignacion.IdActivo == activo.IdActivo
                     && asignacion.EstadoRegistro == EstadosRegistro.Activo
-                    && ((asignacion.FechaInicio <= datos.FechaFin
-                            && asignacion.FechaFin >= datos.FechaInicio)
-                        || asignacion.FechaFin >= DateTime.Today))
+                    && asignacion.FechaInicio <= datos.FechaFin
+                    && asignacion.FechaFin >= datos.FechaInicio)
                 .OrderBy(asignacion => asignacion.FechaInicio)
                 .Select(asignacion => new
                 {
@@ -174,17 +177,27 @@ public sealed class AsignacionActivoProyectoService(ApplicationDbContext context
                     $"del {conflicto.FechaInicio:dd/MM/yyyy} al {conflicto.FechaFin:dd/MM/yyyy}.");
             }
 
-            ReglasAsignacionActivo.ValidarEstadoAsignable(activo.EstadoActivo?.Nombre);
-
-            var estadoAsignado = await contexto.EstadosActivo
+            var tieneMantenimientoEnProceso = await contexto.Mantenimientos
                 .AsNoTracking()
-                .FirstOrDefaultAsync(estado => estado.Nombre == EstadosActivo.Asignado
-                    && estado.EstadoRegistro == EstadosRegistro.Activo, cancellationToken)
-                ?? throw new InvalidOperationException(
-                    "No se encontró el estado oficial Asignado en la base de datos.");
+                .AnyAsync(mantenimiento => mantenimiento.IdActivo == activo.IdActivo
+                    && mantenimiento.EstadoRegistro == EstadosRegistro.Activo
+                    && mantenimiento.EstadoMantenimiento != null
+                    && mantenimiento.EstadoMantenimiento.Nombre == EstadosMantenimiento.EnProceso
+                    && mantenimiento.EstadoMantenimiento.EstadoRegistro == EstadosRegistro.Activo,
+                    cancellationToken);
+
+            if (tieneMantenimientoEnProceso)
+            {
+                throw new InvalidOperationException(
+                    $"El activo {activo.CodigoActivo} tiene un mantenimiento en proceso y no puede asignarse.");
+            }
+
+            ReglasAsignacionActivo.ValidarEstadoReservable(activo.EstadoActivo?.Nombre);
 
             var fechaCambio = DateTime.Now;
             var estadoAnterior = activo.EstadoActivo?.Nombre;
+            var asignacionVigenteHoy = datos.FechaInicio <= DateTime.Today
+                && datos.FechaFin >= DateTime.Today;
 
             var asignacion = new AsignacionActivoProyecto
             {
@@ -199,32 +212,70 @@ public sealed class AsignacionActivoProyectoService(ApplicationDbContext context
             };
 
             contexto.AsignacionesActivoProyecto.Add(asignacion);
-            activo.IdEstadoActivo = estadoAsignado.IdEstadoActivo;
-            activo.EstadoActivo = estadoAsignado;
-            activo.FechaModificacion = fechaCambio;
-            activo.ModificadoPor = idUsuario;
 
-            contexto.BitacoraAuditoria.Add(new BitacoraAuditoria
+            if (asignacionVigenteHoy
+                && !ReglasAsignacionActivo.EsEstadoCompatibleConAsignacionVigente(estadoAnterior))
             {
-                IdUsuario = idUsuario,
-                FechaHora = fechaCambio,
-                Accion = "Actualización de estado por asignación",
-                Entidad = "Activo",
-                IdRegistro = activo.IdActivo.ToString(),
-                ValoresAnteriores = JsonSerializer.Serialize(new
+                var estadoAsignado = await contexto.EstadosActivo
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(estado => estado.Nombre == EstadosActivo.Asignado
+                        && estado.EstadoRegistro == EstadosRegistro.Activo, cancellationToken)
+                    ?? throw new InvalidOperationException(
+                        "No se encontró el estado oficial Asignado en la base de datos.");
+
+                activo.IdEstadoActivo = estadoAsignado.IdEstadoActivo;
+                activo.EstadoActivo = estadoAsignado;
+                activo.FechaModificacion = fechaCambio;
+                activo.ModificadoPor = idUsuario;
+
+                contexto.BitacoraAuditoria.Add(new BitacoraAuditoria
                 {
-                    Estado = estadoAnterior,
-                    activo.UbicacionActual
-                }),
-                ValoresNuevos = JsonSerializer.Serialize(new
+                    IdUsuario = idUsuario,
+                    FechaHora = fechaCambio,
+                    Accion = "Actualización de estado por asignación",
+                    Entidad = "Activo",
+                    IdRegistro = activo.IdActivo.ToString(),
+                    ValoresAnteriores = JsonSerializer.Serialize(new
+                    {
+                        Estado = estadoAnterior,
+                        activo.UbicacionActual
+                    }),
+                    ValoresNuevos = JsonSerializer.Serialize(new
+                    {
+                        Estado = estadoAsignado.Nombre,
+                        activo.UbicacionActual
+                    }),
+                    Observacion = $"Estado actualizado de {estadoAnterior ?? "Sin estado"} a {estadoAsignado.Nombre} "
+                        + $"al asignar el activo al proyecto {proyecto.CodigoProyecto} "
+                        + $"del {datos.FechaInicio:dd/MM/yyyy} al {datos.FechaFin:dd/MM/yyyy}."
+                });
+            }
+
+            await contexto.SaveChangesAsync(cancellationToken);
+
+            contexto.BitacoraAuditoria.Add(
+                new BitacoraAuditoria
                 {
-                    Estado = estadoAsignado.Nombre,
-                    activo.UbicacionActual
-                }),
-                Observacion = $"Estado actualizado de {estadoAnterior ?? "Sin estado"} a {estadoAsignado.Nombre} "
-                    + $"al asignar el activo al proyecto {proyecto.CodigoProyecto} "
-                    + $"del {datos.FechaInicio:dd/MM/yyyy} al {datos.FechaFin:dd/MM/yyyy}."
-            });
+                    IdUsuario = idUsuario,
+                    FechaHora = fechaCambio,
+                    Accion =
+                        "Creación de asignación de activo",
+                    Entidad =
+                        "AsignacionActivoProyecto",
+                    IdRegistro = asignacion
+                        .IdAsignacionActivoProyecto
+                        .ToString(),
+                    ValoresNuevos = JsonSerializer.Serialize(new
+                    {
+                        asignacion.IdActivo,
+                        asignacion.IdProyecto,
+                        asignacion.FechaInicio,
+                        asignacion.FechaFin,
+                        asignacion.Observaciones
+                    }),
+                    Observacion =
+                        $"Se asignó el activo {activo.CodigoActivo} al proyecto {proyecto.CodigoProyecto}."
+                });
 
             await contexto.SaveChangesAsync(cancellationToken);
             await transaccion.CommitAsync(cancellationToken);
@@ -233,6 +284,7 @@ public sealed class AsignacionActivoProyectoService(ApplicationDbContext context
         catch
         {
             await transaccion.RollbackAsync(CancellationToken.None);
+            contexto.ChangeTracker.Clear();
             throw;
         }
     }
@@ -249,7 +301,6 @@ public sealed class AsignacionActivoProyectoService(ApplicationDbContext context
         DateTime fechaFin,
         int? idEstadoActivo)
     {
-        var hoy = DateTime.Today;
         var consulta = contexto.Activos
             .AsNoTracking()
             .Where(activo => activo.EstadoRegistro == EstadosRegistro.Activo
@@ -274,9 +325,14 @@ public sealed class AsignacionActivoProyectoService(ApplicationDbContext context
             TieneRestriccionDeAsignacion = contexto.AsignacionesActivoProyecto.Any(asignacion =>
                 asignacion.IdActivo == activo.IdActivo
                 && asignacion.EstadoRegistro == EstadosRegistro.Activo
-                && ((asignacion.FechaInicio <= fechaFin
-                        && asignacion.FechaFin >= fechaInicio)
-                    || asignacion.FechaFin >= hoy))
+                && asignacion.FechaInicio <= fechaFin
+                && asignacion.FechaFin >= fechaInicio),
+            TieneMantenimientoEnProceso = contexto.Mantenimientos.Any(mantenimiento =>
+                mantenimiento.IdActivo == activo.IdActivo
+                && mantenimiento.EstadoRegistro == EstadosRegistro.Activo
+                && mantenimiento.EstadoMantenimiento != null
+                && mantenimiento.EstadoMantenimiento.Nombre == EstadosMantenimiento.EnProceso
+                && mantenimiento.EstadoMantenimiento.EstadoRegistro == EstadosRegistro.Activo)
         });
     }
 
@@ -299,6 +355,8 @@ public sealed class AsignacionActivoProyectoService(ApplicationDbContext context
         public string? UbicacionActual { get; set; }
 
         public bool TieneRestriccionDeAsignacion { get; set; }
+
+        public bool TieneMantenimientoEnProceso { get; set; }
     }
 
     private sealed record DatosFiltroDisponibilidad(

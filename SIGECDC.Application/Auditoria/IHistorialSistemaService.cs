@@ -21,4 +21,12 @@ public interface IHistorialSistemaService
         string? busqueda = null,
         int cantidad = 100,
         CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<OperacionBitacoraResumen>> ObtenerOperacionesAsync(
+        FiltroBitacoraOperaciones filtro,
+        CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<OperacionBitacoraResumen>> ObtenerOperacionesRecursosHumanosAsync(
+        FiltroBitacoraRecursosHumanos filtro,
+        CancellationToken cancellationToken = default);
 }

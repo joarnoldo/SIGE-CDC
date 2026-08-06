@@ -1,0 +1,375 @@
+@page "/rrhh/forecast/comparar"
+@rendermode InteractiveServer
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Recursos Humanos")]
+@using System.ComponentModel.DataAnnotations
+@using SIGECDC.Application.Forecast
+@inject IForecastComparacionEscenarioService ForecastComparacionService
+@inject AuthenticationStateProvider Autenticacion
+@inject ILogger<CompararEscenariosForecast> Logger
+
+<PageTitle>Comparar escenarios forecast | SIGE-CDC</PageTitle>
+
+<section class="page-banner">
+    <div class="container page-banner__inner stack--tight">
+        <p class="eyebrow">Recursos Humanos / Forecast</p>
+        <h1>Comparación de escenarios.</h1>
+        <p class="lead">Contraste dos escenarios guardados con períodos equivalentes usando únicamente sus resultados persistidos.</p>
+    </div>
+</section>
+
+<section class="section-shell">
+    <div class="container stack">
+        @if (!string.IsNullOrWhiteSpace(mensajeError))
+        {
+            <div class="alert alert--warning" role="alert">
+                <strong>No se pudo completar la comparación</strong>
+                <span>@mensajeError</span>
+            </div>
+        }
+
+        <div class="page-header">
+            <div>
+                <p class="eyebrow">Escenario base y alternativo</p>
+                <h2>Diferencias de proyección</h2>
+            </div>
+            <div class="page-actions">
+                <a class="btn btn--secondary" href="rrhh/forecast">Volver a escenarios</a>
+            </div>
+        </div>
+
+        @if (cargando)
+        {
+            <div class="empty-state">
+                <strong>Cargando escenarios</strong>
+                <p class="text-muted">Estamos recuperando los escenarios guardados disponibles.</p>
+            </div>
+        }
+        else if (opciones.Count < 2)
+        {
+            <div class="empty-state">
+                <strong>Se requieren dos escenarios guardados</strong>
+                <p class="text-muted">Calcule y guarde al menos dos escenarios para poder compararlos.</p>
+            </div>
+        }
+        else
+        {
+            <article class="card stack">
+                <div class="form-grid">
+                    <div class="field-group">
+                        <label for="escenario-base">Escenario base</label>
+                        <select id="escenario-base" class="form-control" @bind="idEscenarioBase" disabled="@comparando">
+                            <option value="0">Seleccione un escenario</option>
+                            @foreach (var opcion in opciones)
+                            {
+                                <option value="@opcion.IdForecastEscenario">@TextoOpcion(opcion)</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="field-group">
+                        <label for="escenario-alternativo">Escenario alternativo</label>
+                        <select id="escenario-alternativo" class="form-control" @bind="idEscenarioAlternativo" disabled="@comparando">
+                            <option value="0">Seleccione un escenario</option>
+                            @foreach (var opcion in opciones)
+                            {
+                                <option value="@opcion.IdForecastEscenario">@TextoOpcion(opcion)</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="field-group">
+                        <label for="dimension-comparacion">Dimensión</label>
+                        <select id="dimension-comparacion" class="form-control" @bind="dimension" disabled="@comparando">
+                            <option value="@DimensionesResultadoForecast.Periodo">Período</option>
+                            <option value="@DimensionesResultadoForecast.Colaborador">Colaborador</option>
+                            <option value="@DimensionesResultadoForecast.Departamento">Departamento</option>
+                            <option value="@DimensionesResultadoForecast.Proyecto">Proyecto</option>
+                        </select>
+                    </div>
+                    <div class="field-group">
+                        <label for="periodo-comparacion">Período</label>
+                        <select id="periodo-comparacion" class="form-control" @bind="numeroOrdenPeriodo" disabled="@(comparando || comparacion is null)">
+                            <option value="0">Todos los períodos</option>
+                            @if (comparacion is not null)
+                            {
+                                @foreach (var periodo in comparacion.Periodos)
+                                {
+                                    <option value="@periodo.NumeroOrden">@periodo.NumeroOrden. @periodo.TipoPeriodo · @TextoRango(periodo.FechaInicio, periodo.FechaFin)</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button class="btn btn--primary" type="button" disabled="@comparando" @onclick="CompararAsync">
+                        @(comparando ? "Comparando..." : "Comparar escenarios")
+                    </button>
+                </div>
+                <p class="card__meta">La diferencia con signo se calcula como escenario alternativo menos escenario base.</p>
+            </article>
+        }
+
+        @if (comparacion is not null)
+        {
+            <section class="kpi-grid">
+                <article class="stat-card">
+                    <span class="stat-label">Base</span>
+                    <strong class="stat-value">@Moneda(comparacion.Totales.SalarioBrutoBase)</strong>
+                    <span class="stat-delta">@comparacion.EscenarioBase.Nombre</span>
+                </article>
+                <article class="stat-card">
+                    <span class="stat-label">Alternativo</span>
+                    <strong class="stat-value">@Moneda(comparacion.Totales.SalarioBrutoAlternativo)</strong>
+                    <span class="stat-delta">@comparacion.EscenarioAlternativo.Nombre</span>
+                </article>
+                <article class="stat-card">
+                    <span class="stat-label">Diferencia bruta</span>
+                    <strong class="stat-value">@MonedaConSigno(comparacion.Totales.DiferenciaSalarioBruto)</strong>
+                    <span class="stat-delta">Alternativo − base</span>
+                </article>
+                <article class="stat-card">
+                    <span class="stat-label">Diferencia neta</span>
+                    <strong class="stat-value">@MonedaConSigno(comparacion.Totales.DiferenciaSalarioNeto)</strong>
+                    <span class="stat-delta">Sin desviación porcentual</span>
+                </article>
+            </section>
+
+            <article class="table-card">
+                <div class="table-toolbar">
+                    <div>
+                        <h2 class="card__title">Parámetros asociados</h2>
+                        <p class="card__meta">Configuración conservada por cada escenario.</p>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr><th>Parámetro</th><th>Base</th><th>Alternativo</th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var parametro in comparacion.Parametros)
+                            {
+                                <tr>
+                                    <td><strong>@parametro.Nombre</strong><p class="card__meta">@parametro.Codigo</p></td>
+                                    <td>@TextoParametro(parametro.EstaHabilitadoBase, parametro.TipoBase, parametro.ValorBase)</td>
+                                    <td>@TextoParametro(parametro.EstaHabilitadoAlternativo, parametro.TipoAlternativo, parametro.ValorAlternativo)</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </article>
+
+            @if (comparacion.Filas.Count == 0)
+            {
+                <div class="empty-state">
+                    <strong>No hay resultados para la consulta</strong>
+                    <p class="text-muted">No existen detalles activos para la dimensión y el período seleccionados.</p>
+                </div>
+            }
+            else
+            {
+                <article class="table-card">
+                    <div class="table-toolbar">
+                        <div>
+                            <h2 class="card__title">Comparación por @NombreDimension(comparacion.Dimension).ToLowerInvariant()</h2>
+                            <p class="card__meta">Importes persistidos; esta consulta no recalcula los escenarios.</p>
+                        </div>
+                        <span class="badge badge--info">@comparacion.Filas.Count agrupaciones</span>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>@NombreDimension(comparacion.Dimension)</th>
+                                    <th>Bruto base</th>
+                                    <th>Bruto alternativo</th>
+                                    <th>Diferencia</th>
+                                    <th>Deducciones</th>
+                                    <th>Neto</th>
+                                    <th>Conceptos</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var fila in comparacion.Filas)
+                                {
+                                    <tr @key="fila.Clave">
+                                        <td>
+                                            <strong>@fila.Etiqueta</strong>
+                                            @if (!string.IsNullOrWhiteSpace(fila.Codigo))
+                                            {
+                                                <p class="card__meta">@fila.Codigo</p>
+                                            }
+                                            @if (!string.IsNullOrWhiteSpace(fila.Detalle))
+                                            {
+                                                <p class="card__meta">@fila.Detalle</p>
+                                            }
+                                        </td>
+                                        <td>@Moneda(fila.Valores.SalarioBrutoBase)</td>
+                                        <td>@Moneda(fila.Valores.SalarioBrutoAlternativo)</td>
+                                        <td><strong>@MonedaConSigno(fila.Valores.DiferenciaSalarioBruto)</strong></td>
+                                        <td>@Moneda(fila.Valores.DeduccionesBase) / @Moneda(fila.Valores.DeduccionesAlternativo)</td>
+                                        <td>@Moneda(fila.Valores.SalarioNetoBase) / @Moneda(fila.Valores.SalarioNetoAlternativo)</td>
+                                        <td>
+                                            <details>
+                                                <summary>Ver desglose</summary>
+                                                <div class="table-responsive">
+                                                    <table class="data-table">
+                                                        <thead><tr><th>Concepto</th><th>Base</th><th>Alternativo</th><th>Diferencia</th></tr></thead>
+                                                        <tbody>
+                                                            @foreach (var concepto in fila.Conceptos)
+                                                            {
+                                                                <tr>
+                                                                    <td>@concepto.Nombre</td>
+                                                                    <td>@Moneda(concepto.MontoBaseEscenario)</td>
+                                                                    <td>@Moneda(concepto.MontoAlternativo)</td>
+                                                                    <td>@MonedaConSigno(concepto.Diferencia)</td>
+                                                                </tr>
+                                                            }
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </details>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </article>
+            }
+        }
+    </div>
+</section>
+
+@code {
+    [SupplyParameterFromQuery(Name = "base")]
+    public long? IdEscenarioBaseQuery { get; set; }
+
+    private IReadOnlyList<EscenarioComparacionForecastOpcion> opciones = [];
+    private ComparacionEscenariosForecast? comparacion;
+    private long idEscenarioBase;
+    private long idEscenarioAlternativo;
+    private string dimension = DimensionesResultadoForecast.Periodo;
+    private int numeroOrdenPeriodo;
+    private bool cargando = true;
+    private bool comparando;
+    private string? mensajeError;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        cargando = true;
+        mensajeError = null;
+        try
+        {
+            opciones = await ForecastComparacionService.ObtenerEscenariosElegiblesAsync(
+                await ObtenerIdUsuarioActualAsync());
+            if (IdEscenarioBaseQuery.HasValue
+                && opciones.Any(item => item.IdForecastEscenario == IdEscenarioBaseQuery.Value))
+            {
+                idEscenarioBase = IdEscenarioBaseQuery.Value;
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudieron cargar los escenarios comparables.");
+            opciones = [];
+            mensajeError = "No se pudieron cargar los escenarios guardados.";
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private async Task CompararAsync()
+    {
+        if (comparando)
+        {
+            return;
+        }
+
+        comparando = true;
+        mensajeError = null;
+        try
+        {
+            comparacion = await ForecastComparacionService.CompararAsync(
+                new SolicitudCompararEscenariosForecast
+                {
+                    IdEscenarioBase = idEscenarioBase,
+                    IdEscenarioAlternativo = idEscenarioAlternativo,
+                    Dimension = dimension,
+                    NumeroOrdenPeriodo = numeroOrdenPeriodo == 0 ? null : numeroOrdenPeriodo
+                },
+                await ObtenerIdUsuarioActualAsync());
+            opciones = await ForecastComparacionService.ObtenerEscenariosElegiblesAsync(
+                await ObtenerIdUsuarioActualAsync());
+        }
+        catch (Exception ex) when (ex is ValidationException
+            or InvalidOperationException
+            or KeyNotFoundException
+            or ArgumentException)
+        {
+            Logger.LogWarning(ex, "Los escenarios forecast seleccionados no se pueden comparar.");
+            comparacion = null;
+            mensajeError = ex.Message;
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            Logger.LogWarning(ex, "Una cuenta no autorizada intentó comparar escenarios forecast.");
+            comparacion = null;
+            mensajeError = "La cuenta actual no está autorizada para comparar escenarios.";
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudieron comparar los escenarios forecast.");
+            comparacion = null;
+            mensajeError = "Ocurrió un error al comparar los escenarios. Intente nuevamente.";
+        }
+        finally
+        {
+            comparando = false;
+        }
+    }
+
+    private async Task<string> ObtenerIdUsuarioActualAsync()
+    {
+        var estado = await Autenticacion.GetAuthenticationStateAsync();
+        return estado.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+            ?? throw new UnauthorizedAccessException("No fue posible autorizar la cuenta actual.");
+    }
+
+    private static string TextoOpcion(EscenarioComparacionForecastOpcion opcion) =>
+        $"{opcion.Nombre} · {opcion.EstadoEscenario} · {TextoRango(opcion.FechaInicioProyeccion, opcion.FechaFinProyeccion)}";
+
+    private static string TextoRango(DateTime inicio, DateTime fin) =>
+        $"{inicio:dd/MM/yyyy} – {fin:dd/MM/yyyy}";
+
+    private static string Moneda(decimal monto) => $"₡{monto:N2}";
+
+    private static string MonedaConSigno(decimal monto) =>
+        monto > 0m ? $"+₡{monto:N2}" : monto < 0m ? $"-₡{Math.Abs(monto):N2}" : "₡0.00";
+
+    private static string NombreDimension(string valor) => valor switch
+    {
+        DimensionesResultadoForecast.Colaborador => "Colaborador",
+        DimensionesResultadoForecast.Departamento => "Departamento",
+        DimensionesResultadoForecast.Proyecto => "Proyecto",
+        _ => "Período"
+    };
+
+    private static string TextoParametro(bool habilitado, string tipo, decimal? valor)
+    {
+        if (!habilitado)
+        {
+            return "Deshabilitado";
+        }
+
+        if (!valor.HasValue)
+        {
+            return $"{tipo}: sin valor";
+        }
+
+        return string.Equals(tipo, "Porcentaje", StringComparison.Ordinal)
+            ? $"{valor:N4} %"
+            : $"₡{valor:N4}";
+    }
+}

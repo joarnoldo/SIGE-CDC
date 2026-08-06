@@ -149,7 +149,8 @@ public sealed class ParametroPlanillaService(ApplicationDbContext contexto) : IP
                 EstadoRegistro = asignacion.EstadoRegistro,
                 EstaBloqueada = asignacion.PeriodoPlanilla != null
                     && asignacion.PeriodoPlanilla.EstadoPlanilla != null
-                    && (asignacion.PeriodoPlanilla.EstadoPlanilla.Nombre == EstadosPlanilla.Aprobada
+                    && (asignacion.PeriodoPlanilla.EstadoPlanilla.Nombre == EstadosPlanilla.Calculada
+                        || asignacion.PeriodoPlanilla.EstadoPlanilla.Nombre == EstadosPlanilla.Aprobada
                         || asignacion.PeriodoPlanilla.EstadoPlanilla.Nombre == EstadosPlanilla.Cerrada)
             })
             .ToListAsync(cancellationToken);
@@ -213,7 +214,8 @@ public sealed class ParametroPlanillaService(ApplicationDbContext contexto) : IP
                 periodo.CodigoPeriodo,
                 periodo.Nombre,
                 periodo.EstadoPlanilla != null
-                    && (periodo.EstadoPlanilla.Nombre == EstadosPlanilla.Aprobada
+                    && (periodo.EstadoPlanilla.Nombre == EstadosPlanilla.Calculada
+                        || periodo.EstadoPlanilla.Nombre == EstadosPlanilla.Aprobada
                         || periodo.EstadoPlanilla.Nombre == EstadosPlanilla.Cerrada)))
             .ToListAsync(cancellationToken);
     }

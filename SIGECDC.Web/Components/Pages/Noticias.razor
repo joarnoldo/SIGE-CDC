@@ -1,6 +1,7 @@
 @page "/noticias"
 @using SIGECDC.Application.SitioPublico
 @inject INoticiaService NoticiaService
+@inject ILogger<Noticias> Logger
 
 <PageTitle>Noticias | SIGE-CDC</PageTitle>
 
@@ -19,6 +20,15 @@
             <div class="empty-state">
                 <strong>Cargando noticias</strong>
                 <p class="text-muted">Estamos recuperando las publicaciones disponibles.</p>
+            </div>
+        }
+        else if (!string.IsNullOrWhiteSpace(mensajeError))
+        {
+            <div class="alert alert--danger stack--tight" role="alert">
+                <span>@mensajeError</span>
+                <div>
+                    <a class="btn btn--secondary" href="/noticias" data-enhance-nav="false">Reintentar</a>
+                </div>
             </div>
         }
         else if (noticias.Count == 0)
@@ -54,12 +64,20 @@
 @code {
     private IReadOnlyList<NoticiaResumen> noticias = [];
     private bool cargando = true;
+    private string? mensajeError;
 
     protected override async Task OnInitializedAsync()
     {
+        noticias = [];
+        mensajeError = null;
         try
         {
             noticias = await NoticiaService.ObtenerPublicadasAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudieron cargar las noticias públicas.");
+            mensajeError = "No pudimos cargar las noticias en este momento.";
         }
         finally
         {

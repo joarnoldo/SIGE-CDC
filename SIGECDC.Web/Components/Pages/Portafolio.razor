@@ -22,7 +22,7 @@
                 <div class="toolbar__group">
                     <label class="field">
                         <span>Estado del proyecto</span>
-                        <select @bind="estadoSeleccionado">
+                        <select value="@estadoSeleccionado" @onchange="CambiarEstadoAsync" disabled="@cargando">
                             <option value="">Todos los estados</option>
                             @foreach (var estado in estadosDisponibles)
                             {
@@ -31,13 +31,13 @@
                         </select>
                     </label>
                 </div>
-                <span class="badge badge--info">@TextoCantidad</span>
+                <span class="badge badge--info" aria-live="polite">@TextoCantidad</span>
             </section>
         }
 
         @if (cargando)
         {
-            <div class="empty-state">
+            <div class="empty-state" aria-live="polite">
                 <strong>Cargando proyectos</strong>
                 <p class="text-muted">Estamos recuperando el portafolio publicado.</p>
             </div>
@@ -46,65 +46,76 @@
         {
             <div class="alert alert--danger" role="alert">@mensajeError</div>
         }
-        else if (proyectos.Count == 0)
+        else if (proyectos.Count == 0 && string.IsNullOrWhiteSpace(estadoSeleccionado))
         {
-            <div class="empty-state">
+            <div class="empty-state" role="status">
                 <strong>No hay proyectos publicados</strong>
-                <p class="text-muted">Cuando administración publique tarjetas, aparecerán en este portafolio.</p>
+                <p class="text-muted">Cuando la administración publique tarjetas, aparecerán en este portafolio.</p>
             </div>
         }
-        else if (ProyectosFiltrados.Count == 0)
+        else if (proyectos.Count == 0)
         {
-            <div class="empty-state">
+            <div class="empty-state" role="status">
                 <strong>No hay proyectos para este estado</strong>
                 <p class="text-muted">Seleccione otro estado o muestre todos los proyectos.</p>
             </div>
         }
         else
         {
-            <div class="content-grid">
-                @foreach (var proyecto in ProyectosFiltrados)
+            <div class="project-grid">
+                @foreach (var proyecto in proyectos)
                 {
-                    <article class="card">
-                        <div class="card__meta">@TextoEstado(proyecto)</div>
-                        <h2 class="card__title">@proyecto.Titulo</h2>
-                        <p>@proyecto.Descripcion</p>
-                        @if (!string.IsNullOrWhiteSpace(proyecto.NombreProyecto))
-                        {
-                            <p class="card__meta">@proyecto.NombreProyecto</p>
-                        }
+                    <article class="project-card stack--tight" @key="proyecto.IdProyectoPublicado">
+                        <span class="badge badge--info">@TextoEstado(proyecto)</span>
+                        <h2>@proyecto.Titulo</h2>
+                        <p>@TextoDescripcion(proyecto)</p>
+                        <div class="project-card__meta">
+                            <button class="btn btn--secondary"
+                                    type="button"
+                                    aria-expanded="@(EstaSeleccionado(proyecto) ? "true" : "false")"
+                                    aria-controls="detalle-proyecto-publicado"
+                                    @onclick="() => AlternarDetalle(proyecto)">
+                                @(EstaSeleccionado(proyecto) ? "Cerrar detalle" : "Ver detalle")
+                            </button>
+                        </div>
                     </article>
                 }
             </div>
+
+            @if (proyectoSeleccionado is not null)
+            {
+                <section id="detalle-proyecto-publicado" class="panel-highlight stack--tight" aria-labelledby="titulo-detalle-proyecto">
+                    <p class="eyebrow">Detalle público del proyecto</p>
+                    <h2 id="titulo-detalle-proyecto">@proyectoSeleccionado.Titulo</h2>
+                    <span class="badge badge--info">@TextoEstado(proyectoSeleccionado)</span>
+                    <p>@TextoDescripcion(proyectoSeleccionado)</p>
+                    <div>
+                        <button class="btn btn--secondary" type="button" @onclick="CerrarDetalle">Cerrar detalle</button>
+                    </div>
+                </section>
+            }
         }
     </div>
 </section>
 
 @code {
-    private IReadOnlyList<ProyectoPublicadoResumen> proyectos = [];
+    private IReadOnlyList<ProyectoPortafolioResumen> proyectos = [];
     private IReadOnlyList<string> estadosDisponibles = [];
+    private ProyectoPortafolioResumen? proyectoSeleccionado;
     private bool cargando = true;
     private string? estadoSeleccionado;
     private string? mensajeError;
 
-    private IReadOnlyList<ProyectoPublicadoResumen> ProyectosFiltrados => string.IsNullOrWhiteSpace(estadoSeleccionado)
-        ? proyectos
-        : proyectos.Where(proyecto => string.Equals(TextoEstado(proyecto), estadoSeleccionado, StringComparison.OrdinalIgnoreCase)).ToList();
-
-    private string TextoCantidad => ProyectosFiltrados.Count == 1
+    private string TextoCantidad => proyectos.Count == 1
         ? "1 proyecto"
-        : $"{ProyectosFiltrados.Count} proyectos";
+        : $"{proyectos.Count} proyectos";
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
+            estadosDisponibles = await ProyectoPublicadoService.ObtenerEstadosPublicadosAsync();
             proyectos = await ProyectoPublicadoService.ObtenerProyectosPublicadosAsync();
-            estadosDisponibles = proyectos
-                .Select(TextoEstado)
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .OrderBy(estado => estado)
-                .ToList();
         }
         catch (Exception ex)
         {
@@ -117,10 +128,57 @@
         }
     }
 
-    private static string TextoEstado(ProyectoPublicadoResumen proyecto)
+    private async Task CambiarEstadoAsync(ChangeEventArgs args)
+    {
+        estadoSeleccionado = string.IsNullOrWhiteSpace(args.Value?.ToString())
+            ? null
+            : args.Value.ToString();
+        proyectoSeleccionado = null;
+        mensajeError = null;
+        cargando = true;
+
+        try
+        {
+            proyectos = await ProyectoPublicadoService.ObtenerProyectosPublicadosAsync(estadoSeleccionado);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudo filtrar el portafolio público por el estado {EstadoVisual}.", estadoSeleccionado);
+            proyectos = [];
+            mensajeError = "No se pudo actualizar el portafolio en este momento. Intente nuevamente más tarde.";
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private void AlternarDetalle(ProyectoPortafolioResumen proyecto)
+    {
+        proyectoSeleccionado = EstaSeleccionado(proyecto) ? null : proyecto;
+    }
+
+    private void CerrarDetalle()
+    {
+        proyectoSeleccionado = null;
+    }
+
+    private bool EstaSeleccionado(ProyectoPortafolioResumen proyecto)
+    {
+        return proyectoSeleccionado?.IdProyectoPublicado == proyecto.IdProyectoPublicado;
+    }
+
+    private static string TextoEstado(ProyectoPortafolioResumen proyecto)
     {
         return string.IsNullOrWhiteSpace(proyecto.EstadoVisual)
-            ? "Proyecto publicado"
+            ? "Estado no informado"
             : proyecto.EstadoVisual;
+    }
+
+    private static string TextoDescripcion(ProyectoPortafolioResumen proyecto)
+    {
+        return string.IsNullOrWhiteSpace(proyecto.Descripcion)
+            ? "Este proyecto no tiene una descripción pública disponible."
+            : proyecto.Descripcion;
     }
 }

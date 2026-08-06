@@ -12,5 +12,17 @@ public interface IActivoService
 
     Task<IReadOnlyList<EstadoActivoOpcion>> ObtenerEstadosActivoAsync(CancellationToken cancellationToken = default);
 
-    Task GuardarActivoAsync(SolicitudActivo solicitud, CancellationToken cancellationToken = default);
+    Task<long> RegistrarActivoAsync(
+        SolicitudRegistroActivo solicitud,
+        string idUsuarioActual,
+        CancellationToken cancellationToken = default);
+
+    Task ActualizarEstadoUbicacionAsync(
+        SolicitudActualizacionEstadoUbicacion solicitud,
+        string idUsuarioActual,
+        CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<TrazabilidadActivoResumen>> ObtenerTrazabilidadActivoAsync(
+        long idActivo,
+        CancellationToken cancellationToken = default);
 }

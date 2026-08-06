@@ -40,6 +40,18 @@ public sealed class SolicitudImagenGaleria : IDisposable
     }
 }
 
+public sealed class SolicitudActualizarImagenGaleria
+{
+    [StringLength(150, ErrorMessage = "El titulo no debe superar los 150 caracteres.")]
+    public string? Titulo { get; set; }
+
+    [StringLength(300, ErrorMessage = "La descripcion no debe superar los 300 caracteres.")]
+    public string? Descripcion { get; set; }
+
+    [Range(0, int.MaxValue, ErrorMessage = "El orden no puede ser negativo.")]
+    public int Orden { get; set; }
+}
+
 public sealed class GaleriaResumen
 {
     public long IdGaleria { get; set; }

@@ -1,5 +1,8 @@
+using System.Data;
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using SIGECDC.Application.Operaciones;
+using SIGECDC.Domain.Auditoria;
 using SIGECDC.Domain.Operaciones;
 using SIGECDC.Domain.SitioPublico;
 using SIGECDC.Persistence.Identity;
@@ -72,11 +75,27 @@ public sealed class ProyectoService(ApplicationDbContext contexto) : IProyectoSe
             .FirstOrDefaultAsync(cancellationToken);
     }
 
-    public async Task GuardarProyectoAsync(SolicitudProyecto solicitud, CancellationToken cancellationToken = default)
+    public async Task GuardarProyectoAsync(
+        SolicitudProyecto solicitud,
+        string idUsuarioActual,
+        CancellationToken cancellationToken = default)
     {
         var codigoProyecto = LimpiarObligatorio(solicitud.CodigoProyecto, "El codigo del proyecto es obligatorio.");
         var nombreProyecto = LimpiarObligatorio(solicitud.NombreProyecto, "El nombre del proyecto es obligatorio.");
+        var idUsuario = LimpiarIdUsuarioObligatorio(idUsuarioActual);
         ValidarFechas(solicitud);
+
+        var usuarioExiste = await contexto.Users
+            .AsNoTracking()
+            .AnyAsync(
+                usuario => usuario.Id == idUsuario,
+                cancellationToken);
+
+        if (!usuarioExiste)
+        {
+            throw new InvalidOperationException(
+                "No se encontró al usuario responsable del proyecto.");
+        }
 
         var codigoDuplicado = await contexto.Proyectos
             .AsNoTracking()
@@ -93,50 +112,153 @@ public sealed class ProyectoService(ApplicationDbContext contexto) : IProyectoSe
         var idEstado = solicitud.IdEstadoProyecto ?? await ObtenerIdEstadoPlanificadoAsync(cancellationToken);
         await ValidarEstadoActivoAsync(idEstado, cancellationToken);
 
-        if (solicitud.IdProyecto == 0)
-        {
-            var proyecto = new Proyecto
-            {
-                CodigoProyecto = codigoProyecto,
-                NombreProyecto = nombreProyecto,
-                Descripcion = LimpiarTextoOpcional(solicitud.Descripcion),
-                FechaInicio = solicitud.FechaInicio,
-                FechaFinEstimada = solicitud.FechaFinEstimada,
-                FechaFinReal = solicitud.FechaFinReal,
-                Responsable = LimpiarTextoOpcional(solicitud.Responsable),
-                Ubicacion = LimpiarTextoOpcional(solicitud.Ubicacion),
-                IdEstadoProyecto = idEstado,
-                Observaciones = LimpiarTextoOpcional(solicitud.Observaciones),
-                FechaCreacion = DateTime.Now,
-                EstadoRegistro = EstadosRegistro.Activo
-            };
-
-            contexto.Proyectos.Add(proyecto);
-        }
-        else
-        {
-            var proyecto = await ObtenerProyectoActivoAsync(solicitud.IdProyecto, cancellationToken);
-
-            proyecto.CodigoProyecto = codigoProyecto;
-            proyecto.NombreProyecto = nombreProyecto;
-            proyecto.Descripcion = LimpiarTextoOpcional(solicitud.Descripcion);
-            proyecto.FechaInicio = solicitud.FechaInicio;
-            proyecto.FechaFinEstimada = solicitud.FechaFinEstimada;
-            proyecto.FechaFinReal = solicitud.FechaFinReal;
-            proyecto.Responsable = LimpiarTextoOpcional(solicitud.Responsable);
-            proyecto.Ubicacion = LimpiarTextoOpcional(solicitud.Ubicacion);
-            proyecto.IdEstadoProyecto = idEstado;
-            proyecto.Observaciones = LimpiarTextoOpcional(solicitud.Observaciones);
-            proyecto.FechaModificacion = DateTime.Now;
-        }
+        var fechaOperacion = DateTime.Now;
+        await using var transaccion =
+            await contexto.Database.BeginTransactionAsync(
+                IsolationLevel.Serializable,
+                cancellationToken);
 
         try
         {
+            if (solicitud.IdProyecto == 0)
+            {
+                var proyecto = new Proyecto
+                {
+                    CodigoProyecto = codigoProyecto,
+                    NombreProyecto = nombreProyecto,
+                    Descripcion =
+                        LimpiarTextoOpcional(solicitud.Descripcion),
+                    FechaInicio = solicitud.FechaInicio,
+                    FechaFinEstimada =
+                        solicitud.FechaFinEstimada,
+                    FechaFinReal = solicitud.FechaFinReal,
+                    Responsable =
+                        LimpiarTextoOpcional(solicitud.Responsable),
+                    Ubicacion =
+                        LimpiarTextoOpcional(solicitud.Ubicacion),
+                    IdEstadoProyecto = idEstado,
+                    Observaciones =
+                        LimpiarTextoOpcional(solicitud.Observaciones),
+                    FechaCreacion = fechaOperacion,
+                    CreadoPor = idUsuario,
+                    EstadoRegistro = EstadosRegistro.Activo
+                };
+
+                contexto.Proyectos.Add(proyecto);
+                await contexto.SaveChangesAsync(cancellationToken);
+
+                contexto.BitacoraAuditoria.Add(
+                    new BitacoraAuditoria
+                    {
+                        IdUsuario = idUsuario,
+                        FechaHora = fechaOperacion,
+                        Accion = "Creación de proyecto",
+                        Entidad = "Proyecto",
+                        IdRegistro =
+                            proyecto.IdProyecto.ToString(),
+                        ValoresNuevos =
+                            JsonSerializer.Serialize(new
+                            {
+                                proyecto.CodigoProyecto,
+                                proyecto.NombreProyecto,
+                                proyecto.Descripcion,
+                                proyecto.FechaInicio,
+                                proyecto.FechaFinEstimada,
+                                proyecto.FechaFinReal,
+                                proyecto.Responsable,
+                                proyecto.Ubicacion,
+                                proyecto.IdEstadoProyecto,
+                                proyecto.Observaciones
+                            }),
+                        Observacion =
+                            $"Se registró el proyecto {proyecto.CodigoProyecto}."
+                    });
+            }
+            else
+            {
+                var proyecto =
+                    await ObtenerProyectoActivoAsync(
+                        solicitud.IdProyecto,
+                        cancellationToken);
+                var valoresAnteriores =
+                    JsonSerializer.Serialize(new
+                    {
+                        proyecto.CodigoProyecto,
+                        proyecto.NombreProyecto,
+                        proyecto.Descripcion,
+                        proyecto.FechaInicio,
+                        proyecto.FechaFinEstimada,
+                        proyecto.FechaFinReal,
+                        proyecto.Responsable,
+                        proyecto.Ubicacion,
+                        proyecto.IdEstadoProyecto,
+                        proyecto.Observaciones
+                    });
+
+                proyecto.CodigoProyecto = codigoProyecto;
+                proyecto.NombreProyecto = nombreProyecto;
+                proyecto.Descripcion =
+                    LimpiarTextoOpcional(solicitud.Descripcion);
+                proyecto.FechaInicio = solicitud.FechaInicio;
+                proyecto.FechaFinEstimada =
+                    solicitud.FechaFinEstimada;
+                proyecto.FechaFinReal = solicitud.FechaFinReal;
+                proyecto.Responsable =
+                    LimpiarTextoOpcional(solicitud.Responsable);
+                proyecto.Ubicacion =
+                    LimpiarTextoOpcional(solicitud.Ubicacion);
+                proyecto.IdEstadoProyecto = idEstado;
+                proyecto.Observaciones =
+                    LimpiarTextoOpcional(solicitud.Observaciones);
+                proyecto.FechaModificacion = fechaOperacion;
+                proyecto.ModificadoPor = idUsuario;
+
+                contexto.BitacoraAuditoria.Add(
+                    new BitacoraAuditoria
+                    {
+                        IdUsuario = idUsuario,
+                        FechaHora = fechaOperacion,
+                        Accion = "Actualización de proyecto",
+                        Entidad = "Proyecto",
+                        IdRegistro =
+                            proyecto.IdProyecto.ToString(),
+                        ValoresAnteriores =
+                            valoresAnteriores,
+                        ValoresNuevos =
+                            JsonSerializer.Serialize(new
+                            {
+                                proyecto.CodigoProyecto,
+                                proyecto.NombreProyecto,
+                                proyecto.Descripcion,
+                                proyecto.FechaInicio,
+                                proyecto.FechaFinEstimada,
+                                proyecto.FechaFinReal,
+                                proyecto.Responsable,
+                                proyecto.Ubicacion,
+                                proyecto.IdEstadoProyecto,
+                                proyecto.Observaciones
+                            }),
+                        Observacion =
+                            $"Se actualizó el proyecto {proyecto.CodigoProyecto}."
+                    });
+            }
+
             await contexto.SaveChangesAsync(cancellationToken);
+            await transaccion.CommitAsync(cancellationToken);
         }
         catch (DbUpdateException ex) when (EsCodigoDuplicado(ex))
         {
+            await transaccion.RollbackAsync(
+                CancellationToken.None);
+            contexto.ChangeTracker.Clear();
             throw new InvalidOperationException("Ya existe un proyecto con el codigo indicado.", ex);
+        }
+        catch
+        {
+            await transaccion.RollbackAsync(
+                CancellationToken.None);
+            contexto.ChangeTracker.Clear();
+            throw;
         }
     }
 
@@ -189,6 +311,15 @@ public sealed class ProyectoService(ApplicationDbContext contexto) : IProyectoSe
         }
 
         return valor.Trim();
+    }
+
+    private static string LimpiarIdUsuarioObligatorio(
+        string idUsuario)
+    {
+        return string.IsNullOrWhiteSpace(idUsuario)
+            ? throw new ArgumentException(
+                "No se pudo identificar al usuario que guarda el proyecto.")
+            : idUsuario.Trim();
     }
 
     private static void ValidarFechas(SolicitudProyecto solicitud)

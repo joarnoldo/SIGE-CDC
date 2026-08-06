@@ -117,6 +117,19 @@ public sealed class MySqlActivoIntegrationTests
         contexto.AsignacionesActivoProyecto.Add(asignacion);
         await contexto.SaveChangesAsync();
 
+        await servicio.ActualizarEstadoUbicacionAsync(new SolicitudActualizacionEstadoUbicacion
+        {
+            IdActivo = idAsignado,
+            IdEstadoActivo = datos.Estados[EstadosActivo.Disponible],
+            UbicacionActual = "Patio con reserva futura QA"
+        }, datos.IdUsuario);
+
+        activoAsignado = await contexto.Activos.SingleAsync(activo => activo.IdActivo == idAsignado);
+        activoAsignado.IdEstadoActivo = datos.Estados[EstadosActivo.Asignado];
+        activoAsignado.EstadoActivo = null;
+        asignacion.FechaInicio = DateTime.Today;
+        await contexto.SaveChangesAsync();
+
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
             servicio.ActualizarEstadoUbicacionAsync(new SolicitudActualizacionEstadoUbicacion
             {
@@ -125,6 +138,10 @@ public sealed class MySqlActivoIntegrationTests
                 UbicacionActual = "Patio QA"
             }, datos.IdUsuario));
 
+        asignacion = await contexto.AsignacionesActivoProyecto
+            .SingleAsync(registro =>
+                registro.IdAsignacionActivoProyecto
+                    == asignacion.IdAsignacionActivoProyecto);
         asignacion.FechaInicio = DateTime.Today.AddDays(-5);
         asignacion.FechaFin = DateTime.Today.AddDays(-1);
         await contexto.SaveChangesAsync();
@@ -222,17 +239,28 @@ public sealed class MySqlActivoIntegrationTests
         foreach (var estado in EstadosOficiales)
         {
             var resultado = Assert.Single(resultados, item => item.CodigoActivo == codigos[estado]);
-            Assert.Equal(estado == EstadosActivo.Disponible, resultado.EstaDisponible);
+            Assert.Equal(
+                estado is EstadosActivo.Disponible or EstadosActivo.Asignado,
+                resultado.EstaDisponible);
         }
 
-        Assert.False(Assert.Single(resultados, item => item.CodigoActivo == codigoRestringido).EstaDisponible);
+        Assert.True(Assert.Single(resultados, item => item.CodigoActivo == codigoRestringido).EstaDisponible);
 
         var opciones = await servicio.ObtenerActivosDisponiblesAsync(
             DateTime.Today.AddDays(20),
             DateTime.Today.AddDays(22));
         Assert.Contains(opciones, opcion => opcion.CodigoActivo == codigos[EstadosActivo.Disponible]);
-        Assert.DoesNotContain(opciones, opcion => opcion.CodigoActivo == codigos[EstadosActivo.Asignado]);
-        Assert.DoesNotContain(opciones, opcion => opcion.CodigoActivo == codigoRestringido);
+        Assert.Contains(opciones, opcion => opcion.CodigoActivo == codigos[EstadosActivo.Asignado]);
+        Assert.Contains(opciones, opcion => opcion.CodigoActivo == codigoRestringido);
+
+        var rangoTraslapado = await servicio.ConsultarDisponibilidadAsync(new FiltroDisponibilidadActivo
+        {
+            FechaInicio = DateTime.Today.AddDays(11),
+            FechaFin = DateTime.Today.AddDays(11)
+        });
+        Assert.False(Assert.Single(
+            rangoTraslapado,
+            item => item.CodigoActivo == codigoRestringido).EstaDisponible);
 
         var soloAsignados = await servicio.ConsultarDisponibilidadAsync(new FiltroDisponibilidadActivo
         {
@@ -240,15 +268,139 @@ public sealed class MySqlActivoIntegrationTests
             FechaFin = DateTime.Today.AddDays(1),
             IdEstadoActivo = datos.Estados[EstadosActivo.Asignado]
         });
-        Assert.All(soloAsignados, activo =>
-        {
-            Assert.Equal(EstadosActivo.Asignado, activo.EstadoActivo);
-            Assert.False(activo.EstaDisponible);
-        });
+        var asignadoSinTraslape = Assert.Single(
+            soloAsignados,
+            activo => activo.CodigoActivo == codigos[EstadosActivo.Asignado]);
+        Assert.True(asignadoSinTraslape.EstaDisponible);
     }
 
     [MySqlQaFact]
-    public async Task CrearAsignacion_ActualizaEstadoAuditaEvitaConflictosYPermiteLiberacionManual()
+    public async Task MantenimientoEnProceso_BloqueaDisponibilidadAsignacionYCambioManual()
+    {
+        await using var contexto = CrearContexto();
+        var datos = await PrepararDatosAsync(contexto);
+        var servicioActivo = new ActivoService(contexto);
+        var servicioAsignacion = new AsignacionActivoProyectoService(contexto);
+        var idActivo = await servicioActivo.RegistrarActivoAsync(
+            CrearSolicitudRegistro(NuevoCodigo("MNT"), datos),
+            datos.IdUsuario);
+        var estadosMantenimiento = await contexto.EstadosMantenimiento
+            .AsNoTracking()
+            .Where(estado => estado.EstadoRegistro == EstadosRegistro.Activo)
+            .ToDictionaryAsync(estado => estado.Nombre, estado => estado.IdEstadoMantenimiento);
+
+        Assert.Contains(EstadosMantenimiento.Programado, estadosMantenimiento.Keys);
+        Assert.Contains(EstadosMantenimiento.EnProceso, estadosMantenimiento.Keys);
+        Assert.Contains(EstadosMantenimiento.Finalizado, estadosMantenimiento.Keys);
+        Assert.Contains(EstadosMantenimiento.Cancelado, estadosMantenimiento.Keys);
+
+        var mantenimiento = new Mantenimiento
+        {
+            IdActivo = idActivo,
+            TipoMantenimiento = TiposMantenimiento.Correctivo,
+            IdEstadoMantenimiento = estadosMantenimiento[EstadosMantenimiento.Programado],
+            FechaProgramada = DateTime.Today,
+            FechaCreacion = DateTime.Now,
+            CreadoPor = datos.IdUsuario,
+            EstadoRegistro = EstadosRegistro.Activo
+        };
+        contexto.Mantenimientos.Add(mantenimiento);
+        await contexto.SaveChangesAsync();
+
+        foreach (var estadoNoBloqueante in new[]
+                 {
+                     EstadosMantenimiento.Programado,
+                     EstadosMantenimiento.Finalizado,
+                     EstadosMantenimiento.Cancelado
+                 })
+        {
+            mantenimiento.IdEstadoMantenimiento = estadosMantenimiento[estadoNoBloqueante];
+            await contexto.SaveChangesAsync();
+
+            Assert.Contains(
+                await servicioAsignacion.ObtenerActivosDisponiblesAsync(
+                    DateTime.Today,
+                    DateTime.Today),
+                activo => activo.IdActivo == idActivo);
+        }
+
+        mantenimiento.IdEstadoMantenimiento = estadosMantenimiento[EstadosMantenimiento.EnProceso];
+        mantenimiento.EstadoRegistro = EstadosRegistro.Inactivo;
+        await contexto.SaveChangesAsync();
+
+        Assert.Contains(
+            await servicioAsignacion.ObtenerActivosDisponiblesAsync(
+                DateTime.Today,
+                DateTime.Today),
+            activo => activo.IdActivo == idActivo);
+
+        mantenimiento.EstadoRegistro = EstadosRegistro.Activo;
+        await contexto.SaveChangesAsync();
+
+        Assert.DoesNotContain(
+            await servicioAsignacion.ObtenerActivosDisponiblesAsync(
+                DateTime.Today,
+                DateTime.Today),
+            activo => activo.IdActivo == idActivo);
+
+        var disponibilidad = await servicioAsignacion.ConsultarDisponibilidadAsync(
+            new FiltroDisponibilidadActivo
+            {
+                FechaInicio = DateTime.Today,
+                FechaFin = DateTime.Today
+            });
+        var activoNoDisponible = Assert.Single(
+            disponibilidad,
+            activo => activo.IdActivo == idActivo);
+        Assert.False(activoNoDisponible.EstaDisponible);
+        Assert.Contains(
+            "mantenimiento en proceso",
+            activoNoDisponible.MotivoDisponibilidad,
+            StringComparison.OrdinalIgnoreCase);
+
+        var errorAsignacion = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            servicioAsignacion.CrearAsignacionAsync(
+                new SolicitudAsignacionActivoProyecto
+                {
+                    IdActivo = idActivo,
+                    IdProyecto = datos.IdProyecto,
+                    FechaInicio = DateTime.Today,
+                    FechaFin = DateTime.Today.AddDays(1)
+                },
+                datos.IdUsuario));
+        Assert.Contains(
+            "mantenimiento en proceso",
+            errorAsignacion.Message,
+            StringComparison.OrdinalIgnoreCase);
+
+        foreach (var estadoOperativo in new[]
+                 {
+                     EstadosActivo.Disponible,
+                     EstadosActivo.Asignado
+                 })
+        {
+            var errorEstado = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+                servicioActivo.ActualizarEstadoUbicacionAsync(
+                    new SolicitudActualizacionEstadoUbicacion
+                    {
+                        IdActivo = idActivo,
+                        IdEstadoActivo = datos.Estados[estadoOperativo],
+                        UbicacionActual = $"Ubicación bloqueada {estadoOperativo}"
+                    },
+                    datos.IdUsuario));
+            Assert.Contains(
+                "mantenimiento en proceso",
+                errorEstado.Message,
+                StringComparison.OrdinalIgnoreCase);
+        }
+
+        Assert.False(await contexto.AsignacionesActivoProyecto
+            .AsNoTracking()
+            .AnyAsync(asignacion => asignacion.IdActivo == idActivo));
+    }
+
+    [MySqlQaFact]
+    public async Task CrearAsignacion_RespetaTraslapesYActualizaEstadoSoloSiEstaVigente()
     {
         await using var contexto = CrearContexto();
         var datos = await PrepararDatosAsync(contexto);
@@ -278,9 +430,9 @@ public sealed class MySqlActivoIntegrationTests
         var activoPersistido = await contexto.Activos.AsNoTracking()
             .Include(activo => activo.EstadoActivo)
             .SingleAsync(activo => activo.IdActivo == idActivo);
-        Assert.Equal(EstadosActivo.Asignado, activoPersistido.EstadoActivo?.Nombre);
-        Assert.Equal(datos.IdUsuario, activoPersistido.ModificadoPor);
-        Assert.True(await contexto.BitacoraAuditoria.AsNoTracking().AnyAsync(registro =>
+        Assert.Equal(EstadosActivo.Disponible, activoPersistido.EstadoActivo?.Nombre);
+        Assert.Null(activoPersistido.ModificadoPor);
+        Assert.False(await contexto.BitacoraAuditoria.AsNoTracking().AnyAsync(registro =>
             registro.Entidad == "Activo"
             && registro.IdRegistro == idActivo.ToString()
             && registro.Accion == "Actualización de estado por asignación"));
@@ -299,29 +451,43 @@ public sealed class MySqlActivoIntegrationTests
             FechaInicio = fin.AddDays(10),
             FechaFin = fin.AddDays(12)
         };
-        await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            servicioAsignacion.CrearAsignacionAsync(rangoSinTraslape, datos.IdUsuario));
+        var idAsignacionNoSolapada = await servicioAsignacion.CrearAsignacionAsync(
+            rangoSinTraslape,
+            datos.IdUsuario);
+        Assert.NotEqual(idAsignacion, idAsignacionNoSolapada);
 
         Assert.DoesNotContain(
             await servicioAsignacion.ObtenerActivosDisponiblesAsync(inicio, fin),
             activo => activo.IdActivo == idActivo);
 
-        var asignacionPersistida = await contexto.AsignacionesActivoProyecto
-            .SingleAsync(asignacion => asignacion.IdAsignacionActivoProyecto == idAsignacion);
-        asignacionPersistida.FechaInicio = DateTime.Today.AddDays(-4);
-        asignacionPersistida.FechaFin = DateTime.Today.AddDays(-1);
-        await contexto.SaveChangesAsync();
-
-        await servicioActivo.ActualizarEstadoUbicacionAsync(new SolicitudActualizacionEstadoUbicacion
-        {
-            IdActivo = idActivo,
-            IdEstadoActivo = datos.Estados[EstadosActivo.Disponible],
-            UbicacionActual = "Patio liberado QA"
-        }, datos.IdUsuario);
-
         Assert.Contains(
-            await servicioAsignacion.ObtenerActivosDisponiblesAsync(inicio, fin),
+            await servicioAsignacion.ObtenerActivosDisponiblesAsync(
+                fin.AddDays(1),
+                fin.AddDays(5)),
             activo => activo.IdActivo == idActivo);
+
+        var idActivoVigente = await servicioActivo.RegistrarActivoAsync(
+            CrearSolicitudRegistro(NuevoCodigo("VIG"), datos),
+            datos.IdUsuario);
+        await servicioAsignacion.CrearAsignacionAsync(
+            new SolicitudAsignacionActivoProyecto
+            {
+                IdActivo = idActivoVigente,
+                IdProyecto = datos.IdProyecto,
+                FechaInicio = DateTime.Today,
+                FechaFin = DateTime.Today.AddDays(1)
+            },
+            datos.IdUsuario);
+
+        var activoVigente = await contexto.Activos.AsNoTracking()
+            .Include(activo => activo.EstadoActivo)
+            .SingleAsync(activo => activo.IdActivo == idActivoVigente);
+        Assert.Equal(EstadosActivo.Asignado, activoVigente.EstadoActivo?.Nombre);
+        Assert.Equal(datos.IdUsuario, activoVigente.ModificadoPor);
+        Assert.True(await contexto.BitacoraAuditoria.AsNoTracking().AnyAsync(registro =>
+            registro.Entidad == "Activo"
+            && registro.IdRegistro == idActivoVigente.ToString()
+            && registro.Accion == "Actualización de estado por asignación"));
     }
 
     [MySqlQaFact]

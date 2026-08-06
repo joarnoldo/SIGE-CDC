@@ -34,7 +34,8 @@ public sealed class PlanillaService(ApplicationDbContext contexto) : IPlanillaSe
                 CantidadIncidencias = contexto.IncidenciasPlanilla.Count(incidencia =>
                     incidencia.IdPeriodoPlanilla == periodo.IdPeriodoPlanilla
                     && incidencia.EstadoRegistro == EstadoActivo),
-                TienePlanilla = periodo.Planilla != null,
+                TienePlanilla = periodo.Planilla != null
+                    && periodo.Planilla.FechaCalculo.HasValue,
                 SalarioNetoTotal = periodo.Planilla != null ? periodo.Planilla.SalarioNetoTotal : 0m
             })
             .ToListAsync(cancellationToken);
@@ -105,6 +106,7 @@ public sealed class PlanillaService(ApplicationDbContext contexto) : IPlanillaSe
         catch
         {
             await transaccion.RollbackAsync(CancellationToken.None);
+            contexto.ChangeTracker.Clear();
             throw;
         }
     }
@@ -136,7 +138,13 @@ public sealed class PlanillaService(ApplicationDbContext contexto) : IPlanillaSe
                 FechaCierre = registro.Planilla != null ? registro.Planilla.FechaCierre : null,
                 SalarioBrutoTotal = registro.Planilla != null ? registro.Planilla.SalarioBrutoTotal : 0m,
                 DeduccionesTotal = registro.Planilla != null ? registro.Planilla.DeduccionesTotal : 0m,
-                SalarioNetoTotal = registro.Planilla != null ? registro.Planilla.SalarioNetoTotal : 0m
+                SalarioNetoTotal = registro.Planilla != null ? registro.Planilla.SalarioNetoTotal : 0m,
+                CantidadColillas = registro.Planilla != null
+                    ? registro.Planilla.Detalles.Count(detalle => detalle.ColillaPago != null)
+                    : 0,
+                CantidadColillasPendientes = registro.Planilla != null
+                    ? registro.Planilla.Detalles.Count(detalle => detalle.ColillaPago == null)
+                    : 0
             })
             .FirstOrDefaultAsync(cancellationToken);
 
@@ -217,11 +225,23 @@ public sealed class PlanillaService(ApplicationDbContext contexto) : IPlanillaSe
                 throw new InvalidOperationException("Solo se puede calcular un período en estado Borrador.");
             }
 
-            if (await contexto.Planillas.AnyAsync(planilla =>
-                planilla.IdPeriodoPlanilla == idPeriodoPlanilla,
-                cancellationToken))
+            var planillaExistente = await contexto.Planillas
+                .Include(planilla => planilla.EstadoPlanilla)
+                .Include(planilla => planilla.Detalles)
+                .SingleOrDefaultAsync(planilla =>
+                    planilla.IdPeriodoPlanilla == idPeriodoPlanilla,
+                    cancellationToken);
+
+            if (planillaExistente is not null
+                && (!string.Equals(
+                        planillaExistente.EstadoPlanilla?.Nombre,
+                        EstadosPlanilla.Borrador,
+                        StringComparison.OrdinalIgnoreCase)
+                    || planillaExistente.FechaCalculo.HasValue
+                    || planillaExistente.Detalles.Count > 0))
             {
-                throw new InvalidOperationException("El período ya tiene una planilla generada.");
+                throw new InvalidOperationException(
+                    "El período ya tiene una planilla generada que no fue reabierta correctamente.");
             }
 
             var estadoCalculada = await ObtenerEstadoAsync(EstadosPlanilla.Calculada, cancellationToken);
@@ -262,16 +282,32 @@ public sealed class PlanillaService(ApplicationDbContext contexto) : IPlanillaSe
                 .ToListAsync(cancellationToken);
 
             var ahora = DateTime.Now;
-            var planilla = new Planilla
+            var idUsuario = LimpiarIdUsuario(idUsuarioActual);
+            var planilla = planillaExistente ?? new Planilla
             {
                 IdPeriodoPlanilla = periodo.IdPeriodoPlanilla,
-                IdEstadoPlanilla = estadoCalculada.IdEstadoPlanilla,
-                FechaCalculo = ahora,
-                CostoPatronalEstimadoTotal = 0m,
                 FechaCreacion = ahora,
-                CreadoPor = LimpiarIdUsuario(idUsuarioActual),
+                CreadoPor = idUsuario,
                 EstadoRegistro = EstadoActivo
             };
+
+            planilla.IdEstadoPlanilla = estadoCalculada.IdEstadoPlanilla;
+            planilla.EstadoPlanilla = estadoCalculada;
+            planilla.FechaCalculo = ahora;
+            planilla.SalarioBrutoTotal = 0m;
+            planilla.DeduccionesTotal = 0m;
+            planilla.SalarioNetoTotal = 0m;
+            planilla.CostoPatronalEstimadoTotal = 0m;
+            planilla.AprobadoPor = null;
+            planilla.FechaAprobacion = null;
+            planilla.CerradoPor = null;
+            planilla.FechaCierre = null;
+
+            if (planillaExistente is not null)
+            {
+                planilla.FechaModificacion = ahora;
+                planilla.ModificadoPor = idUsuario;
+            }
 
             foreach (var colaborador in colaboradores)
             {
@@ -345,8 +381,18 @@ public sealed class PlanillaService(ApplicationDbContext contexto) : IPlanillaSe
             periodo.FechaModificacion = ahora;
             periodo.ModificadoPor = LimpiarIdUsuario(idUsuarioActual);
 
-            contexto.Planillas.Add(planilla);
+            if (planillaExistente is null)
+            {
+                contexto.Planillas.Add(planilla);
+            }
             await contexto.SaveChangesAsync(cancellationToken);
+
+            await GeneradorMetadatosColillaPago.AgregarPendientesAsync(
+                contexto,
+                planilla.IdPlanilla,
+                idUsuario,
+                ahora,
+                cancellationToken);
 
             contexto.BitacoraAuditoria.Add(new BitacoraAuditoria
             {
@@ -373,6 +419,7 @@ public sealed class PlanillaService(ApplicationDbContext contexto) : IPlanillaSe
         catch
         {
             await transaccion.RollbackAsync(CancellationToken.None);
+            contexto.ChangeTracker.Clear();
             throw;
         }
     }
@@ -387,6 +434,102 @@ public sealed class PlanillaService(ApplicationDbContext contexto) : IPlanillaSe
             idUsuarioActual,
             EstadosPlanilla.Aprobada,
             cancellationToken);
+    }
+
+    public async Task ReabrirPlanillaAsync(
+        long idPeriodoPlanilla,
+        string idUsuarioActual,
+        CancellationToken cancellationToken = default)
+    {
+        var idUsuario = LimpiarIdUsuarioObligatorio(idUsuarioActual);
+
+        await using var transaccion = await contexto.Database.BeginTransactionAsync(
+            IsolationLevel.Serializable,
+            cancellationToken);
+
+        try
+        {
+            var periodo = await contexto.PeriodosPlanilla
+                .Include(registro => registro.EstadoPlanilla)
+                .Include(registro => registro.Planilla)!
+                    .ThenInclude(planilla => planilla!.EstadoPlanilla)
+                .Include(registro => registro.Planilla)!
+                    .ThenInclude(planilla => planilla!.Detalles)
+                .FirstOrDefaultAsync(registro =>
+                    registro.IdPeriodoPlanilla == idPeriodoPlanilla
+                    && registro.EstadoRegistro == EstadoActivo,
+                    cancellationToken)
+                ?? throw new InvalidOperationException(
+                    "No se encontró el período de planilla solicitado.");
+
+            var planilla = periodo.Planilla
+                ?? throw new InvalidOperationException(
+                    "El período no tiene una planilla calculada.");
+
+            FlujoEstadosPlanilla.ValidarReapertura(
+                periodo.EstadoPlanilla?.Nombre,
+                planilla.EstadoPlanilla?.Nombre);
+
+            var estadoBorrador = await ObtenerEstadoAsync(
+                EstadosPlanilla.Borrador,
+                cancellationToken);
+            var ahora = DateTime.Now;
+            var valoresAnteriores = JsonSerializer.Serialize(new
+            {
+                Estado = EstadosPlanilla.Calculada,
+                planilla.FechaCalculo,
+                Colaboradores = planilla.Detalles.Count,
+                planilla.SalarioBrutoTotal,
+                planilla.DeduccionesTotal,
+                planilla.SalarioNetoTotal
+            });
+
+            contexto.DetallesPlanilla.RemoveRange(planilla.Detalles);
+
+            periodo.IdEstadoPlanilla = estadoBorrador.IdEstadoPlanilla;
+            periodo.EstadoPlanilla = estadoBorrador;
+            periodo.FechaModificacion = ahora;
+            periodo.ModificadoPor = idUsuario;
+
+            planilla.IdEstadoPlanilla = estadoBorrador.IdEstadoPlanilla;
+            planilla.EstadoPlanilla = estadoBorrador;
+            planilla.FechaCalculo = null;
+            planilla.SalarioBrutoTotal = 0m;
+            planilla.DeduccionesTotal = 0m;
+            planilla.SalarioNetoTotal = 0m;
+            planilla.CostoPatronalEstimadoTotal = 0m;
+            planilla.AprobadoPor = null;
+            planilla.FechaAprobacion = null;
+            planilla.CerradoPor = null;
+            planilla.FechaCierre = null;
+            planilla.FechaModificacion = ahora;
+            planilla.ModificadoPor = idUsuario;
+
+            contexto.BitacoraAuditoria.Add(new BitacoraAuditoria
+            {
+                IdUsuario = idUsuario,
+                FechaHora = ahora,
+                Accion = "REABRIR_PLANILLA",
+                Entidad = "Planilla",
+                IdRegistro = planilla.IdPlanilla.ToString(),
+                ValoresAnteriores = valoresAnteriores,
+                ValoresNuevos = JsonSerializer.Serialize(new
+                {
+                    Estado = EstadosPlanilla.Borrador,
+                    RequiereCalculo = true
+                }),
+                Observacion = "Planilla reabierta para ajustes; el cálculo anterior fue invalidado."
+            });
+
+            await contexto.SaveChangesAsync(cancellationToken);
+            await transaccion.CommitAsync(cancellationToken);
+        }
+        catch
+        {
+            await transaccion.RollbackAsync(CancellationToken.None);
+            contexto.ChangeTracker.Clear();
+            throw;
+        }
     }
 
     public Task CerrarPlanillaAsync(
@@ -490,6 +633,7 @@ public sealed class PlanillaService(ApplicationDbContext contexto) : IPlanillaSe
         catch
         {
             await transaccion.RollbackAsync(CancellationToken.None);
+            contexto.ChangeTracker.Clear();
             throw;
         }
     }

@@ -3,10 +3,12 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using SIGECDC.Domain.Activos;
 using SIGECDC.Domain.Auditoria;
+using SIGECDC.Domain.Forecast;
 using SIGECDC.Domain.Operaciones;
 using SIGECDC.Domain.Planillas;
 using SIGECDC.Domain.RecursosHumanos;
 using SIGECDC.Domain.SitioPublico;
+using SIGECDC.Persistence.Forecast;
 
 namespace SIGECDC.Persistence.Identity;
 
@@ -33,8 +35,23 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<PeriodoPlanilla> PeriodosPlanilla => Set<PeriodoPlanilla>();
     public DbSet<Planilla> Planillas => Set<Planilla>();
     public DbSet<DetallePlanilla> DetallesPlanilla => Set<DetallePlanilla>();
+    public DbSet<ColillaPago> ColillasPago => Set<ColillaPago>();
     public DbSet<IncidenciaPlanilla> IncidenciasPlanilla => Set<IncidenciaPlanilla>();
     public DbSet<BitacoraAuditoria> BitacoraAuditoria => Set<BitacoraAuditoria>();
+
+    public DbSet<ForecastEscenario> ForecastEscenarios => Set<ForecastEscenario>();
+
+    public DbSet<ForecastPeriodo> ForecastPeriodos => Set<ForecastPeriodo>();
+
+    public DbSet<ForecastFuenteHistorica> ForecastFuentesHistoricas => Set<ForecastFuenteHistorica>();
+
+    public DbSet<ForecastParametro> ForecastParametros => Set<ForecastParametro>();
+
+    public DbSet<ForecastParticipante> ForecastParticipantes => Set<ForecastParticipante>();
+
+    public DbSet<ForecastAsignacionProyecto> ForecastAsignacionesProyecto => Set<ForecastAsignacionProyecto>();
+
+    public DbSet<ForecastDetalle> ForecastDetalles => Set<ForecastDetalle>();
 
     public DbSet<EstadoActivo> EstadosActivo => Set<EstadoActivo>();
 
@@ -44,7 +61,11 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
 
     public DbSet<Activo> Activos => Set<Activo>();
 
+    public DbSet<TipoMedicionUso> TiposMedicionUso => Set<TipoMedicionUso>();
+
     public DbSet<AsignacionActivoProyecto> AsignacionesActivoProyecto => Set<AsignacionActivoProyecto>();
+
+    public DbSet<RegistroUsoActivo> RegistrosUsoActivo => Set<RegistroUsoActivo>();
 
 	public DbSet<EstadoMantenimiento> EstadosMantenimiento => Set<EstadoMantenimiento>();
 
@@ -61,6 +82,14 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
 	protected override void OnModelCreating(ModelBuilder builder)
 	{
 		base.OnModelCreating(builder);
+
+        builder.ApplyConfiguration(new ForecastEscenarioConfiguracion());
+        builder.ApplyConfiguration(new ForecastPeriodoConfiguracion());
+        builder.ApplyConfiguration(new ForecastFuenteHistoricaConfiguracion());
+        builder.ApplyConfiguration(new ForecastParametroConfiguracion());
+        builder.ApplyConfiguration(new ForecastParticipanteConfiguracion());
+        builder.ApplyConfiguration(new ForecastAsignacionProyectoConfiguracion());
+        builder.ApplyConfiguration(new ForecastDetalleConfiguracion());
 
 		builder.Entity<ApplicationUser>(entidad =>
 		{
@@ -159,6 +188,18 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
 				.HasForeignKey(mantenimiento => mantenimiento.IdEstadoMantenimiento)
 				.OnDelete(DeleteBehavior.Restrict)
 				.HasConstraintName("FK_Mantenimiento_EstadoMantenimiento");
+
+			entidad.HasOne<ApplicationUser>()
+				.WithMany()
+				.HasForeignKey(mantenimiento => mantenimiento.CreadoPor)
+				.OnDelete(DeleteBehavior.SetNull)
+				.HasConstraintName("FK_Mantenimiento_CreadoPor");
+
+			entidad.HasOne<ApplicationUser>()
+				.WithMany()
+				.HasForeignKey(mantenimiento => mantenimiento.ModificadoPor)
+				.OnDelete(DeleteBehavior.SetNull)
+				.HasConstraintName("FK_Mantenimiento_ModificadoPor");
 		});
 
 
@@ -1318,6 +1359,55 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                 .HasConstraintName("FK_DetallePlanilla_Colaborador");
         });
 
+        builder.Entity<ColillaPago>(entidad =>
+        {
+            entidad.ToTable("ColillaPago");
+
+            entidad.HasKey(colilla => colilla.IdColillaPago);
+
+            entidad.Property(colilla => colilla.IdColillaPago)
+                .ValueGeneratedOnAdd();
+
+            entidad.Property(colilla => colilla.CodigoColilla)
+                .HasMaxLength(50)
+                .IsRequired();
+
+            entidad.Property(colilla => colilla.RutaArchivo)
+                .HasMaxLength(500);
+
+            entidad.Property(colilla => colilla.FechaGeneracion)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .IsRequired();
+
+            entidad.Property(colilla => colilla.GeneradoPor)
+                .HasMaxLength(255);
+
+            entidad.Property(colilla => colilla.EstadoRegistro)
+                .HasColumnType("enum('Activo','Inactivo')")
+                .HasDefaultValue("Activo")
+                .IsRequired();
+
+            entidad.HasIndex(colilla => colilla.IdDetallePlanilla)
+                .IsUnique()
+                .HasDatabaseName("UX_ColillaPago_IdDetallePlanilla");
+
+            entidad.HasIndex(colilla => colilla.CodigoColilla)
+                .IsUnique()
+                .HasDatabaseName("UX_ColillaPago_CodigoColilla");
+
+            entidad.HasOne(colilla => colilla.DetallePlanilla)
+                .WithOne(detalle => detalle.ColillaPago)
+                .HasForeignKey<ColillaPago>(colilla => colilla.IdDetallePlanilla)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_ColillaPago_DetallePlanilla");
+
+            entidad.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(colilla => colilla.GeneradoPor)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_ColillaPago_GeneradoPor");
+        });
+
         builder.Entity<IncidenciaPlanilla>(entidad =>
         {
             entidad.ToTable("IncidenciaPlanilla");
@@ -1572,14 +1662,41 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             entidad.HasIndex(categoria => categoria.IdTipoActivo)
                 .HasDatabaseName("IX_CategoriaActivo_IdTipoActivo");
 
-            entidad.HasIndex(categoria => categoria.Nombre)
-                .HasDatabaseName("IX_CategoriaActivo_Nombre");
+            entidad.HasIndex(categoria => new { categoria.IdTipoActivo, categoria.Nombre })
+                .IsUnique()
+                .HasDatabaseName("UX_CategoriaActivo_Tipo_Nombre");
 
             entidad.HasOne(categoria => categoria.TipoActivo)
                 .WithMany()
                 .HasForeignKey(categoria => categoria.IdTipoActivo)
                 .OnDelete(DeleteBehavior.Restrict)
                 .HasConstraintName("FK_CategoriaActivo_TipoActivo");
+        });
+
+        builder.Entity<TipoMedicionUso>(entidad =>
+        {
+            entidad.ToTable("TipoMedicionUso");
+
+            entidad.HasKey(tipo => tipo.IdTipoMedicionUso);
+
+            entidad.Property(tipo => tipo.IdTipoMedicionUso)
+                .ValueGeneratedOnAdd();
+
+            entidad.Property(tipo => tipo.Nombre)
+                .HasMaxLength(50)
+                .IsRequired();
+
+            entidad.Property(tipo => tipo.Descripcion)
+                .HasMaxLength(255);
+
+            entidad.Property(tipo => tipo.EstadoRegistro)
+                .HasColumnType("enum('Activo','Inactivo')")
+                .HasDefaultValue(EstadosRegistro.Activo)
+                .IsRequired();
+
+            entidad.HasIndex(tipo => tipo.Nombre)
+                .IsUnique()
+                .HasDatabaseName("UX_TipoMedicionUso_Nombre");
         });
 
         builder.Entity<Activo>(entidad =>
@@ -1622,6 +1739,9 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
 
             entidad.Property(activo => activo.UbicacionActual)
                 .HasMaxLength(150);
+
+            entidad.Property(activo => activo.LecturaUsoActual)
+                .HasPrecision(18, 2);
 
             entidad.Property(activo => activo.Observaciones)
                 .HasMaxLength(500);
@@ -1676,6 +1796,12 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                 .HasForeignKey(activo => activo.IdEstadoActivo)
                 .OnDelete(DeleteBehavior.Restrict)
                 .HasConstraintName("FK_Activo_EstadoActivo");
+
+            entidad.HasOne(activo => activo.TipoMedicionUso)
+                .WithMany()
+                .HasForeignKey(activo => activo.IdTipoMedicionUso)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_Activo_TipoMedicionUso");
 
             entidad.HasOne<ApplicationUser>()
                 .WithMany()
@@ -1748,6 +1874,72 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                 .HasForeignKey(asignacion => asignacion.AsignadoPor)
                 .OnDelete(DeleteBehavior.SetNull)
                 .HasConstraintName("FK_AsignacionActivoProyecto_AsignadoPor");
+        });
+
+        builder.Entity<RegistroUsoActivo>(entidad =>
+        {
+            entidad.ToTable("RegistroUsoActivo");
+
+            entidad.HasKey(registro => registro.IdRegistroUsoActivo);
+
+            entidad.Property(registro => registro.IdRegistroUsoActivo)
+                .ValueGeneratedOnAdd();
+
+            entidad.Property(registro => registro.FechaRegistro)
+                .HasColumnType("date")
+                .IsRequired();
+
+            entidad.Property(registro => registro.LecturaAnterior)
+                .HasPrecision(18, 2);
+
+            entidad.Property(registro => registro.LecturaNueva)
+                .HasPrecision(18, 2)
+                .IsRequired();
+
+            entidad.Property(registro => registro.CantidadUso)
+                .HasPrecision(18, 2);
+
+            entidad.Property(registro => registro.Observaciones)
+                .HasMaxLength(500);
+
+            entidad.Property(registro => registro.RegistradoPor)
+                .HasMaxLength(255);
+
+            entidad.Property(registro => registro.FechaCreacion)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .IsRequired();
+
+            entidad.Property(registro => registro.EstadoRegistro)
+                .HasColumnType("enum('Activo','Inactivo')")
+                .HasDefaultValue(EstadosRegistro.Activo)
+                .IsRequired();
+
+            entidad.HasIndex(registro => registro.IdActivo)
+                .HasDatabaseName("IX_RegistroUsoActivo_IdActivo");
+
+            entidad.HasIndex(registro => registro.IdProyecto)
+                .HasDatabaseName("IX_RegistroUsoActivo_IdProyecto");
+
+            entidad.HasIndex(registro => registro.FechaRegistro)
+                .HasDatabaseName("IX_RegistroUsoActivo_FechaRegistro");
+
+            entidad.HasOne(registro => registro.Activo)
+                .WithMany()
+                .HasForeignKey(registro => registro.IdActivo)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_RegistroUsoActivo_Activo");
+
+            entidad.HasOne(registro => registro.Proyecto)
+                .WithMany()
+                .HasForeignKey(registro => registro.IdProyecto)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_RegistroUsoActivo_Proyecto");
+
+            entidad.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(registro => registro.RegistradoPor)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_RegistroUsoActivo_RegistradoPor");
         });
 
 		builder.Entity<EstadoMantenimiento>(entidad =>

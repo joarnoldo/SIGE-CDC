@@ -1,0 +1,429 @@
+@page "/rrhh/forecast/nuevo"
+@rendermode InteractiveServer
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Recursos Humanos")]
+@using SIGECDC.Application.Forecast
+@using SIGECDC.Domain.Planillas
+@inject IForecastEscenarioService ForecastEscenarioService
+@inject AuthenticationStateProvider Autenticacion
+@inject NavigationManager Navegacion
+@inject ILogger<NuevoEscenarioForecast> Logger
+
+<PageTitle>Nuevo escenario forecast | SIGE-CDC</PageTitle>
+
+<section class="page-banner">
+    <div class="container page-banner__inner stack--tight">
+        <p class="eyebrow">Recursos Humanos / Forecast</p>
+        <h1>Nuevo escenario de forecast.</h1>
+        <p class="lead">Defina los períodos futuros y las planillas históricas exactas que sustentarán la proyección.</p>
+    </div>
+</section>
+
+<section class="section-shell">
+    <div class="container stack">
+        @if (!string.IsNullOrWhiteSpace(mensajeError))
+        {
+            <div class="alert alert--danger" role="alert">
+                <strong>No se pudo crear el escenario</strong>
+                <span>@mensajeError</span>
+            </div>
+        }
+
+        @if (cargando)
+        {
+            <div class="empty-state">
+                <strong>Cargando formulario</strong>
+                <p class="text-muted">Estamos consultando las planillas históricas elegibles.</p>
+            </div>
+        }
+        else
+        {
+            <EditForm Model="solicitud" OnValidSubmit="GuardarAsync" OnInvalidSubmit="LimpiarMensaje" class="stack">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <section class="page-grid">
+                    <div class="page-main stack">
+                        <article class="form-section stack">
+                            <div>
+                                <p class="eyebrow">Identificación</p>
+                                <h2>Definición del borrador</h2>
+                            </div>
+                            <div class="form-grid">
+                                <div class="field field--span-2">
+                                    <label for="nombreEscenario">Nombre</label>
+                                    <InputTextInmediato id="nombreEscenario" @bind-Value="solicitud.Nombre" autocomplete="off" />
+                                    <ValidationMessage For="() => solicitud.Nombre" />
+                                </div>
+                                <div class="field field--span-2">
+                                    <label for="descripcionEscenario">Descripción</label>
+                                    <InputTextAreaInmediato id="descripcionEscenario" @bind-Value="solicitud.Descripcion" />
+                                    <ValidationMessage For="() => solicitud.Descripcion" />
+                                </div>
+                            </div>
+                        </article>
+
+                        <article class="form-section stack">
+                            <div class="page-header">
+                                <div>
+                                    <p class="eyebrow">Períodos futuros</p>
+                                    <h2>Rangos de proyección</h2>
+                                </div>
+                                <div class="page-actions">
+                                    <button class="btn btn--secondary" type="button" @onclick="AgregarPeriodo">Agregar período</button>
+                                </div>
+                            </div>
+                            <p class="help-text">Registre los períodos en orden cronológico. Se permiten espacios entre ellos, pero no traslapes.</p>
+
+                            @for (var indice = 0; indice < solicitud.Periodos.Count; indice++)
+                            {
+                                var indiceActual = indice;
+                                var periodo = solicitud.Periodos[indiceActual];
+                                <section class="card stack" @key="periodo">
+                                    <div class="page-header">
+                                        <div>
+                                            <span class="badge badge--info">Período @(indiceActual + 1)</span>
+                                        </div>
+                                        <div class="page-actions">
+                                            <button class="btn btn--secondary"
+                                                    type="button"
+                                                    disabled="@(solicitud.Periodos.Count == 1)"
+                                                    @onclick="() => EliminarPeriodo(indiceActual)">
+                                                Eliminar
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="inline-fields">
+                                        <div class="field">
+                                            <label for="@($"tipoPeriodo-{indiceActual}")">Tipo</label>
+                                            <InputSelect id="@($"tipoPeriodo-{indiceActual}")" @bind-Value="periodo.TipoPeriodo">
+                                                <option value="@TiposPeriodoPlanilla.Mensual">Mensual</option>
+                                                <option value="@TiposPeriodoPlanilla.Quincenal">Quincenal</option>
+                                            </InputSelect>
+                                        </div>
+                                        <div class="field">
+                                            <label for="@($"fechaInicio-{indiceActual}")">Fecha inicial</label>
+                                            <InputDate id="@($"fechaInicio-{indiceActual}")"
+                                                       @bind-Value="periodo.FechaInicio"
+                                                       min="@FechaMinimaTexto" />
+                                        </div>
+                                        <div class="field">
+                                            <label for="@($"fechaFin-{indiceActual}")">Fecha final</label>
+                                            <InputDate id="@($"fechaFin-{indiceActual}")"
+                                                       @bind-Value="periodo.FechaFin"
+                                                       min="@FechaMinimaTexto" />
+                                        </div>
+                                    </div>
+                                </section>
+                            }
+                        </article>
+
+                        <article class="table-card">
+                            <div class="table-toolbar">
+                                <div>
+                                    <h2 class="card__title">Planillas históricas elegibles</h2>
+                                    <p class="card__meta">Solo se muestran planillas activas aprobadas o cerradas.</p>
+                                </div>
+                                <span class="badge badge--info">@fuentesDisponibles.Count</span>
+                            </div>
+
+                            @if (fuentesDisponibles.Count == 0)
+                            {
+                                <div class="empty-state">
+                                    <strong>No hay fuentes históricas disponibles</strong>
+                                    <p class="text-muted">Se necesita al menos una planilla activa Aprobada o Cerrada antes de crear un escenario.</p>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="table-responsive">
+                                    <table class="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Seleccionar</th>
+                                                <th>Período</th>
+                                                <th>Rango</th>
+                                                <th>Estado</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var fuente in fuentesDisponibles)
+                                            {
+                                                <tr>
+                                                    <td>
+                                                        <input type="checkbox"
+                                                               aria-label="@($"Seleccionar {fuente.CodigoPeriodo}")"
+                                                               checked="@EstaFuenteSeleccionada(fuente.IdPlanilla)"
+                                                               @onchange="evento => CambiarSeleccionFuente(fuente.IdPlanilla, evento)" />
+                                                    </td>
+                                                    <td>
+                                                        <strong>@fuente.CodigoPeriodo</strong>
+                                                        <p class="card__meta">@fuente.NombrePeriodo</p>
+                                                    </td>
+                                                    <td>@TextoRango(fuente.FechaInicio, fuente.FechaFin)</td>
+                                                    <td><span class="badge badge--success">@fuente.EstadoPlanilla</span></td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            }
+                        </article>
+
+                        <article class="table-card">
+                            <div class="table-toolbar">
+                                <div>
+                                    <h2 class="card__title">Orden de uso</h2>
+                                    <p class="card__meta">El orden persistido determina la secuencia reproducible de los históricos.</p>
+                                </div>
+                                <span class="badge badge--accent">@idsFuentesSeleccionadas.Count</span>
+                            </div>
+
+                            @if (idsFuentesSeleccionadas.Count == 0)
+                            {
+                                <div class="empty-state">
+                                    <strong>No hay planillas seleccionadas</strong>
+                                    <p class="text-muted">Seleccione al menos una fuente histórica.</p>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="table-responsive">
+                                    <table class="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Orden</th>
+                                                <th>Período</th>
+                                                <th>Estado</th>
+                                                <th>Acciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @for (var indice = 0; indice < idsFuentesSeleccionadas.Count; indice++)
+                                            {
+                                                var indiceActual = indice;
+                                                var fuente = ObtenerFuente(idsFuentesSeleccionadas[indiceActual]);
+                                                <tr>
+                                                    <td><strong>@(indiceActual + 1)</strong></td>
+                                                    <td>@fuente.CodigoPeriodo · @fuente.NombrePeriodo</td>
+                                                    <td><span class="badge badge--success">@fuente.EstadoPlanilla</span></td>
+                                                    <td>
+                                                        <div class="table-actions">
+                                                            <button type="button"
+                                                                    disabled="@(indiceActual == 0)"
+                                                                    @onclick="() => MoverFuente(indiceActual, -1)">
+                                                                Subir
+                                                            </button>
+                                                            <button type="button"
+                                                                    disabled="@(indiceActual == idsFuentesSeleccionadas.Count - 1)"
+                                                                    @onclick="() => MoverFuente(indiceActual, 1)">
+                                                                Bajar
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            }
+                        </article>
+                    </div>
+
+                    <aside class="page-aside stack">
+                        <article class="card card--accent stack">
+                            <p class="eyebrow">Estado inicial</p>
+                            <h2>Borrador</h2>
+                            <p>El escenario conservará su rango, períodos y fuentes. Todavía no ejecutará ningún cálculo.</p>
+                        </article>
+                        <article class="card stack">
+                            <h3>Resumen</h3>
+                            <div class="metric-list">
+                                <div class="metric-row"><span>Períodos</span><strong>@solicitud.Periodos.Count</strong></div>
+                                <div class="metric-row"><span>Fuentes</span><strong>@idsFuentesSeleccionadas.Count</strong></div>
+                            </div>
+                        </article>
+                    </aside>
+                </section>
+
+                <div class="form-actions">
+                    <a class="btn btn--secondary" href="rrhh/forecast">Cancelar</a>
+                    <button class="btn btn--primary"
+                            type="submit"
+                            disabled="@(guardando || fuentesDisponibles.Count == 0)">
+                        @(guardando ? "Guardando..." : "Crear escenario")
+                    </button>
+                </div>
+            </EditForm>
+        }
+    </div>
+</section>
+
+@code {
+    private SolicitudCrearEscenarioForecast solicitud = NuevaSolicitud();
+    private IReadOnlyList<PlanillaHistoricaForecastOpcion> fuentesDisponibles = [];
+    private readonly List<long> idsFuentesSeleccionadas = [];
+    private bool cargando = true;
+    private bool guardando;
+    private string? mensajeError;
+
+    private static string FechaMinimaTexto => DateTime.Today.AddDays(1).ToString("yyyy-MM-dd");
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            fuentesDisponibles = await ForecastEscenarioService.ObtenerFuentesHistoricasDisponiblesAsync(
+                await ObtenerIdUsuarioActualAsync());
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudieron cargar las fuentes históricas para forecast.");
+            fuentesDisponibles = [];
+            mensajeError = "No se pudieron cargar las planillas históricas disponibles.";
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private async Task GuardarAsync()
+    {
+        if (guardando)
+        {
+            return;
+        }
+
+        guardando = true;
+        mensajeError = null;
+        solicitud.IdPlanillasHistoricas = [.. idsFuentesSeleccionadas];
+
+        try
+        {
+            var idEscenario = await ForecastEscenarioService.CrearBorradorAsync(
+                solicitud,
+                await ObtenerIdUsuarioActualAsync());
+            Navegacion.NavigateTo($"rrhh/forecast/{idEscenario}");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudo crear el escenario forecast.");
+            mensajeError = MensajeSeguro(ex);
+        }
+        finally
+        {
+            guardando = false;
+        }
+    }
+
+    private void AgregarPeriodo()
+    {
+        var fechaInicio = solicitud.Periodos.LastOrDefault()?.FechaFin?.Date.AddDays(1)
+            ?? DateTime.Today.AddDays(1);
+        solicitud.Periodos.Add(new SolicitudPeriodoForecast
+        {
+            TipoPeriodo = TiposPeriodoPlanilla.Mensual,
+            FechaInicio = fechaInicio,
+            FechaFin = fechaInicio
+        });
+        LimpiarMensaje();
+    }
+
+    private void EliminarPeriodo(int indice)
+    {
+        if (solicitud.Periodos.Count > 1 && indice >= 0 && indice < solicitud.Periodos.Count)
+        {
+            solicitud.Periodos.RemoveAt(indice);
+        }
+        LimpiarMensaje();
+    }
+
+    private void CambiarSeleccionFuente(long idPlanilla, ChangeEventArgs evento)
+    {
+        var seleccionada = evento.Value is bool valor && valor;
+        if (seleccionada && !idsFuentesSeleccionadas.Contains(idPlanilla))
+        {
+            idsFuentesSeleccionadas.Add(idPlanilla);
+        }
+        else if (!seleccionada)
+        {
+            idsFuentesSeleccionadas.Remove(idPlanilla);
+        }
+
+        solicitud.IdPlanillasHistoricas = [.. idsFuentesSeleccionadas];
+        LimpiarMensaje();
+    }
+
+    private bool EstaFuenteSeleccionada(long idPlanilla) => idsFuentesSeleccionadas.Contains(idPlanilla);
+
+    private void MoverFuente(int indice, int desplazamiento)
+    {
+        var destino = indice + desplazamiento;
+        if (indice < 0 || indice >= idsFuentesSeleccionadas.Count
+            || destino < 0 || destino >= idsFuentesSeleccionadas.Count)
+        {
+            return;
+        }
+
+        (idsFuentesSeleccionadas[indice], idsFuentesSeleccionadas[destino]) =
+            (idsFuentesSeleccionadas[destino], idsFuentesSeleccionadas[indice]);
+        solicitud.IdPlanillasHistoricas = [.. idsFuentesSeleccionadas];
+        LimpiarMensaje();
+    }
+
+    private PlanillaHistoricaForecastOpcion ObtenerFuente(long idPlanilla) =>
+        fuentesDisponibles.First(fuente => fuente.IdPlanilla == idPlanilla);
+
+    private void LimpiarMensaje()
+    {
+        mensajeError = null;
+    }
+
+    private async Task<string> ObtenerIdUsuarioActualAsync()
+    {
+        var estadoAutenticacion = await Autenticacion.GetAuthenticationStateAsync();
+        return estadoAutenticacion.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+            ?? throw new UnauthorizedAccessException("No fue posible autorizar la cuenta actual.");
+    }
+
+    private static SolicitudCrearEscenarioForecast NuevaSolicitud()
+    {
+        var fechaInicial = DateTime.Today.AddDays(1);
+        return new SolicitudCrearEscenarioForecast
+        {
+            Periodos =
+            [
+                new SolicitudPeriodoForecast
+                {
+                    TipoPeriodo = TiposPeriodoPlanilla.Mensual,
+                    FechaInicio = fechaInicial,
+                    FechaFin = fechaInicial
+                }
+            ]
+        };
+    }
+
+    private static string MensajeSeguro(Exception ex)
+    {
+        if (ex is ArgumentException argumento)
+        {
+            var mensaje = argumento.Message;
+            var inicioParametro = mensaje.LastIndexOf(" (", StringComparison.Ordinal);
+            if (!string.IsNullOrWhiteSpace(argumento.ParamName)
+                && inicioParametro >= 0
+                && mensaje.AsSpan(inicioParametro).Contains(argumento.ParamName, StringComparison.Ordinal))
+            {
+                return mensaje[..inicioParametro];
+            }
+
+            return mensaje;
+        }
+
+        return ex is InvalidOperationException
+            ? ex.Message
+            : "No se pudo crear el escenario. Revise los datos e intente nuevamente.";
+    }
+
+    private static string TextoRango(DateTime inicio, DateTime fin) =>
+        $"{inicio:dd/MM/yyyy} – {fin:dd/MM/yyyy}";
+}

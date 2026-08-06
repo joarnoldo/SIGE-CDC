@@ -1,6 +1,7 @@
 @page "/preguntas-frecuentes"
 @using SIGECDC.Application.SitioPublico
 @inject IFaqService FaqService
+@inject ILogger<PreguntasFrecuentes> Logger
 @rendermode InteractiveServer
 
 <PageTitle>Preguntas Frecuentes - Canales y Drenajes del Caribe S.R.L.</PageTitle>
@@ -13,6 +14,15 @@
         @if (cargando)
         {
             <p>Cargando...</p>
+        }
+        else if (!string.IsNullOrWhiteSpace(mensajeError))
+        {
+            <div class="alert alert--danger stack--tight" role="alert">
+                <span>@mensajeError</span>
+                <div>
+                    <button class="btn btn--secondary" type="button" @onclick="CargarAsync">Reintentar</button>
+                </div>
+            </div>
         }
         else if (faqs.Count == 0)
         {
@@ -49,12 +59,28 @@
     private List<FaqResumen> faqs = [];
     private HashSet<long> abiertas = [];
     private bool cargando = true;
+    private string? mensajeError;
 
     protected override async Task OnInitializedAsync()
     {
+        await CargarAsync();
+    }
+
+    private async Task CargarAsync()
+    {
+        cargando = true;
+        mensajeError = null;
+        faqs = [];
+        abiertas.Clear();
+
         try
         {
             faqs = [.. await FaqService.ObtenerPublicadasAsync()];
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudieron cargar las preguntas frecuentes públicas.");
+            mensajeError = "No pudimos cargar las preguntas frecuentes en este momento.";
         }
         finally
         {

@@ -33,12 +33,14 @@
                         </nav>
                     </details>
 
-                    <details class="sidebar-section" open="@EsSeccionActiva("rrhh/periodos-planilla", "rrhh/parametros-planilla", "rrhh/incidencias-planilla")">
+                    <details class="sidebar-section" open="@EsSeccionActiva("rrhh/periodos-planilla", "rrhh/reportes-planilla", "rrhh/parametros-planilla", "rrhh/incidencias-planilla", "rrhh/forecast")">
                         <summary>Planillas</summary>
                         <nav class="sidebar-nav" aria-label="Planillas">
                             <AuthorizeView Roles="Recursos Humanos" Context="periodosContext">
                                 <Authorized>
                                     <NavLink href="rrhh/periodos-planilla" ActiveClass="is-active">Períodos de planilla</NavLink>
+                                    <NavLink href="rrhh/reportes-planilla" ActiveClass="is-active">Reportes de planilla</NavLink>
+                                    <NavLink href="rrhh/forecast" ActiveClass="is-active">Forecast</NavLink>
                                 </Authorized>
                             </AuthorizeView>
                             <NavLink href="rrhh/parametros-planilla" ActiveClass="is-active">Parámetros de planilla</NavLink>
@@ -66,11 +68,15 @@
 
             <AuthorizeView Roles="Administrador,Operaciones" Context="operacionesContext">
                 <Authorized>
-                    <details class="sidebar-section" open="@EsSeccionActiva("operaciones/proyectos", "operaciones/activos", "operaciones/asignaciones-activos")">
+                    <details class="sidebar-section" open="@EsSeccionActiva("operaciones/proyectos", "operaciones/activos", "operaciones/asignaciones-activos", "operaciones/mantenimientos-preventivos", "operaciones/mantenimientos", "operaciones/uso-activos", "operaciones/reportes-activos")">
                         <summary>Operaciones</summary>
                         <nav class="sidebar-nav" aria-label="Operaciones">
                             <NavLink href="operaciones/proyectos" ActiveClass="is-active">Gestion de proyectos</NavLink>
                             <NavLink href="operaciones/activos" ActiveClass="is-active">Gestion de activos</NavLink>
+                            <NavLink href="operaciones/mantenimientos-preventivos" Match="NavLinkMatch.All" ActiveClass="is-active">Mantenimiento preventivo</NavLink>
+                            <NavLink href="operaciones/mantenimientos" Match="NavLinkMatch.All" ActiveClass="is-active">Órdenes de mantenimiento</NavLink>
+                            <NavLink href="operaciones/uso-activos" Match="NavLinkMatch.All" ActiveClass="is-active">Uso de activos</NavLink>
+                            <NavLink href="operaciones/reportes-activos" Match="NavLinkMatch.All" ActiveClass="is-active">Reportes de activos</NavLink>
                             <AuthorizeView Roles="Operaciones" Context="asignacionesContext">
                                 <Authorized>
                                     <NavLink href="operaciones/asignaciones-activos" ActiveClass="is-active">Asignacion de activos</NavLink>
@@ -87,6 +93,17 @@
                         <summary>Administración</summary>
                         <nav class="sidebar-nav" aria-label="Administración">
                             <NavLink href="admin/historial" ActiveClass="is-active">Historial del sistema</NavLink>
+                        </nav>
+                    </details>
+                </Authorized>
+            </AuthorizeView>
+
+            <AuthorizeView Roles="Empleado" Context="empleadoContext">
+                <Authorized>
+                    <details class="sidebar-section" open="@EsSeccionActiva("empleado/colillas")">
+                        <summary>Mi acceso</summary>
+                        <nav class="sidebar-nav" aria-label="Mi acceso">
+                            <NavLink href="empleado/colillas" ActiveClass="is-active">Mis colillas</NavLink>
                         </nav>
                     </details>
                 </Authorized>

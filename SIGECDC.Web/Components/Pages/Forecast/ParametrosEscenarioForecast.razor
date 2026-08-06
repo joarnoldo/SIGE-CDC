@@ -1,0 +1,293 @@
+@page "/rrhh/forecast/{IdForecastEscenario:long}/parametros"
+@rendermode InteractiveServer
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Recursos Humanos")]
+@using System.ComponentModel.DataAnnotations
+@using SIGECDC.Application.Forecast
+@using SIGECDC.Domain.Planillas
+@inject IForecastParametroService ForecastParametroService
+@inject AuthenticationStateProvider Autenticacion
+@inject ILogger<ParametrosEscenarioForecast> Logger
+
+<PageTitle>Parámetros forecast | SIGE-CDC</PageTitle>
+
+<section class="page-banner">
+    <div class="container page-banner__inner stack--tight">
+        <p class="eyebrow">Recursos Humanos / Forecast</p>
+        <h1>Parámetros del escenario.</h1>
+        <p class="lead">Configure los componentes que se conservarán para el cálculo posterior de la proyección.</p>
+    </div>
+</section>
+
+<section class="section-shell">
+    <div class="container stack">
+        @if (!string.IsNullOrWhiteSpace(mensajeError))
+        {
+            <div class="alert alert--danger" role="alert">
+                <strong>No se pudo guardar la configuración</strong>
+                <span>@mensajeError</span>
+            </div>
+        }
+        @if (!string.IsNullOrWhiteSpace(mensajeExito))
+        {
+            <div class="alert alert--success" role="status">
+                <strong>Configuración actualizada</strong>
+                <span>@mensajeExito</span>
+            </div>
+        }
+
+        <div class="page-header">
+            <div>
+                <p class="eyebrow">Configuración reproducible</p>
+                <h2>@(configuracion?.NombreEscenario ?? "Escenario no disponible")</h2>
+            </div>
+            <div class="page-actions">
+                <a class="btn btn--secondary" href="@($"rrhh/forecast/{IdForecastEscenario}")">Volver al detalle</a>
+            </div>
+        </div>
+
+        @if (cargando)
+        {
+            <div class="empty-state">
+                <strong>Cargando parámetros</strong>
+                <p class="text-muted">Estamos recuperando la configuración persistida.</p>
+            </div>
+        }
+        else if (configuracion is null)
+        {
+            <div class="empty-state">
+                <strong>Escenario no encontrado</strong>
+                <p class="text-muted">El escenario solicitado no existe o no está activo.</p>
+                <a class="btn btn--primary" href="rrhh/forecast">Ver escenarios</a>
+            </div>
+        }
+        else
+        {
+            <section class="kpi-grid">
+                <article class="stat-card">
+                    <span class="stat-label">Estado</span>
+                    <strong class="stat-value">@configuracion.EstadoEscenario</strong>
+                    <span class="stat-delta">Estado oficial del escenario</span>
+                </article>
+                <article class="stat-card">
+                    <span class="stat-label">Parámetros activos</span>
+                    <strong class="stat-value">@solicitud.Parametros.Count(parametro => parametro.EstaHabilitado)</strong>
+                    <span class="stat-delta">De cuatro conceptos oficiales</span>
+                </article>
+            </section>
+
+            @if (!configuracion.PuedeEditar)
+            {
+                <article class="alert alert--info" role="status">
+                    <strong>Configuración bloqueada</strong>
+                    <span>Los parámetros solo pueden modificarse mientras el escenario se encuentre en estado Borrador.</span>
+                </article>
+            }
+
+            <EditForm Model="solicitud" OnValidSubmit="GuardarAsync" OnInvalidSubmit="LimpiarMensajes" class="stack">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <section class="page-grid">
+                    <div class="page-main stack">
+                        @for (var indice = 0; indice < solicitud.Parametros.Count; indice++)
+                        {
+                            var parametro = solicitud.Parametros[indice];
+                            var definicion = configuracion.Parametros[indice];
+                            <article class="form-section stack" @key="parametro.Codigo">
+                                <div class="page-header">
+                                    <div>
+                                        <p class="eyebrow">@parametro.Codigo</p>
+                                        <h2>@definicion.Nombre</h2>
+                                    </div>
+                                    <label class="checkbox-card">
+                                        <InputCheckbox @bind-Value="parametro.EstaHabilitado"
+                                                       disabled="@(!configuracion.PuedeEditar)" />
+                                        <span>Incluir en el escenario</span>
+                                    </label>
+                                </div>
+
+                                <div class="form-grid">
+                                    <div class="field">
+                                        <label for="@($"tipoParametro-{indice}")">Tipo</label>
+                                        @if (definicion.TiposPermitidos.Count == 1)
+                                        {
+                                            <input id="@($"tipoParametro-{indice}")"
+                                                   value="@parametro.TipoParametro"
+                                                   disabled />
+                                        }
+                                        else
+                                        {
+                                            <InputSelect id="@($"tipoParametro-{indice}")"
+                                                         @bind-Value="parametro.TipoParametro"
+                                                         disabled="@(!configuracion.PuedeEditar || !parametro.EstaHabilitado)">
+                                                @foreach (var tipo in definicion.TiposPermitidos)
+                                                {
+                                                    <option value="@tipo">@tipo</option>
+                                                }
+                                            </InputSelect>
+                                        }
+                                    </div>
+                                    <div class="field">
+                                        <label for="@($"valorParametro-{indice}")">Valor</label>
+                                        <InputNumber id="@($"valorParametro-{indice}")"
+                                                     @bind-Value="parametro.ValorDecimal"
+                                                     min="0"
+                                                     max="@ValorMaximo(parametro)"
+                                                     step="0.0001"
+                                                     disabled="@(!configuracion.PuedeEditar || !parametro.EstaHabilitado)" />
+                                        <span class="help-text">@AyudaValor(parametro)</span>
+                                    </div>
+                                </div>
+                            </article>
+                        }
+                    </div>
+
+                    <aside class="page-aside stack">
+                        <article class="card card--accent stack">
+                            <p class="eyebrow">Alcance</p>
+                            <h2>Solo configuración</h2>
+                            <p>Guardar estos valores no ejecuta el forecast ni modifica sus totales.</p>
+                        </article>
+                        <article class="alert alert--info" role="status">
+                            <strong>Valores deterministas</strong>
+                            <span>Los porcentajes usan formato humano: 10 representa 10 %. Los montos se conservan con hasta cuatro decimales.</span>
+                        </article>
+                    </aside>
+                </section>
+
+                @if (configuracion.PuedeEditar)
+                {
+                    <div class="form-actions">
+                        <a class="btn btn--secondary" href="@($"rrhh/forecast/{IdForecastEscenario}")">Cancelar</a>
+                        <button class="btn btn--primary" type="submit" disabled="@guardando">
+                            @(guardando ? "Guardando..." : "Guardar parámetros")
+                        </button>
+                    </div>
+                }
+            </EditForm>
+        }
+    </div>
+</section>
+
+@code {
+    [Parameter]
+    public long IdForecastEscenario { get; set; }
+
+    private ConfiguracionParametrosForecast? configuracion;
+    private SolicitudGuardarParametrosForecast solicitud = new();
+    private bool cargando = true;
+    private bool guardando;
+    private string? mensajeError;
+    private string? mensajeExito;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        cargando = true;
+        LimpiarMensajes();
+
+        try
+        {
+            await CargarConfiguracionAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudieron cargar los parámetros del escenario forecast {IdForecastEscenario}.", IdForecastEscenario);
+            configuracion = null;
+            mensajeError = "No se pudo cargar la configuración de parámetros.";
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private async Task GuardarAsync()
+    {
+        if (guardando || configuracion?.PuedeEditar != true)
+        {
+            return;
+        }
+
+        guardando = true;
+        LimpiarMensajes();
+
+        try
+        {
+            var idActor = await ObtenerIdUsuarioActualAsync();
+            await ForecastParametroService.GuardarConfiguracionAsync(
+                IdForecastEscenario,
+                solicitud,
+                idActor);
+            await CargarConfiguracionAsync(idActor);
+            mensajeExito = "Los parámetros del escenario fueron guardados correctamente.";
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudieron guardar los parámetros del escenario forecast {IdForecastEscenario}.", IdForecastEscenario);
+            mensajeError = MensajeSeguro(ex);
+        }
+        finally
+        {
+            guardando = false;
+        }
+    }
+
+    private async Task CargarConfiguracionAsync(string? idActor = null)
+    {
+        idActor ??= await ObtenerIdUsuarioActualAsync();
+        configuracion = await ForecastParametroService.ObtenerConfiguracionAsync(
+            IdForecastEscenario,
+            idActor);
+        solicitud = new SolicitudGuardarParametrosForecast
+        {
+            Parametros = configuracion?.Parametros.Select(parametro => new SolicitudParametroForecast
+            {
+                Codigo = parametro.Codigo,
+                EstaHabilitado = parametro.EstaHabilitado,
+                TipoParametro = parametro.TipoParametro,
+                ValorDecimal = parametro.ValorDecimal
+            }).ToList() ?? []
+        };
+    }
+
+    private async Task<string> ObtenerIdUsuarioActualAsync()
+    {
+        var estadoAutenticacion = await Autenticacion.GetAuthenticationStateAsync();
+        return estadoAutenticacion.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+            ?? throw new UnauthorizedAccessException("No fue posible autorizar la cuenta actual.");
+    }
+
+    private void LimpiarMensajes()
+    {
+        mensajeError = null;
+        mensajeExito = null;
+    }
+
+    private static string ValorMaximo(SolicitudParametroForecast parametro) =>
+        string.Equals(parametro.TipoParametro, TiposParametroPlanilla.Porcentaje, StringComparison.OrdinalIgnoreCase)
+            ? "100"
+            : "99999999999999.9999";
+
+    private static string AyudaValor(SolicitudParametroForecast parametro) =>
+        string.Equals(parametro.TipoParametro, TiposParametroPlanilla.Porcentaje, StringComparison.OrdinalIgnoreCase)
+            ? "Porcentaje entre 0 y 100."
+            : "Monto no negativo; su aplicación se definirá durante el cálculo.";
+
+    private static string MensajeSeguro(Exception ex)
+    {
+        if (ex is ArgumentException argumento)
+        {
+            var mensaje = argumento.Message;
+            var inicioParametro = mensaje.LastIndexOf(" (", StringComparison.Ordinal);
+            return !string.IsNullOrWhiteSpace(argumento.ParamName)
+                && inicioParametro >= 0
+                && mensaje.AsSpan(inicioParametro).Contains(argumento.ParamName, StringComparison.Ordinal)
+                    ? mensaje[..inicioParametro]
+                    : mensaje;
+        }
+
+        return ex is ValidationException or InvalidOperationException or KeyNotFoundException
+            ? ex.Message
+            : "No se pudo guardar la configuración. Revise los datos e intente nuevamente.";
+    }
+}

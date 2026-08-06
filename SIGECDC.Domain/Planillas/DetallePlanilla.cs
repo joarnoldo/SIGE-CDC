@@ -37,4 +37,6 @@ public sealed class DetallePlanilla
     public Planilla? Planilla { get; set; }
 
     public Colaborador? Colaborador { get; set; }
+
+    public ColillaPago? ColillaPago { get; set; }
 }

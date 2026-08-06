@@ -4,6 +4,7 @@
 @using SIGECDC.Application.Planillas
 @using SIGECDC.Domain.Planillas
 @inject IPlanillaService PlanillaService
+@inject IColillaPagoService ColillaPagoService
 @inject AuthenticationStateProvider Autenticacion
 @inject ILogger<DetallePeriodoPlanilla> Logger
 
@@ -40,20 +41,51 @@
                         @(calculando ? "Calculando..." : "Calcular planilla")
                     </button>
                 }
-                else if (PuedeAprobar)
+                @if (PuedeReabrir)
+                {
+                    <button class="btn btn--secondary" type="button" disabled="@cambiandoEstado" @onclick="SolicitarReapertura">
+                        Reabrir para ajustes
+                    </button>
+                }
+                @if (PuedeAprobar)
                 {
                     <button class="btn btn--primary" type="button" disabled="@cambiandoEstado" @onclick="AprobarAsync">
                         @(cambiandoEstado ? "Aprobando..." : "Aprobar y bloquear")
                     </button>
                 }
-                else if (PuedeCerrar)
+                @if (PuedeCerrar)
                 {
                     <button class="btn btn--primary" type="button" disabled="@cambiandoEstado" @onclick="CerrarAsync">
                         @(cambiandoEstado ? "Cerrando..." : "Cerrar planilla")
                     </button>
                 }
+                @if (periodo?.CantidadColillasPendientes > 0)
+                {
+                    <button class="btn btn--secondary"
+                            type="button"
+                            disabled="@generandoColillas"
+                            @onclick="GenerarColillasPendientesAsync">
+                        @(generandoColillas ? "Generando colillas..." : "Generar colillas pendientes")
+                    </button>
+                }
             </div>
         </div>
+
+        @if (confirmandoReapertura)
+        {
+            <div class="alert alert--info" role="alert">
+                <strong>¿Reabrir la planilla para ajustes?</strong>
+                <span>El resultado calculado será invalidado y el período volverá a Borrador. La acción quedará registrada en la bitácora.</span>
+                <div class="page-actions">
+                    <button class="btn btn--secondary" type="button" disabled="@cambiandoEstado" @onclick="CancelarReapertura">
+                        Cancelar
+                    </button>
+                    <button class="btn btn--primary" type="button" disabled="@cambiandoEstado" @onclick="ReabrirAsync">
+                        @(cambiandoEstado ? "Reabriendo..." : "Confirmar reapertura")
+                    </button>
+                </div>
+            </div>
+        }
 
         @if (cargando)
         {
@@ -95,7 +127,7 @@
                 </article>
             </section>
 
-            @if (periodo.IdPlanilla is null)
+            @if (!TieneCalculoVigente)
             {
                 <article class="form-section stack">
                     <div>
@@ -140,7 +172,7 @@
                 {
                     <div class="alert alert--info" role="status">
                         <strong>Planilla bloqueada</strong>
-                        <span>La planilla está en estado @periodo.EstadoPlanilla y no permite cambios en sus incidencias o parámetros del período.</span>
+                        <span>La planilla está en estado @periodo.EstadoPlanilla y su resultado no permite cambios directos. Si está Calculada, use “Reabrir para ajustes” antes de modificar sus insumos.</span>
                     </div>
                 }
 
@@ -202,16 +234,22 @@
     private PeriodoPlanillaDetalle? periodo;
     private bool cargando = true;
     private bool calculando;
+    private bool generandoColillas;
     private bool cambiandoEstado;
+    private bool confirmandoReapertura;
     private bool mensajeEsError;
     private string? mensajeEstado;
 
     private bool PuedeCalcular => periodo is not null
-        && periodo.IdPlanilla is null
+        && !TieneCalculoVigente
         && string.Equals(periodo.EstadoPlanilla, EstadosPlanilla.Borrador, StringComparison.OrdinalIgnoreCase);
+
+    private bool TieneCalculoVigente => periodo?.FechaCalculo.HasValue == true;
 
     private bool PuedeAprobar => periodo?.IdPlanilla is not null
         && string.Equals(periodo.EstadoPlanilla, EstadosPlanilla.Calculada, StringComparison.OrdinalIgnoreCase);
+
+    private bool PuedeReabrir => PuedeAprobar;
 
     private bool PuedeCerrar => periodo?.IdPlanilla is not null
         && string.Equals(periodo.EstadoPlanilla, EstadosPlanilla.Aprobada, StringComparison.OrdinalIgnoreCase);
@@ -294,6 +332,29 @@
             "No se pudo aprobar la planilla.");
     }
 
+    private void SolicitarReapertura()
+    {
+        confirmandoReapertura = true;
+        mensajeEstado = null;
+    }
+
+    private void CancelarReapertura()
+    {
+        confirmandoReapertura = false;
+    }
+
+    private async Task ReabrirAsync()
+    {
+        await CambiarEstadoAsync(
+            (idUsuario, cancellationToken) => PlanillaService.ReabrirPlanillaAsync(
+                IdPeriodoPlanilla,
+                idUsuario,
+                cancellationToken),
+            "La planilla fue reabierta. Ajuste los insumos y ejecute nuevamente el cálculo.",
+            "No se pudo reabrir la planilla.");
+        confirmandoReapertura = false;
+    }
+
     private async Task CerrarAsync()
     {
         await CambiarEstadoAsync(
@@ -303,6 +364,38 @@
                 cancellationToken),
             "La planilla fue cerrada correctamente.",
             "No se pudo cerrar la planilla.");
+    }
+
+    private async Task GenerarColillasPendientesAsync()
+    {
+        generandoColillas = true;
+        mensajeEstado = null;
+        mensajeEsError = false;
+
+        try
+        {
+            var cantidad = await ColillaPagoService.GenerarPendientesAsync(
+                IdPeriodoPlanilla,
+                await ObtenerIdUsuarioActualAsync());
+            periodo = await PlanillaService.ObtenerDetallePeriodoAsync(IdPeriodoPlanilla);
+            mensajeEstado = cantidad == 0
+                ? "La planilla ya tenía todas sus colillas generadas."
+                : cantidad == 1
+                    ? "Se generó 1 colilla pendiente."
+                    : $"Se generaron {cantidad} colillas pendientes.";
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudieron generar las colillas del período {IdPeriodoPlanilla}.", IdPeriodoPlanilla);
+            mensajeEsError = true;
+            mensajeEstado = ex is ArgumentException or InvalidOperationException
+                ? ex.Message
+                : "No se pudieron generar las colillas pendientes.";
+        }
+        finally
+        {
+            generandoColillas = false;
+        }
     }
 
     private async Task CambiarEstadoAsync(

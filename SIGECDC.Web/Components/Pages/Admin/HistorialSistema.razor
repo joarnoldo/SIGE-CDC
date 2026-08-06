@@ -12,8 +12,8 @@
 <section class="page-banner">
     <div class="container page-banner__inner stack--tight">
         <p class="eyebrow">Administración / Historial</p>
-        <h1>Historial de accesos y formularios.</h1>
-        <p class="lead">Consulte eventos recientes de acceso interno y solicitudes recibidas desde el sitio público.</p>
+        <h1>Historial del sistema.</h1>
+        <p class="lead">Consulte accesos, solicitudes públicas y la trazabilidad de los módulos operativo y de Recursos Humanos.</p>
     </div>
 </section>
 
@@ -41,7 +41,7 @@
                     <span>Buscar</span>
                     <input type="search"
                            @bind="busqueda"
-                           placeholder="Usuario, correo, IP, contacto o mensaje" />
+                           placeholder="Usuario, correo, registro o mensaje" />
                 </label>
                 <label class="field">
                     <span>Acción</span>
@@ -60,6 +60,26 @@
                         @foreach (var estado in estadosFormulario)
                         {
                             <option value="@estado.Valor">@estado.Etiqueta</option>
+                        }
+                    </select>
+                </label>
+                <label class="field">
+                    <span>Módulo operativo</span>
+                    <select @bind="categoriaOperacionFiltro">
+                        <option value="">Todos</option>
+                        @foreach (var categoria in CategoriasBitacoraOperaciones.Todas)
+                        {
+                            <option value="@categoria">@categoria</option>
+                        }
+                    </select>
+                </label>
+                <label class="field">
+                    <span>Módulo de Recursos Humanos</span>
+                    <select @bind="categoriaRecursosHumanosFiltro">
+                        <option value="">Todos</option>
+                        @foreach (var categoria in CategoriasBitacoraRecursosHumanos.Todas)
+                        {
+                            <option value="@categoria">@categoria</option>
                         }
                     </select>
                 </label>
@@ -155,6 +175,178 @@
         <article class="table-card">
             <div class="table-toolbar">
                 <div>
+                    <h2 class="card__title">Bitácora de Recursos Humanos</h2>
+                    <p class="card__meta">
+                        Cambios auditados sobre colaboradores, períodos y cálculos de planilla.
+                    </p>
+                </div>
+                <span class="badge badge--info">@TextoCantidadOperacionesRecursosHumanos</span>
+            </div>
+
+            @if (cargando)
+            {
+                <div class="empty-state">
+                    <strong>Cargando operaciones</strong>
+                    <p class="text-muted">Estamos recuperando la trazabilidad de Recursos Humanos.</p>
+                </div>
+            }
+            else if (operacionesRecursosHumanos.Count == 0)
+            {
+                <div class="empty-state">
+                    <strong>No hay operaciones de Recursos Humanos para mostrar</strong>
+                    <p class="text-muted">No existen registros para los filtros seleccionados. Los cambios históricos no registrados no se reconstruyen.</p>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Categoría</th>
+                                <th>Acción</th>
+                                <th>Registro</th>
+                                <th>Usuario responsable</th>
+                                <th>Trazabilidad</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var operacion in operacionesRecursosHumanos)
+                            {
+                                <tr>
+                                    <td>@operacion.FechaHora.ToString("dd/MM/yyyy HH:mm")</td>
+                                    <td>
+                                        <span class="badge @ClaseCategoriaRecursosHumanos(operacion.Categoria)">
+                                            @operacion.Categoria
+                                        </span>
+                                        <div class="card__meta">@operacion.Entidad</div>
+                                    </td>
+                                    <td>@operacion.Accion</td>
+                                    <td>@TextoOpcional(operacion.IdRegistro)</td>
+                                    <td>
+                                        @TextoUsuarioAuditoria(operacion)
+                                        @if (!string.IsNullOrWhiteSpace(operacion.CorreoElectronico))
+                                        {
+                                            <div class="card__meta">@operacion.CorreoElectronico</div>
+                                        }
+                                    </td>
+                                    <td>
+                                        <div>@TextoOpcional(operacion.Observacion)</div>
+                                        @if (TieneDetalleCambios(operacion))
+                                        {
+                                            <details>
+                                                <summary>Ver valores auditados</summary>
+                                                @if (!string.IsNullOrWhiteSpace(operacion.ValoresAnteriores))
+                                                {
+                                                    <div class="card__meta">Valores anteriores</div>
+                                                    <code>@operacion.ValoresAnteriores</code>
+                                                }
+                                                @if (!string.IsNullOrWhiteSpace(operacion.ValoresNuevos))
+                                                {
+                                                    <div class="card__meta">Valores nuevos</div>
+                                                    <code>@operacion.ValoresNuevos</code>
+                                                }
+                                            </details>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </article>
+
+        <article class="table-card">
+            <div class="table-toolbar">
+                <div>
+                    <h2 class="card__title">Bitácora operativa</h2>
+                    <p class="card__meta">
+                        Operaciones auditadas sobre activos, proyectos, asignaciones y mantenimientos.
+                    </p>
+                </div>
+                <span class="badge badge--info">@TextoCantidadOperaciones</span>
+            </div>
+
+            @if (cargando)
+            {
+                <div class="empty-state">
+                    <strong>Cargando operaciones</strong>
+                    <p class="text-muted">Estamos recuperando la trazabilidad del módulo operativo.</p>
+                </div>
+            }
+            else if (operaciones.Count == 0)
+            {
+                <div class="empty-state">
+                    <strong>No hay operaciones para mostrar</strong>
+                    <p class="text-muted">No existen registros para los filtros seleccionados.</p>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Módulo</th>
+                                <th>Acción</th>
+                                <th>Registro</th>
+                                <th>Usuario</th>
+                                <th>Trazabilidad</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var operacion in operaciones)
+                            {
+                                <tr>
+                                    <td>@operacion.FechaHora.ToString("dd/MM/yyyy HH:mm")</td>
+                                    <td>
+                                        <span class="badge @ClaseCategoria(operacion.Categoria)">
+                                            @operacion.Categoria
+                                        </span>
+                                        <div class="card__meta">@operacion.Entidad</div>
+                                    </td>
+                                    <td>@operacion.Accion</td>
+                                    <td>@TextoOpcional(operacion.IdRegistro)</td>
+                                    <td>
+                                        @TextoOpcional(operacion.Usuario ?? operacion.IdUsuario)
+                                        @if (!string.IsNullOrWhiteSpace(operacion.CorreoElectronico))
+                                        {
+                                            <div class="card__meta">@operacion.CorreoElectronico</div>
+                                        }
+                                    </td>
+                                    <td>
+                                        <div>@TextoOpcional(operacion.Observacion)</div>
+                                        @if (TieneDetalleCambios(operacion))
+                                        {
+                                            <details>
+                                                <summary>Ver valores auditados</summary>
+                                                @if (!string.IsNullOrWhiteSpace(operacion.ValoresAnteriores))
+                                                {
+                                                    <div class="card__meta">Valores anteriores</div>
+                                                    <code>@operacion.ValoresAnteriores</code>
+                                                }
+                                                @if (!string.IsNullOrWhiteSpace(operacion.ValoresNuevos))
+                                                {
+                                                    <div class="card__meta">Valores nuevos</div>
+                                                    <code>@operacion.ValoresNuevos</code>
+                                                }
+                                            </details>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </article>
+
+        <article class="table-card">
+            <div class="table-toolbar">
+                <div>
                     <h2 class="card__title">Formularios de contacto</h2>
                     <p class="card__meta">Solicitudes públicas consultadas en modo de solo lectura.</p>
                 </div>
@@ -217,6 +409,8 @@
 @code {
     private IReadOnlyList<AccesoHistorialResumen> accesos = [];
     private IReadOnlyList<FormularioContactoHistorialResumen> formularios = [];
+    private IReadOnlyList<OperacionBitacoraResumen> operaciones = [];
+    private IReadOnlyList<OperacionBitacoraResumen> operacionesRecursosHumanos = [];
     private IReadOnlyList<EstadoConsultaContactoOpcion> estadosFormulario = [];
     private bool cargando = true;
     private string? mensajeEstado;
@@ -225,10 +419,22 @@
     private string? busqueda;
     private string? accionFiltro;
     private string? estadoFormularioFiltro;
+    private string? categoriaOperacionFiltro;
+    private string? categoriaRecursosHumanosFiltro;
 
     private string TextoCantidadAccesos => accesos.Count == 1 ? "1 acceso" : $"{accesos.Count} accesos";
 
     private string TextoCantidadFormularios => formularios.Count == 1 ? "1 formulario" : $"{formularios.Count} formularios";
+
+    private string TextoCantidadOperaciones =>
+        operaciones.Count == 1
+            ? "1 operación"
+            : $"{operaciones.Count} operaciones";
+
+    private string TextoCantidadOperacionesRecursosHumanos =>
+        operacionesRecursosHumanos.Count == 1
+            ? "1 operación"
+            : $"{operacionesRecursosHumanos.Count} operaciones";
 
     protected override async Task OnInitializedAsync()
     {
@@ -254,6 +460,34 @@
                 fechaHasta,
                 string.IsNullOrWhiteSpace(estadoFormularioFiltro) ? null : estadoFormularioFiltro,
                 busqueda);
+
+            operaciones =
+                await HistorialSistemaService.ObtenerOperacionesAsync(
+                    new FiltroBitacoraOperaciones
+                    {
+                        FechaDesde = fechaDesde,
+                        FechaHasta = fechaHasta,
+                        Categoria =
+                            string.IsNullOrWhiteSpace(
+                                categoriaOperacionFiltro)
+                                ? null
+                                : categoriaOperacionFiltro,
+                        Busqueda = busqueda,
+                        Cantidad = 250
+                    });
+
+            operacionesRecursosHumanos =
+                await HistorialSistemaService.ObtenerOperacionesRecursosHumanosAsync(
+                    new FiltroBitacoraRecursosHumanos
+                    {
+                        FechaDesde = fechaDesde,
+                        FechaHasta = fechaHasta,
+                        Categoria = string.IsNullOrWhiteSpace(categoriaRecursosHumanosFiltro)
+                            ? null
+                            : categoriaRecursosHumanosFiltro,
+                        Busqueda = busqueda,
+                        Cantidad = 250
+                    });
         }
         catch (Exception ex)
         {
@@ -261,6 +495,8 @@
             mensajeEstado = "No se pudo cargar el historial administrativo.";
             accesos = [];
             formularios = [];
+            operaciones = [];
+            operacionesRecursosHumanos = [];
         }
         finally
         {
@@ -275,6 +511,8 @@
         busqueda = null;
         accionFiltro = null;
         estadoFormularioFiltro = null;
+        categoriaOperacionFiltro = null;
+        categoriaRecursosHumanosFiltro = null;
         await CargarHistorialAsync();
     }
 
@@ -321,6 +559,58 @@
             "Acceso fallido" => "badge--danger",
             "Acceso bloqueado" => "badge--warning",
             _ => "badge--info"
+        };
+    }
+
+    private static bool TieneDetalleCambios(
+        OperacionBitacoraResumen operacion)
+    {
+        return !string.IsNullOrWhiteSpace(
+                operacion.ValoresAnteriores)
+            || !string.IsNullOrWhiteSpace(
+                operacion.ValoresNuevos);
+    }
+
+    private static string TextoOpcional(string? texto)
+    {
+        return string.IsNullOrWhiteSpace(texto)
+            ? "—"
+            : texto;
+    }
+
+    private static string ClaseCategoria(string categoria)
+    {
+        return categoria switch
+        {
+            CategoriasBitacoraOperaciones.Activo =>
+                "badge--accent",
+            CategoriasBitacoraOperaciones.Proyecto =>
+                "badge--info",
+            CategoriasBitacoraOperaciones.Asignacion =>
+                "badge--success",
+            CategoriasBitacoraOperaciones.Mantenimiento =>
+                "badge--warning",
+            _ => "badge--ink"
+        };
+    }
+
+    private static string TextoUsuarioAuditoria(OperacionBitacoraResumen operacion)
+    {
+        return string.IsNullOrWhiteSpace(operacion.Usuario)
+            ? string.IsNullOrWhiteSpace(operacion.IdUsuario)
+                ? "No asociado"
+                : operacion.IdUsuario
+            : operacion.Usuario;
+    }
+
+    private static string ClaseCategoriaRecursosHumanos(string categoria)
+    {
+        return categoria switch
+        {
+            CategoriasBitacoraRecursosHumanos.Colaborador => "badge--accent",
+            CategoriasBitacoraRecursosHumanos.PeriodoPlanilla => "badge--info",
+            CategoriasBitacoraRecursosHumanos.Planilla => "badge--success",
+            _ => "badge--ink"
         };
     }
 }

@@ -49,27 +49,27 @@
                 <div class="form-grid">
                     <div class="field">
                         <label for="nombre">Nombre completo</label>
-                        <InputText id="nombre" @bind-Value="consulta.Nombre" autocomplete="name" placeholder="Nombre de contacto" />
+                        <input id="nombre" @bind="consulta.Nombre" @bind:event="oninput" autocomplete="name" placeholder="Nombre de contacto" />
                         <ValidationMessage For="() => consulta.Nombre" />
                     </div>
                     <div class="field">
                         <label for="correo">Correo electrónico</label>
-                        <InputText id="correo" @bind-Value="consulta.CorreoElectronico" type="email" autocomplete="email" placeholder="correo@empresa.com" />
+                        <input id="correo" @bind="consulta.CorreoElectronico" @bind:event="oninput" type="email" autocomplete="email" placeholder="correo@empresa.com" />
                         <ValidationMessage For="() => consulta.CorreoElectronico" />
                     </div>
                     <div class="field">
                         <label for="telefono">Teléfono</label>
-                        <InputText id="telefono" @bind-Value="consulta.Telefono" autocomplete="tel" placeholder="+506 0000-0000" />
+                        <input id="telefono" @bind="consulta.Telefono" @bind:event="oninput" autocomplete="tel" placeholder="+506 0000-0000" />
                         <ValidationMessage For="() => consulta.Telefono" />
                     </div>
                     <div class="field">
                         <label for="asunto">Asunto</label>
-                        <InputText id="asunto" @bind-Value="consulta.Asunto" placeholder="Motivo de la consulta" />
+                        <input id="asunto" @bind="consulta.Asunto" @bind:event="oninput" placeholder="Motivo de la consulta" />
                         <ValidationMessage For="() => consulta.Asunto" />
                     </div>
                     <div class="field field--span-2">
                         <label for="mensaje">Mensaje</label>
-                        <InputTextArea id="mensaje" @bind-Value="consulta.Mensaje" placeholder="Detalle de la solicitud" />
+                        <textarea id="mensaje" @bind="consulta.Mensaje" @bind:event="oninput" placeholder="Detalle de la solicitud"></textarea>
                         <ValidationMessage For="() => consulta.Mensaje" />
                     </div>
                 </div>

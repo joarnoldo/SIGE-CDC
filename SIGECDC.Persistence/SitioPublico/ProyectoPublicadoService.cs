@@ -7,6 +7,8 @@ namespace SIGECDC.Persistence.SitioPublico;
 
 public sealed class ProyectoPublicadoService(ApplicationDbContext contexto) : IProyectoPublicadoService
 {
+    private const int LongitudMaximaEstadoVisual = 50;
+
     public async Task<IReadOnlyList<ProyectoPublicadoResumen>> ObtenerProyectosAsync(CancellationToken cancellationToken = default)
     {
         return await contexto.ProyectosPublicados
@@ -30,27 +32,50 @@ public sealed class ProyectoPublicadoService(ApplicationDbContext contexto) : IP
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<IReadOnlyList<ProyectoPublicadoResumen>> ObtenerProyectosPublicadosAsync(CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<ProyectoPortafolioResumen>> ObtenerProyectosPublicadosAsync(
+        string? estadoVisual = null,
+        CancellationToken cancellationToken = default)
+    {
+        var estadoFiltrado = LimpiarTextoOpcional(estadoVisual);
+
+        if (estadoFiltrado?.Length > LongitudMaximaEstadoVisual)
+        {
+            return [];
+        }
+
+        var consulta = contexto.ProyectosPublicados
+            .AsNoTracking()
+            .Where(proyecto => proyecto.EstadoRegistro == EstadosRegistro.Activo
+                && proyecto.EstaPublicado);
+
+        if (estadoFiltrado is not null)
+        {
+            consulta = consulta.Where(proyecto => proyecto.EstadoVisual != null
+                && proyecto.EstadoVisual.Trim() == estadoFiltrado);
+        }
+
+        return await consulta
+            .Select(proyecto => new ProyectoPortafolioResumen
+            {
+                IdProyectoPublicado = proyecto.IdProyectoPublicado,
+                Titulo = proyecto.Titulo,
+                Descripcion = proyecto.Descripcion,
+                EstadoVisual = proyecto.EstadoVisual
+            })
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<string>> ObtenerEstadosPublicadosAsync(CancellationToken cancellationToken = default)
     {
         return await contexto.ProyectosPublicados
             .AsNoTracking()
-            .Include(proyecto => proyecto.Proyecto)
             .Where(proyecto => proyecto.EstadoRegistro == EstadosRegistro.Activo
-                && proyecto.EstaPublicado)
-            .OrderByDescending(proyecto => proyecto.FechaPublicacion ?? proyecto.FechaCreacion)
-            .Select(proyecto => new ProyectoPublicadoResumen
-            {
-                IdProyectoPublicado = proyecto.IdProyectoPublicado,
-                IdProyecto = proyecto.IdProyecto,
-                CodigoProyecto = proyecto.Proyecto == null ? null : proyecto.Proyecto.CodigoProyecto,
-                NombreProyecto = proyecto.Proyecto == null ? null : proyecto.Proyecto.NombreProyecto,
-                Titulo = proyecto.Titulo,
-                Descripcion = proyecto.Descripcion,
-                EstadoVisual = proyecto.EstadoVisual,
-                EstaPublicado = proyecto.EstaPublicado,
-                FechaPublicacion = proyecto.FechaPublicacion,
-                FechaCreacion = proyecto.FechaCreacion
-            })
+                && proyecto.EstaPublicado
+                && proyecto.EstadoVisual != null
+                && proyecto.EstadoVisual.Trim() != string.Empty)
+            .Select(proyecto => proyecto.EstadoVisual!.Trim())
+            .Distinct()
+            .OrderBy(estado => estado)
             .ToListAsync(cancellationToken);
     }
 

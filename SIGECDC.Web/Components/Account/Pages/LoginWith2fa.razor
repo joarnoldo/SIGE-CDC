@@ -82,6 +82,11 @@
             Logger.LogWarning("La cuenta del usuario con ID '{UserId}' fue bloqueada.", userId);
             RedirectManager.RedirectTo("Account/Lockout");
         }
+        else if (result.IsNotAllowed)
+        {
+            Logger.LogWarning("Inicio 2FA rechazado para una cuenta no habilitada.");
+            message = "Error: no fue posible iniciar sesión. Verifique sus credenciales o contacte al administrador.";
+        }
         else
         {
             Logger.LogWarning("Código de autenticación inválido para el usuario con ID '{UserId}'.", userId);

@@ -38,6 +38,12 @@ public sealed class Activo
 
     public EstadoActivo? EstadoActivo { get; set; }
 
+    public int? IdTipoMedicionUso { get; set; }
+
+    public TipoMedicionUso? TipoMedicionUso { get; set; }
+
+    public decimal? LecturaUsoActual { get; set; }
+
     public string? Observaciones { get; set; }
 
     public DateTime FechaCreacion { get; set; }

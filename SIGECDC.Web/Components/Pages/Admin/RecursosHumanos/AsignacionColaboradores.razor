@@ -4,6 +4,7 @@
 @inject IColaboradorService ColaboradorService
 @inject IDepartamentoService DepartamentoService
 @inject IPuestoService PuestoService
+@inject AuthenticationStateProvider Autenticacion
 @rendermode InteractiveServer
 @attribute [Authorize(Roles = "Administrador,Recursos Humanos")]
 
@@ -196,7 +197,7 @@
                 IdColaborador = colaboradorSeleccionado!.IdColaborador,
                 IdDepartamento = idDepartamentoSeleccionado,
                 IdPuesto = idPuestoSeleccionado
-            });
+            }, await ObtenerIdUsuarioActualAsync());
 
             mensajeExito = $"Asignacion de {colaboradorSeleccionado.NombreCompleto} actualizada correctamente.";
             mostrarFormulario = false;
@@ -210,5 +211,12 @@
         {
             guardando = false;
         }
+    }
+
+    private async Task<string> ObtenerIdUsuarioActualAsync()
+    {
+        var estadoAutenticacion = await Autenticacion.GetAuthenticationStateAsync();
+        return estadoAutenticacion.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+            ?? throw new InvalidOperationException("No se pudo identificar al usuario actual.");
     }
 }

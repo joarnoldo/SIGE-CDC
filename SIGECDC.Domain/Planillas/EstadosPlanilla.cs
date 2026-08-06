@@ -4,6 +4,7 @@ public static class EstadosPlanilla
 {
     public const string Borrador = "Borrador";
     public const string Calculada = "Calculada";
+    public const string EnRevision = "En revisión";
     public const string Aprobada = "Aprobada";
     public const string Cerrada = "Cerrada";
 }

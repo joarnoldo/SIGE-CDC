@@ -177,7 +177,8 @@ public sealed class IncidenciaPlanillaService(ApplicationDbContext contexto) : I
                 periodo.FechaFin,
                 periodo.EstadoPlanilla != null ? periodo.EstadoPlanilla.Nombre : string.Empty,
                 periodo.EstadoPlanilla != null
-                    && (periodo.EstadoPlanilla.Nombre == EstadosPlanilla.Aprobada
+                    && (periodo.EstadoPlanilla.Nombre == EstadosPlanilla.Calculada
+                        || periodo.EstadoPlanilla.Nombre == EstadosPlanilla.Aprobada
                         || periodo.EstadoPlanilla.Nombre == EstadosPlanilla.Cerrada)))
             .ToListAsync(cancellationToken);
     }

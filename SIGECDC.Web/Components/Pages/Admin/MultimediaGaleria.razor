@@ -106,31 +106,41 @@
 
             <div class="form-grid">
                 <div class="field field--span-2">
-                    <label>Archivo</label>
+                    <label>@(idImagenEditando == 0 ? "Archivo" : "Archivo de reemplazo (opcional)")</label>
                     <InputFile OnChange="SeleccionarImagen" accept=".jpg,.jpeg,.png" />
-                    <span class="help-text">Seleccione desde su equipo la imagen que desea cargar en esta galería.</span>
+                    <span class="help-text">
+                        @(idImagenEditando == 0
+                            ? "Seleccione desde su equipo la imagen que desea cargar en esta galería."
+                            : "Deje el archivo vacío para conservarlo o seleccione otro para reemplazarlo.")
+                    </span>
                     <span class="help-text">@TextoArchivoImagen</span>
                 </div>
                 <div class="field">
                     <label>Título</label>
-                    <input @bind="imagenFormulario.Titulo" maxlength="150" />
+                    <input @bind="imagenFormulario.Titulo" @bind:event="oninput" maxlength="150" />
                 </div>
                 <div class="field">
                     <label>Orden</label>
-                    <input type="number" min="0" @bind="imagenFormulario.Orden" />
+                    <input type="number" min="0" @bind="imagenFormulario.Orden" @bind:event="oninput" />
                     <span class="help-text">Define la posición en que se mostrará la imagen dentro de la galería.</span>
                 </div>
                 <div class="field field--span-2">
                     <label>Descripción</label>
-                    <textarea @bind="imagenFormulario.Descripcion" maxlength="300"></textarea>
+                    <textarea @bind="imagenFormulario.Descripcion" @bind:event="oninput" maxlength="300"></textarea>
                 </div>
             </div>
 
             <div class="form-actions mt-3">
                 <button class="btn btn--primary" type="button" @onclick="GuardarImagenAsync" disabled="@guardandoImagen">
-                    @(guardandoImagen ? "Adjuntando..." : "Adjuntar imagen")
+                    @(guardandoImagen
+                        ? "Guardando..."
+                        : idImagenEditando == 0 ? "Adjuntar imagen" : "Guardar cambios")
                 </button>
-                <span class="help-text">Adjuntar imagen guarda el archivo seleccionado y sus datos para publicarlo en la galería.</span>
+                @if (idImagenEditando != 0)
+                {
+                    <button class="btn btn--secondary" type="button" @onclick="CancelarEdicionImagen" disabled="@guardandoImagen">Cancelar edición</button>
+                }
+                <span class="help-text">Guarde el título, descripción y orden; el reemplazo mantiene la misma imagen lógica.</span>
             </div>
 
             @if (imagenes.Count == 0)
@@ -150,7 +160,10 @@
                             <h3>@(string.IsNullOrWhiteSpace(imagen.Titulo) ? imagen.NombreOriginal : imagen.Titulo)</h3>
                             <p>@(string.IsNullOrWhiteSpace(imagen.Descripcion) ? "Sin descripción" : imagen.Descripcion)</p>
                             <p class="card__meta">Orden @imagen.Orden · @FormatoTamano(imagen.TamanoBytes)</p>
-                            <button type="button" @onclick="() => DesactivarImagenAsync(imagen.IdImagenGaleria)">Desactivar</button>
+                            <div class="table-actions">
+                                <button type="button" @onclick="() => AbrirEditarImagen(imagen)">Editar</button>
+                                <button type="button" @onclick="() => DesactivarImagenAsync(imagen.IdImagenGaleria)">Desactivar</button>
+                            </div>
                         </article>
                     }
                 </div>
@@ -209,10 +222,13 @@
     private IReadOnlyList<ImagenGaleriaResumen> imagenes = [];
     private IBrowserFile? archivoImagen;
     private long idEditando;
+    private long idImagenEditando;
     private const long TamanoMaximoImagen = 10 * 1024 * 1024;
 
     private string TextoArchivoImagen => archivoImagen is null
-        ? "Seleccione una imagen JPG o PNG de hasta 10 MB."
+        ? idImagenEditando == 0
+            ? "Seleccione una imagen JPG o PNG de hasta 10 MB."
+            : "Se conservará el archivo actual."
         : $"{archivoImagen.Name} · {FormatoTamano(archivoImagen.Size)}";
 
     protected override async Task OnInitializedAsync()
@@ -330,6 +346,7 @@
         galeriaSeleccionada = galeria;
         imagenFormulario = new SolicitudImagenGaleria { IdGaleria = galeria.IdGaleria };
         archivoImagen = null;
+        idImagenEditando = 0;
         mensajeImagen = null;
         await CargarImagenesAsync();
     }
@@ -339,12 +356,43 @@
         galeriaSeleccionada = null;
         imagenes = [];
         archivoImagen = null;
+        idImagenEditando = 0;
         mensajeImagen = null;
     }
 
     private void SeleccionarImagen(InputFileChangeEventArgs evento)
     {
         archivoImagen = evento.File;
+        mensajeImagen = null;
+    }
+
+    private void AbrirEditarImagen(ImagenGaleriaResumen imagen)
+    {
+        idImagenEditando = imagen.IdImagenGaleria;
+        imagenFormulario = new SolicitudImagenGaleria
+        {
+            IdGaleria = imagen.IdGaleria,
+            Titulo = imagen.Titulo,
+            Descripcion = imagen.Descripcion,
+            Orden = imagen.Orden
+        };
+        archivoImagen = null;
+        mensajeImagen = $"Editando {imagen.NombreOriginal}.";
+    }
+
+    private void CancelarEdicionImagen()
+    {
+        if (galeriaSeleccionada is null)
+        {
+            return;
+        }
+
+        idImagenEditando = 0;
+        imagenFormulario = new SolicitudImagenGaleria
+        {
+            IdGaleria = galeriaSeleccionada.IdGaleria
+        };
+        archivoImagen = null;
         mensajeImagen = null;
     }
 
@@ -355,7 +403,7 @@
             return;
         }
 
-        if (archivoImagen is null)
+        if (idImagenEditando == 0 && archivoImagen is null)
         {
             mensajeImagen = "Seleccione una imagen para adjuntar.";
             return;
@@ -366,20 +414,51 @@
 
         try
         {
-            using var solicitud = new SolicitudImagenGaleria
+            if (idImagenEditando != 0 && archivoImagen is null)
             {
-                IdGaleria = galeriaSeleccionada.IdGaleria,
-                Titulo = imagenFormulario.Titulo,
-                Descripcion = imagenFormulario.Descripcion,
-                Orden = imagenFormulario.Orden,
-                NombreOriginal = archivoImagen.Name,
-                MimeType = archivoImagen.ContentType,
-                TamanoBytes = archivoImagen.Size,
-                Contenido = archivoImagen.OpenReadStream(TamanoMaximoImagen)
-            };
+                await GaleriaService.ActualizarImagenAsync(
+                    idImagenEditando,
+                    new SolicitudActualizarImagenGaleria
+                    {
+                        Titulo = imagenFormulario.Titulo,
+                        Descripcion = imagenFormulario.Descripcion,
+                        Orden = imagenFormulario.Orden
+                    },
+                    await ObtenerIdUsuarioActualAsync());
+                mensajeImagen = "Datos de la imagen actualizados correctamente.";
+            }
+            else
+            {
+                using var solicitud = new SolicitudImagenGaleria
+                {
+                    IdGaleria = galeriaSeleccionada.IdGaleria,
+                    Titulo = imagenFormulario.Titulo,
+                    Descripcion = imagenFormulario.Descripcion,
+                    Orden = imagenFormulario.Orden,
+                    NombreOriginal = archivoImagen!.Name,
+                    MimeType = archivoImagen.ContentType,
+                    TamanoBytes = archivoImagen.Size,
+                    Contenido = archivoImagen.OpenReadStream(TamanoMaximoImagen)
+                };
 
-            await GaleriaService.AdjuntarImagenAsync(solicitud, await ObtenerIdUsuarioActualAsync());
-            mensajeImagen = "Imagen adjuntada correctamente.";
+                if (idImagenEditando == 0)
+                {
+                    await GaleriaService.AdjuntarImagenAsync(
+                        solicitud,
+                        await ObtenerIdUsuarioActualAsync());
+                    mensajeImagen = "Imagen adjuntada correctamente.";
+                }
+                else
+                {
+                    await GaleriaService.ReemplazarImagenAsync(
+                        idImagenEditando,
+                        solicitud,
+                        await ObtenerIdUsuarioActualAsync());
+                    mensajeImagen = "Imagen reemplazada correctamente.";
+                }
+            }
+
+            idImagenEditando = 0;
             imagenFormulario = new SolicitudImagenGaleria { IdGaleria = galeriaSeleccionada.IdGaleria };
             archivoImagen = null;
             await CargarImagenesAsync();
@@ -410,6 +489,15 @@
         {
             await GaleriaService.DesactivarImagenAsync(idImagenGaleria, await ObtenerIdUsuarioActualAsync());
             mensajeImagen = "Imagen desactivada correctamente.";
+            if (idImagenEditando == idImagenGaleria)
+            {
+                idImagenEditando = 0;
+                imagenFormulario = new SolicitudImagenGaleria
+                {
+                    IdGaleria = galeriaSeleccionada?.IdGaleria ?? 0
+                };
+                archivoImagen = null;
+            }
             await CargarImagenesAsync();
             await CargarGalerias();
         }

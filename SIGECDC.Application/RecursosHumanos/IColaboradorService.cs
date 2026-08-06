@@ -16,23 +16,34 @@ public interface IColaboradorService
 
     Task<IReadOnlyList<OpcionCatalogo>> ObtenerPuestosAsync(int? idDepartamento = null, CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyList<CuentaEmpleadoOpcion>> ObtenerCuentasEmpleadoDisponiblesAsync(
+        long idColaborador,
+        CancellationToken cancellationToken = default);
+
     Task<long> RegistrarColaboradorAsync(
         SolicitudColaborador solicitud,
-        string? idUsuarioActual = null,
+        string idUsuarioActual,
         CancellationToken cancellationToken = default);
 
     Task ActualizarColaboradorAsync(
         long idColaborador,
         SolicitudColaborador solicitud,
-        string? idUsuarioActual = null,
+        string idUsuarioActual,
         CancellationToken cancellationToken = default);
 
     Task DesactivarColaboradorAsync(
         long idColaborador,
-        string? idUsuarioActual = null,
+        string idUsuarioActual,
+        CancellationToken cancellationToken = default);
+
+    Task VincularCuentaEmpleadoAsync(
+        long idColaborador,
+        SolicitudVinculoCuentaColaborador solicitud,
+        string idUsuarioActual,
         CancellationToken cancellationToken = default);
 
     Task AsignarPuestoYDepartamentoAsync(
         SolicitudAsignarColaborador solicitud,
+        string idUsuarioActual,
         CancellationToken cancellationToken = default);
 }

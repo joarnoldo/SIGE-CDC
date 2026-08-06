@@ -1,0 +1,350 @@
+@page "/rrhh/forecast/{IdForecastEscenario:long}/resultados"
+@rendermode InteractiveServer
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Recursos Humanos")]
+@using System.ComponentModel.DataAnnotations
+@using SIGECDC.Application.Forecast
+@using SIGECDC.Domain.Forecast
+@inject IForecastResultadoService ForecastResultadoService
+@inject AuthenticationStateProvider Autenticacion
+@inject ILogger<ResultadosEscenarioForecast> Logger
+
+<PageTitle>Resultados de forecast | SIGE-CDC</PageTitle>
+
+<section class="page-banner">
+    <div class="container page-banner__inner stack--tight">
+        <p class="eyebrow">Recursos Humanos / Forecast</p>
+        <h1>Resultados del forecast.</h1>
+        <p class="lead">Consulte la proyección persistida por colaborador, departamento, proyecto o período.</p>
+    </div>
+</section>
+
+<section class="section-shell">
+    <div class="container stack">
+        @if (!string.IsNullOrWhiteSpace(mensajeError))
+        {
+            <div class="alert alert--danger" role="alert">
+                <strong>No se pudo consultar el forecast</strong>
+                <span>@mensajeError</span>
+            </div>
+        }
+
+        <div class="page-header">
+            <div>
+                <p class="eyebrow">Consulta de solo lectura</p>
+                <h2>@(consulta?.NombreEscenario ?? "Escenario forecast")</h2>
+            </div>
+            <div class="page-actions">
+                @if (consulta?.EstadoEscenario is EstadosEscenarioForecast.Guardado or EstadosEscenarioForecast.Comparado)
+                {
+                    <a class="btn btn--primary" href="@($"rrhh/forecast/{IdForecastEscenario}/comparacion-real")">Comparar con planilla real</a>
+                }
+                <a class="btn btn--secondary" href="@($"rrhh/forecast/{IdForecastEscenario}")">Volver al escenario</a>
+                <a class="btn btn--secondary" href="rrhh/forecast">Ver escenarios</a>
+            </div>
+        </div>
+
+        @if (cargando)
+        {
+            <div class="empty-state">
+                <strong>Cargando resultados</strong>
+                <p class="text-muted">Estamos recuperando los importes persistidos del escenario.</p>
+            </div>
+        }
+        else if (consulta is null)
+        {
+            <div class="empty-state">
+                <strong>Escenario no encontrado</strong>
+                <p class="text-muted">El escenario solicitado no existe o no está activo.</p>
+            </div>
+        }
+        else
+        {
+            <article class="card stack">
+                <div class="form-grid form-grid--compact">
+                    <div class="field-group">
+                        <label for="dimension-resultado">Agrupar resultados por</label>
+                        <select id="dimension-resultado" class="form-control" @bind="dimensionSeleccionada" disabled="@consultando">
+                            <option value="@DimensionesResultadoForecast.Colaborador">Colaborador</option>
+                            <option value="@DimensionesResultadoForecast.Departamento">Departamento</option>
+                            <option value="@DimensionesResultadoForecast.Proyecto">Proyecto</option>
+                            <option value="@DimensionesResultadoForecast.Periodo">Período</option>
+                        </select>
+                    </div>
+                    <div class="field-group">
+                        <label for="periodo-resultado">Período</label>
+                        <select id="periodo-resultado" class="form-control" @bind="idPeriodoSeleccionado" disabled="@consultando">
+                            <option value="0">Todos los períodos</option>
+                            @foreach (var periodo in consulta.Periodos)
+                            {
+                                <option value="@periodo.IdForecastPeriodo">
+                                    @periodo.NumeroOrden. @periodo.TipoPeriodo · @TextoRango(periodo.FechaInicio, periodo.FechaFin)
+                                </option>
+                            }
+                        </select>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button class="btn btn--primary" type="button" disabled="@consultando" @onclick="ConsultarAsync">
+                        @(consultando ? "Consultando..." : "Consultar")
+                    </button>
+                </div>
+            </article>
+
+            <section class="kpi-grid">
+                <article class="stat-card">
+                    <span class="stat-label">Estado</span>
+                    <strong class="stat-value">@consulta.EstadoEscenario</strong>
+                    <span class="stat-delta">@(consulta.FechaCalculo.HasValue ? $"Calculado {consulta.FechaCalculo:dd/MM/yyyy HH:mm}" : "Pendiente de cálculo")</span>
+                </article>
+                <article class="stat-card">
+                    <span class="stat-label">Bruto consultado</span>
+                    <strong class="stat-value">@Moneda(consulta.MontoProyectadoTotalConsulta)</strong>
+                    <span class="stat-delta">@TextoAlcanceConsulta</span>
+                </article>
+                <article class="stat-card">
+                    <span class="stat-label">Deducciones</span>
+                    <strong class="stat-value">@Moneda(consulta.DeduccionesTotalConsulta)</strong>
+                    <span class="stat-delta">Importe proyectado</span>
+                </article>
+                <article class="stat-card">
+                    <span class="stat-label">Neto proyectado</span>
+                    <strong class="stat-value">@Moneda(consulta.SalarioNetoTotalConsulta)</strong>
+                    <span class="stat-delta">Resultado de la consulta</span>
+                </article>
+            </section>
+
+            @if (consulta.EsConsistenteConEscenario == false)
+            {
+                <div class="alert alert--warning" role="alert">
+                    <strong>Los resultados requieren revisión</strong>
+                    <span>La suma del salario bruto visible no coincide con el total persistido del escenario. No se modificó ningún dato.</span>
+                </div>
+            }
+
+            @if (consulta.Filas.Count == 0)
+            {
+                <div class="empty-state">
+                    <strong>@(consulta.FechaCalculo.HasValue ? "No hay resultados para la consulta" : "El forecast todavía no ha sido generado")</strong>
+                    <p class="text-muted">
+                        @(consulta.FechaCalculo.HasValue
+                            ? "No existen detalles activos para la dimensión y el período seleccionados."
+                            : "Complete la configuración y genere el forecast desde el detalle del escenario.")
+                    </p>
+                </div>
+            }
+            else
+            {
+                <article class="table-card">
+                    <div class="table-toolbar">
+                        <div>
+                            <h2 class="card__title">Resultados por @NombreDimension(consulta.Dimension).ToLowerInvariant()</h2>
+                            <p class="card__meta">Los importes son sumas de los detalles persistidos; esta consulta no recalcula el forecast.</p>
+                        </div>
+                        <div class="page-actions">
+                            <span class="badge badge--info">@consulta.Filas.Count agrupaciones</span>
+                            <a class="btn btn--secondary" href="@UrlExportacionPdf">Exportar PDF</a>
+                            <a class="btn btn--secondary" href="@UrlExportacionExcel">Exportar Excel</a>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>@NombreDimension(consulta.Dimension)</th>
+                                    <th>Participantes</th>
+                                    <th>Salario bruto</th>
+                                    <th>Deducciones</th>
+                                    <th>Salario neto</th>
+                                    <th>Conceptos</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var fila in consulta.Filas)
+                                {
+                                    <tr @key="fila.Clave">
+                                        <td>
+                                            <strong>@fila.Etiqueta</strong>
+                                            @if (!string.IsNullOrWhiteSpace(fila.Codigo))
+                                            {
+                                                <p class="card__meta">@fila.Codigo</p>
+                                            }
+                                            @if (!string.IsNullOrWhiteSpace(fila.Detalle))
+                                            {
+                                                <p class="card__meta">@fila.Detalle</p>
+                                            }
+                                            @if (!string.IsNullOrWhiteSpace(fila.TipoParticipante))
+                                            {
+                                                <span class="badge badge--info">@TextoTipoParticipante(fila.TipoParticipante)</span>
+                                            }
+                                        </td>
+                                        <td>@fila.CantidadParticipantes</td>
+                                        <td><strong>@Moneda(fila.SalarioBrutoProyectado)</strong></td>
+                                        <td>@Moneda(fila.DeduccionesProyectadas)</td>
+                                        <td><strong>@Moneda(fila.SalarioNetoProyectado)</strong></td>
+                                        <td>
+                                            <details>
+                                                <summary>Ver desglose</summary>
+                                                <div class="table-responsive">
+                                                    <table class="data-table">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Concepto</th>
+                                                                <th>Base</th>
+                                                                <th>Ajuste</th>
+                                                                <th>Proyectado</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            @foreach (var concepto in fila.Conceptos)
+                                                            {
+                                                                <tr>
+                                                                    <td>@concepto.Nombre</td>
+                                                                    <td>@Moneda(concepto.MontoBase)</td>
+                                                                    <td>@Moneda(concepto.MontoAjuste)</td>
+                                                                    <td><strong>@Moneda(concepto.MontoProyectado)</strong></td>
+                                                                </tr>
+                                                            }
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </details>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </article>
+            }
+        }
+    </div>
+</section>
+
+@code {
+    [Parameter]
+    public long IdForecastEscenario { get; set; }
+
+    private ConsultaResultadosForecast? consulta;
+    private string dimensionSeleccionada = DimensionesResultadoForecast.Periodo;
+    private long idPeriodoSeleccionado;
+    private bool cargando = true;
+    private bool consultando;
+    private string? mensajeError;
+
+    private string TextoAlcanceConsulta => idPeriodoSeleccionado == 0
+        ? "Todos los períodos"
+        : "Período seleccionado";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        cargando = true;
+        mensajeError = null;
+        try
+        {
+            await CargarResultadosAsync();
+        }
+        catch (Exception ex)
+        {
+            RegistrarError(ex);
+            consulta = null;
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private async Task ConsultarAsync()
+    {
+        if (consultando)
+        {
+            return;
+        }
+
+        consultando = true;
+        mensajeError = null;
+        try
+        {
+            await CargarResultadosAsync();
+        }
+        catch (Exception ex)
+        {
+            RegistrarError(ex);
+        }
+        finally
+        {
+            consultando = false;
+        }
+    }
+
+    private async Task CargarResultadosAsync()
+    {
+        var idActor = await ObtenerIdUsuarioActualAsync();
+        consulta = await ForecastResultadoService.ObtenerResultadosAsync(
+            IdForecastEscenario,
+            new FiltroResultadosForecast
+            {
+                Dimension = dimensionSeleccionada,
+                IdForecastPeriodo = idPeriodoSeleccionado == 0
+                    ? null
+                    : idPeriodoSeleccionado
+            },
+            idActor);
+
+        if (consulta?.EsConsistenteConEscenario == false)
+        {
+            Logger.LogWarning(
+                "Los resultados del escenario forecast {IdForecastEscenario} no coinciden con su total persistido.",
+                IdForecastEscenario);
+        }
+    }
+
+    private async Task<string> ObtenerIdUsuarioActualAsync()
+    {
+        var estado = await Autenticacion.GetAuthenticationStateAsync();
+        return estado.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+            ?? throw new UnauthorizedAccessException("No fue posible autorizar la cuenta actual.");
+    }
+
+    private void RegistrarError(Exception ex)
+    {
+        Logger.LogError(ex, "No se pudieron consultar los resultados forecast {IdForecastEscenario}.", IdForecastEscenario);
+        mensajeError = ex is ValidationException or ArgumentException
+            ? MensajeArgumento(ex.Message)
+            : "No se pudieron consultar los resultados. Recargue los datos e intente nuevamente.";
+    }
+
+    private static string MensajeArgumento(string mensaje)
+    {
+        var indice = mensaje.LastIndexOf(" (", StringComparison.Ordinal);
+        return indice >= 0 ? mensaje[..indice] : mensaje;
+    }
+
+    private static string NombreDimension(string dimension) => dimension switch
+    {
+        DimensionesResultadoForecast.Colaborador => "Colaborador",
+        DimensionesResultadoForecast.Departamento => "Departamento",
+        DimensionesResultadoForecast.Proyecto => "Proyecto",
+        _ => "Período"
+    };
+
+    private static string TextoTipoParticipante(string tipo) => tipo == "ContratacionPrevista"
+        ? "Contratación prevista"
+        : "Colaborador";
+
+    private static string TextoRango(DateTime inicio, DateTime fin) => $"{inicio:dd/MM/yyyy} – {fin:dd/MM/yyyy}";
+    private static string Moneda(decimal monto) => $"₡{monto:N2}";
+    private string UrlExportacionPdf => UrlExportacion("pdf");
+    private string UrlExportacionExcel => UrlExportacion("excel");
+
+    private string UrlExportacion(string formato)
+    {
+        ArgumentNullException.ThrowIfNull(consulta);
+
+        var url = $"rrhh/forecast/{IdForecastEscenario}/resultados/{formato}"
+            + $"?dimension={Uri.EscapeDataString(consulta.Dimension)}";
+        return consulta.IdForecastPeriodo.HasValue
+            ? $"{url}&idForecastPeriodo={consulta.IdForecastPeriodo.Value}"
+            : url;
+    }
+}

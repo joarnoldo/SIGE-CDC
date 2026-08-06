@@ -126,6 +126,12 @@
             Logger.LogWarning("Cuenta de usuario bloqueada.");
             RedirectManager.RedirectTo("Account/Lockout");
         }
+        else if (result.IsNotAllowed)
+        {
+            await RegistrarAccesoAsync("Acceso fallido", null, "Cuenta no habilitada o credenciales inválidas.");
+            Logger.LogWarning("Intento de acceso rechazado para una cuenta no habilitada.");
+            errorMessage = "Error: no fue posible iniciar sesión. Verifique sus credenciales o contacte al administrador.";
+        }
         else
         {
             await RegistrarAccesoAsync("Acceso fallido", null, "Credenciales inválidas.");

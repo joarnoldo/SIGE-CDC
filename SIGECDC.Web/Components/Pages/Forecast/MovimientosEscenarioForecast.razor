@@ -1,0 +1,527 @@
+@page "/rrhh/forecast/{IdForecastEscenario:long}/movimientos"
+@rendermode InteractiveServer
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Recursos Humanos")]
+@using System.ComponentModel.DataAnnotations
+@using SIGECDC.Application.Forecast
+@inject IForecastMovimientoPersonalService ForecastMovimientoPersonalService
+@inject AuthenticationStateProvider Autenticacion
+@inject ILogger<MovimientosEscenarioForecast> Logger
+
+<PageTitle>Cambios previstos forecast | SIGE-CDC</PageTitle>
+
+<section class="page-banner">
+    <div class="container page-banner__inner stack--tight">
+        <p class="eyebrow">Recursos Humanos / Forecast</p>
+        <h1>Contrataciones y salidas previstas.</h1>
+        <p class="lead">Registre movimientos anónimos que se aplicarán al ejecutar posteriormente el forecast.</p>
+    </div>
+</section>
+
+<section class="section-shell">
+    <div class="container stack">
+        @if (!string.IsNullOrWhiteSpace(mensajeError))
+        {
+            <div class="alert alert--danger" role="alert">
+                <strong>No se pudo completar la operación</strong>
+                <span>@mensajeError</span>
+            </div>
+        }
+        @if (!string.IsNullOrWhiteSpace(mensajeExito))
+        {
+            <div class="alert alert--success" role="status">
+                <strong>Cambios guardados</strong>
+                <span>@mensajeExito</span>
+            </div>
+        }
+
+        <div class="page-header">
+            <div>
+                <p class="eyebrow">Movimientos de personal</p>
+                <h2>@(configuracion?.NombreEscenario ?? "Escenario no disponible")</h2>
+            </div>
+            <a class="btn btn--secondary" href="@($"rrhh/forecast/{IdForecastEscenario}")">Volver al detalle</a>
+        </div>
+
+        @if (cargando)
+        {
+            <div class="empty-state">
+                <strong>Cargando movimientos</strong>
+                <p class="text-muted">Estamos recuperando participantes, períodos y catálogos.</p>
+            </div>
+        }
+        else if (configuracion is null)
+        {
+            <div class="empty-state">
+                <strong>Escenario no encontrado</strong>
+                <p class="text-muted">El escenario solicitado no existe o no está activo.</p>
+                <a class="btn btn--primary" href="rrhh/forecast">Ver escenarios</a>
+            </div>
+        }
+        else
+        {
+            <section class="kpi-grid">
+                <article class="stat-card">
+                    <span class="stat-label">Estado</span>
+                    <strong class="stat-value">@configuracion.EstadoEscenario</strong>
+                    <span class="stat-delta">Estado oficial</span>
+                </article>
+                <article class="stat-card">
+                    <span class="stat-label">Contrataciones</span>
+                    <strong class="stat-value">@configuracion.Contrataciones.Count</strong>
+                    <span class="stat-delta">Plazas anónimas activas</span>
+                </article>
+                <article class="stat-card">
+                    <span class="stat-label">Salidas previstas</span>
+                    <strong class="stat-value">@configuracion.Colaboradores.Count(item => item.FechaSalidaPrevista.HasValue)</strong>
+                    <span class="stat-delta">Primer día sin costo</span>
+                </article>
+                <article class="stat-card">
+                    <span class="stat-label">Períodos</span>
+                    <strong class="stat-value">@configuracion.Periodos.Count</strong>
+                    <span class="stat-delta">Rangos permitidos</span>
+                </article>
+            </section>
+
+            @if (!configuracion.PuedeEditar)
+            {
+                <article class="alert alert--info" role="status">
+                    <strong>Movimientos bloqueados</strong>
+                    <span>Los cambios previstos solo pueden modificarse mientras el escenario esté en estado Borrador.</span>
+                </article>
+            }
+
+            <section class="page-grid">
+                <div class="page-main stack">
+                    @if (configuracion.PuedeEditar)
+                    {
+                        <EditForm Model="solicitudContratacion" OnValidSubmit="GuardarContratacionAsync" class="form-section stack">
+                            <DataAnnotationsValidator />
+                            <ValidationSummary />
+                            <div>
+                                <p class="eyebrow">Plaza anónima</p>
+                                <h2>@(idContratacionEditada.HasValue ? "Editar contratación prevista" : "Registrar contratación prevista")</h2>
+                                <p class="text-muted">La etiqueta y el código se generan en el servidor; no se solicitan datos personales.</p>
+                            </div>
+                            <div class="form-grid">
+                                <div class="field">
+                                    <label for="departamentoPrevisto">Departamento</label>
+                                    <InputSelect id="departamentoPrevisto"
+                                                 @bind-Value="solicitudContratacion.IdDepartamento"
+                                                 @bind-Value:after="AjustarPuestoSeleccionado">
+                                        <option value="0">Seleccione</option>
+                                        @foreach (var departamento in configuracion.Departamentos)
+                                        {
+                                            <option value="@departamento.Id">@departamento.Nombre</option>
+                                        }
+                                    </InputSelect>
+                                    <ValidationMessage For="@(() => solicitudContratacion.IdDepartamento)" />
+                                </div>
+                                <div class="field">
+                                    <label for="puestoPrevisto">Puesto</label>
+                                    <InputSelect id="puestoPrevisto" @bind-Value="solicitudContratacion.IdPuesto">
+                                        <option value="0">Seleccione</option>
+                                        @foreach (var puesto in PuestosDisponibles)
+                                        {
+                                            <option value="@puesto.IdPuesto">@puesto.Nombre</option>
+                                        }
+                                    </InputSelect>
+                                    <ValidationMessage For="@(() => solicitudContratacion.IdPuesto)" />
+                                </div>
+                                <div class="field">
+                                    <label for="salarioPrevisto">Salario base mensual</label>
+                                    <InputNumber id="salarioPrevisto"
+                                                 @bind-Value="solicitudContratacion.SalarioBaseMensual"
+                                                 min="0"
+                                                 max="9999999999999999.99"
+                                                 step="0.01" />
+                                    <ValidationMessage For="@(() => solicitudContratacion.SalarioBaseMensual)" />
+                                </div>
+                                <div class="field">
+                                    <label for="fechaContratacion">Primer día con costo</label>
+                                    <InputDate id="fechaContratacion"
+                                               @bind-Value="solicitudContratacion.FechaInicioAplicacion"
+                                               min="@FechaMinimaHtml"
+                                               max="@FechaMaximaHtml" />
+                                    <ValidationMessage For="@(() => solicitudContratacion.FechaInicioAplicacion)" />
+                                    <span class="help-text">Debe pertenecer a uno de los períodos activos.</span>
+                                </div>
+                            </div>
+                            <div class="form-actions">
+                                @if (idContratacionEditada.HasValue)
+                                {
+                                    <button type="button" class="btn btn--secondary" @onclick="CancelarEdicion">Cancelar edición</button>
+                                }
+                                <button type="submit" class="btn btn--primary" disabled="@procesando">
+                                    @(procesando ? "Guardando..." : idContratacionEditada.HasValue ? "Actualizar contratación" : "Registrar contratación")
+                                </button>
+                            </div>
+                        </EditForm>
+                    }
+
+                    <article class="table-card">
+                        <div class="table-toolbar">
+                            <div>
+                                <h2 class="card__title">Contrataciones previstas</h2>
+                                <p class="card__meta">Plazas funcionales sin expedientes ni información personal.</p>
+                            </div>
+                            <span class="badge badge--info">@configuracion.Contrataciones.Count</span>
+                        </div>
+                        @if (configuracion.Contrataciones.Count == 0)
+                        {
+                            <div class="empty-state">
+                                <strong>No hay contrataciones previstas</strong>
+                                <p class="text-muted">El escenario todavía no contiene incorporaciones futuras.</p>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="table-responsive">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr><th>Código</th><th>Plaza</th><th>Departamento</th><th>Salario</th><th>Primer día</th><th>Acciones</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var contratacion in configuracion.Contrataciones)
+                                        {
+                                            <tr @key="contratacion.IdForecastParticipante">
+                                                <td><strong>@contratacion.CodigoParticipante</strong></td>
+                                                <td>@contratacion.Puesto</td>
+                                                <td>@contratacion.Departamento</td>
+                                                <td>@TextoSalario(contratacion.SalarioBaseMensual)</td>
+                                                <td>@contratacion.FechaInicioAplicacion.ToString("dd/MM/yyyy")</td>
+                                                <td>
+                                                    @if (configuracion.PuedeEditar)
+                                                    {
+                                                        @if (idContratacionPorDesactivar == contratacion.IdForecastParticipante)
+                                                        {
+                                                            <button class="btn btn--danger" type="button" disabled="@procesando" @onclick="() => DesactivarContratacionAsync(contratacion)">Confirmar</button>
+                                                            <button class="btn btn--secondary" type="button" @onclick="CancelarDesactivacion">Cancelar</button>
+                                                        }
+                                                        else
+                                                        {
+                                                            <button class="btn btn--secondary" type="button" disabled="@procesando" @onclick="() => EditarContratacion(contratacion)">Editar</button>
+                                                            <button class="btn btn--danger" type="button" disabled="@procesando" @onclick="() => SolicitarDesactivacion(contratacion.IdForecastParticipante)">Desactivar</button>
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge badge--success">Activa</span>
+                                                    }
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                    </article>
+
+                    <article class="table-card">
+                        <div class="table-toolbar">
+                            <div>
+                                <h2 class="card__title">Salidas previstas</h2>
+                                <p class="card__meta">La fecha registrada representa el primer día sin costo.</p>
+                            </div>
+                            <span class="badge badge--warning">@configuracion.Colaboradores.Count(item => item.FechaSalidaPrevista.HasValue)</span>
+                        </div>
+                        @if (configuracion.Colaboradores.Count == 0)
+                        {
+                            <div class="empty-state">
+                                <strong>No hay composición persistida</strong>
+                                <p class="text-muted">Guarde primero los colaboradores del escenario para registrar salidas.</p>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="table-responsive">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr><th>Colaborador</th><th>Departamento</th><th>Puesto</th><th>Inclusión</th><th>Primer día sin costo</th><th>Acción</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var colaborador in configuracion.Colaboradores)
+                                        {
+                                            <tr @key="colaborador.IdForecastParticipante">
+                                                <td><strong>@colaborador.Etiqueta</strong><p class="card__meta">@colaborador.CodigoParticipante</p></td>
+                                                <td>@colaborador.Departamento</td>
+                                                <td>@colaborador.Puesto</td>
+                                                <td><span class="badge @(colaborador.EstaIncluido ? "badge--success" : "badge--warning")">@(colaborador.EstaIncluido ? "Incluido" : "Excluido")</span></td>
+                                                <td>
+                                                    @if (configuracion.PuedeEditar && colaborador.EstaIncluido)
+                                                    {
+                                                        <InputDate @bind-Value="colaborador.FechaSalidaPrevista"
+                                                                   min="@FechaMinimaHtml"
+                                                                   max="@FechaMaximaHtml" />
+                                                    }
+                                                    else
+                                                    {
+                                                        <span>@(colaborador.FechaSalidaPrevista?.ToString("dd/MM/yyyy") ?? "Sin salida prevista")</span>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    @if (configuracion.PuedeEditar)
+                                                    {
+                                                        @if (colaborador.EstaIncluido)
+                                                        {
+                                                            <button class="btn btn--primary" type="button"
+                                                                    disabled="@procesando"
+                                                                    @onclick="() => GuardarSalidaAsync(colaborador)">
+                                                                @(colaborador.FechaSalidaPrevista.HasValue ? "Guardar fecha" : "Limpiar salida")
+                                                            </button>
+                                                        }
+                                                        else if (colaborador.FechaSalidaPrevista.HasValue)
+                                                        {
+                                                            <button class="btn btn--secondary" type="button"
+                                                                    disabled="@procesando"
+                                                                    @onclick="() => LimpiarSalidaAsync(colaborador)">
+                                                                Limpiar salida
+                                                            </button>
+                                                        }
+                                                    }
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                    </article>
+                </div>
+
+                <aside class="page-aside stack">
+                    <article class="card card--accent stack">
+                        <p class="eyebrow">Períodos válidos</p>
+                        <h2>Rangos de aplicación</h2>
+                        @foreach (var periodo in configuracion.Periodos)
+                        {
+                            <div class="metric-row">
+                                <span>@periodo.NumeroOrden. @periodo.TipoPeriodo</span>
+                                <strong>@TextoRango(periodo.FechaInicio, periodo.FechaFin)</strong>
+                            </div>
+                        }
+                    </article>
+                    <article class="alert alert--info" role="status">
+                        <strong>Sin efecto inmediato</strong>
+                        <span>Guardar estos movimientos no ejecuta el forecast ni modifica colaboradores, contratos o totales.</span>
+                    </article>
+                </aside>
+            </section>
+        }
+    </div>
+</section>
+
+@code {
+    [Parameter]
+    public long IdForecastEscenario { get; set; }
+
+    private ConfiguracionMovimientosForecast? configuracion;
+    private SolicitudContratacionPrevistaForecast solicitudContratacion = new();
+    private long? idContratacionEditada;
+    private long? idContratacionPorDesactivar;
+    private bool cargando = true;
+    private bool procesando;
+    private string? mensajeError;
+    private string? mensajeExito;
+
+    private string FechaMinimaHtml => configuracion?.FechaInicioProyeccion.ToString("yyyy-MM-dd") ?? string.Empty;
+    private string FechaMaximaHtml => configuracion?.FechaFinProyeccion.ToString("yyyy-MM-dd") ?? string.Empty;
+    private IReadOnlyList<PuestoForecastOpcion> PuestosDisponibles => configuracion?.Puestos
+        .Where(item => !item.IdDepartamento.HasValue || item.IdDepartamento == solicitudContratacion.IdDepartamento)
+        .ToList() ?? [];
+
+    protected override async Task OnParametersSetAsync()
+    {
+        cargando = true;
+        LimpiarMensajes();
+        try
+        {
+            await CargarConfiguracionAsync();
+            ReiniciarFormulario();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudieron cargar los movimientos forecast {IdForecastEscenario}.", IdForecastEscenario);
+            configuracion = null;
+            mensajeError = "No se pudieron cargar los cambios previstos.";
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private async Task GuardarContratacionAsync()
+    {
+        if (procesando || configuracion?.PuedeEditar != true)
+        {
+            return;
+        }
+
+        await EjecutarOperacionAsync(async idActor =>
+        {
+            if (idContratacionEditada.HasValue)
+            {
+                await ForecastMovimientoPersonalService.ActualizarContratacionPrevistaAsync(
+                    IdForecastEscenario,
+                    idContratacionEditada.Value,
+                    solicitudContratacion,
+                    idActor);
+                mensajeExito = "La contratación prevista fue actualizada.";
+            }
+            else
+            {
+                await ForecastMovimientoPersonalService.RegistrarContratacionPrevistaAsync(
+                    IdForecastEscenario,
+                    solicitudContratacion,
+                    idActor);
+                mensajeExito = "La contratación prevista fue registrada.";
+            }
+
+            await CargarConfiguracionAsync(idActor);
+            ReiniciarFormulario();
+        });
+    }
+
+    private async Task DesactivarContratacionAsync(ContratacionPrevistaForecastResumen contratacion)
+    {
+        await EjecutarOperacionAsync(async idActor =>
+        {
+            await ForecastMovimientoPersonalService.DesactivarContratacionPrevistaAsync(
+                IdForecastEscenario,
+                contratacion.IdForecastParticipante,
+                idActor);
+            await CargarConfiguracionAsync(idActor);
+            ReiniciarFormulario();
+            mensajeExito = "La contratación prevista fue desactivada y se conserva como registro inactivo.";
+        });
+    }
+
+    private async Task GuardarSalidaAsync(ColaboradorSalidaPrevistaForecast colaborador)
+    {
+        await EjecutarOperacionAsync(async idActor =>
+        {
+            await ForecastMovimientoPersonalService.GuardarSalidaPrevistaAsync(
+                IdForecastEscenario,
+                colaborador.IdForecastParticipante,
+                colaborador.FechaSalidaPrevista,
+                idActor);
+            await CargarConfiguracionAsync(idActor);
+            mensajeExito = colaborador.FechaSalidaPrevista.HasValue
+                ? "La salida prevista fue guardada."
+                : "La salida prevista fue eliminada.";
+        });
+    }
+
+    private async Task LimpiarSalidaAsync(ColaboradorSalidaPrevistaForecast colaborador)
+    {
+        await EjecutarOperacionAsync(async idActor =>
+        {
+            await ForecastMovimientoPersonalService.GuardarSalidaPrevistaAsync(
+                IdForecastEscenario,
+                colaborador.IdForecastParticipante,
+                null,
+                idActor);
+            await CargarConfiguracionAsync(idActor);
+            mensajeExito = "La salida prevista fue eliminada.";
+        });
+    }
+
+    private async Task EjecutarOperacionAsync(Func<string, Task> operacion)
+    {
+        if (procesando || configuracion?.PuedeEditar != true)
+        {
+            return;
+        }
+
+        procesando = true;
+        LimpiarMensajes();
+        try
+        {
+            await operacion(await ObtenerIdUsuarioActualAsync());
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudo guardar un movimiento forecast {IdForecastEscenario}.", IdForecastEscenario);
+            mensajeError = MensajeSeguro(ex);
+        }
+        finally
+        {
+            procesando = false;
+        }
+    }
+
+    private void EditarContratacion(ContratacionPrevistaForecastResumen contratacion)
+    {
+        idContratacionEditada = contratacion.IdForecastParticipante;
+        idContratacionPorDesactivar = null;
+        solicitudContratacion = new SolicitudContratacionPrevistaForecast
+        {
+            IdDepartamento = contratacion.IdDepartamento,
+            IdPuesto = contratacion.IdPuesto,
+            SalarioBaseMensual = contratacion.SalarioBaseMensual,
+            FechaInicioAplicacion = contratacion.FechaInicioAplicacion
+        };
+        LimpiarMensajes();
+    }
+
+    private void ReiniciarFormulario()
+    {
+        idContratacionEditada = null;
+        idContratacionPorDesactivar = null;
+        solicitudContratacion = new SolicitudContratacionPrevistaForecast
+        {
+            FechaInicioAplicacion = configuracion?.Periodos.FirstOrDefault()?.FechaInicio
+                ?? configuracion?.FechaInicioProyeccion
+                ?? DateTime.Today
+        };
+    }
+
+    private void AjustarPuestoSeleccionado()
+    {
+        if (!PuestosDisponibles.Any(item => item.IdPuesto == solicitudContratacion.IdPuesto))
+        {
+            solicitudContratacion.IdPuesto = 0;
+        }
+    }
+
+    private void CancelarEdicion() => ReiniciarFormulario();
+    private void SolicitarDesactivacion(long id) => idContratacionPorDesactivar = id;
+    private void CancelarDesactivacion() => idContratacionPorDesactivar = null;
+
+    private async Task CargarConfiguracionAsync(string? idActor = null)
+    {
+        idActor ??= await ObtenerIdUsuarioActualAsync();
+        configuracion = await ForecastMovimientoPersonalService.ObtenerConfiguracionAsync(
+            IdForecastEscenario,
+            idActor);
+    }
+
+    private async Task<string> ObtenerIdUsuarioActualAsync()
+    {
+        var estado = await Autenticacion.GetAuthenticationStateAsync();
+        return estado.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+            ?? throw new UnauthorizedAccessException("No fue posible autorizar la cuenta actual.");
+    }
+
+    private void LimpiarMensajes()
+    {
+        mensajeError = null;
+        mensajeExito = null;
+    }
+
+    private static string TextoSalario(decimal salario) => $"₡{salario:N2}";
+    private static string TextoRango(DateTime inicio, DateTime fin) => $"{inicio:dd/MM/yyyy} – {fin:dd/MM/yyyy}";
+
+    private static string MensajeSeguro(Exception ex)
+    {
+        if (ex is ArgumentException argumento)
+        {
+            var indice = argumento.Message.LastIndexOf(" (", StringComparison.Ordinal);
+            return indice >= 0 ? argumento.Message[..indice] : argumento.Message;
+        }
+
+        return ex is ValidationException or InvalidOperationException or KeyNotFoundException
+            ? ex.Message
+            : "No se pudo guardar el movimiento. Recargue los datos e intente nuevamente.";
+    }
+}

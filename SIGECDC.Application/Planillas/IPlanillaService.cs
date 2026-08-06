@@ -19,6 +19,11 @@ public interface IPlanillaService
         string? idUsuarioActual = null,
         CancellationToken cancellationToken = default);
 
+    Task ReabrirPlanillaAsync(
+        long idPeriodoPlanilla,
+        string idUsuarioActual,
+        CancellationToken cancellationToken = default);
+
     Task AprobarPlanillaAsync(
         long idPeriodoPlanilla,
         string idUsuarioActual,

@@ -69,6 +69,43 @@
                         </div>
                     </div>
                 </EditForm>
+
+                <article class="form-section stack">
+                    <div>
+                        <p class="eyebrow">Acceso del empleado</p>
+                        <h2>Cuenta vinculada</h2>
+                        <p class="text-muted">
+                            La cuenta seleccionada podrá consultar únicamente las colillas de este colaborador.
+                        </p>
+                    </div>
+
+                    <EditForm Model="vinculoCuenta" OnValidSubmit="GuardarVinculoCuentaAsync" class="stack">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary />
+
+                        <div class="form-field">
+                            <label for="cuenta-empleado">Cuenta activa con rol Empleado</label>
+                            <InputSelect id="cuenta-empleado" @bind-Value="vinculoCuenta.IdUsuario">
+                                <option value="">Sin cuenta vinculada</option>
+                                @foreach (var cuenta in cuentasEmpleado)
+                                {
+                                    <option value="@cuenta.IdUsuario">@cuenta.NombreMostrado</option>
+                                }
+                            </InputSelect>
+                            <small>
+                                Actual: @(string.IsNullOrWhiteSpace(colaborador.CuentaUsuario)
+                                    ? "Sin cuenta vinculada"
+                                    : colaborador.CuentaUsuario)
+                            </small>
+                        </div>
+
+                        <div class="form-actions">
+                            <button class="btn btn--secondary" type="submit" disabled="@guardandoVinculo">
+                                @(guardandoVinculo ? "Guardando vínculo..." : "Guardar vínculo")
+                            </button>
+                        </div>
+                    </EditForm>
+                </article>
             }
         </section>
 
@@ -105,8 +142,11 @@
     private IReadOnlyList<OpcionCatalogo> estadosLaborales = [];
     private IReadOnlyList<OpcionCatalogo> departamentos = [];
     private IReadOnlyList<OpcionCatalogo> puestos = [];
+    private IReadOnlyList<CuentaEmpleadoOpcion> cuentasEmpleado = [];
+    private SolicitudVinculoCuentaColaborador vinculoCuenta = new();
     private bool cargando = true;
     private bool guardando;
+    private bool guardandoVinculo;
     private bool desactivando;
     private bool mensajeEsError;
     private string? mensajeEstado;
@@ -154,6 +194,11 @@
             };
 
             await CargarPuestosAsync(solicitud.IdDepartamento);
+            cuentasEmpleado = await ColaboradorService.ObtenerCuentasEmpleadoDisponiblesAsync(IdColaborador);
+            vinculoCuenta = new SolicitudVinculoCuentaColaborador
+            {
+                IdUsuario = colaborador.IdUsuario
+            };
         }
 
         cargando = false;
@@ -225,15 +270,53 @@
         }
     }
 
+    private async Task GuardarVinculoCuentaAsync()
+    {
+        guardandoVinculo = true;
+        mensajeEstado = null;
+        mensajeEsError = false;
+
+        try
+        {
+            var idUsuarioActual = await ObtenerIdUsuarioActualAsync();
+            await ColaboradorService.VincularCuentaEmpleadoAsync(
+                IdColaborador,
+                vinculoCuenta,
+                idUsuarioActual);
+            mensajeEstado = string.IsNullOrWhiteSpace(vinculoCuenta.IdUsuario)
+                ? "La cuenta fue desvinculada del colaborador."
+                : "La cuenta Empleado fue vinculada correctamente.";
+            colaborador = await ColaboradorService.ObtenerColaboradorPorIdAsync(IdColaborador);
+            cuentasEmpleado = await ColaboradorService.ObtenerCuentasEmpleadoDisponiblesAsync(IdColaborador);
+            vinculoCuenta = new SolicitudVinculoCuentaColaborador
+            {
+                IdUsuario = colaborador?.IdUsuario
+            };
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudo actualizar el vínculo de cuenta del colaborador {IdColaborador}.", IdColaborador);
+            mensajeEsError = true;
+            mensajeEstado = ex is ArgumentException or InvalidOperationException
+                ? ex.Message
+                : "No se pudo actualizar el vínculo de cuenta.";
+        }
+        finally
+        {
+            guardandoVinculo = false;
+        }
+    }
+
     private void LimpiarMensaje()
     {
         mensajeEstado = null;
         mensajeEsError = false;
     }
 
-    private async Task<string?> ObtenerIdUsuarioActualAsync()
+    private async Task<string> ObtenerIdUsuarioActualAsync()
     {
         var estadoAutenticacion = await Autenticacion.GetAuthenticationStateAsync();
-        return estadoAutenticacion.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        return estadoAutenticacion.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+            ?? throw new InvalidOperationException("No se pudo identificar al usuario actual.");
     }
 }

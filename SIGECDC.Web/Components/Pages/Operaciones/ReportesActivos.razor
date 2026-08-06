@@ -1,0 +1,650 @@
+@page "/operaciones/reportes-activos"
+@rendermode InteractiveServer
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Administrador,Operaciones")]
+
+@using SIGECDC.Application.Activos
+@using SIGECDC.Application.Operaciones
+
+@inject IReporteUtilizacionCostosService ReporteService
+@inject IProyectoService ProyectoService
+@inject IActivoService ActivoService
+@inject ILogger<ReportesActivos> Logger
+
+<PageTitle>Reportes de activos | SIGE-CDC</PageTitle>
+
+<section class="page-banner">
+    <div class="container page-banner__inner stack--tight">
+        <p class="eyebrow">Operaciones</p>
+        <h1>Reportes de utilización y costos</h1>
+        <p class="lead">
+            Consulte el uso registrado y los costos de mantenimiento por proyecto o por activo.
+        </p>
+    </div>
+</section>
+
+<section class="section-shell">
+    <div class="container stack">
+        @if (!string.IsNullOrWhiteSpace(mensajeEstado))
+        {
+            <div class="alert alert--danger" role="alert">
+                <strong>No se pudo generar el reporte</strong>
+                <span>@mensajeEstado</span>
+            </div>
+        }
+
+        <article class="table-card">
+            <div class="table-toolbar">
+                <div>
+                    <p class="eyebrow">Criterios de consulta</p>
+                    <h2 class="card__title">Seleccione el alcance del reporte</h2>
+                    <p class="card__meta">
+                        El período es opcional y sus fechas se consideran inclusivas.
+                    </p>
+                </div>
+            </div>
+
+            <section class="toolbar" aria-label="Filtros del reporte">
+                <div class="toolbar__group">
+                    <label class="field">
+                        <span>Tipo de reporte</span>
+                        <select id="reporte-tipo"
+                                value="@tipoReporte"
+                                @onchange="CambiarTipoReporte">
+                            <option value="@ReportePorProyecto">Por proyecto</option>
+                            <option value="@ReportePorActivo">Por activo</option>
+                        </select>
+                    </label>
+
+                    <label class="field">
+                        <span>Buscar</span>
+                        <input id="reporte-busqueda"
+                               type="search"
+                               value="@busqueda"
+                               @oninput="CambiarBusqueda"
+                               placeholder="@TextoPlaceholderBusqueda" />
+                    </label>
+
+                    <label class="field">
+                        <span>@TextoEntidad</span>
+                        <select id="reporte-entidad"
+                                value="@idSeleccionado"
+                                @onchange="CambiarEntidadSeleccionada"
+                                disabled="@cargandoCatalogos">
+                            <option value="0">@TextoSeleccionEntidad</option>
+                            @if (EsReporteProyecto)
+                            {
+                                @foreach (var proyecto in ProyectosFiltrados)
+                                {
+                                    <option value="@proyecto.IdProyecto">
+                                        @proyecto.CodigoProyecto · @proyecto.NombreProyecto
+                                    </option>
+                                }
+                            }
+                            else
+                            {
+                                @foreach (var activo in ActivosFiltrados)
+                                {
+                                    <option value="@activo.IdActivo">
+                                        @activo.CodigoActivo · @activo.NombreActivo
+                                    </option>
+                                }
+                            }
+                        </select>
+                    </label>
+
+                    <label class="field">
+                        <span>Desde</span>
+                        <input id="reporte-desde"
+                               type="date"
+                               value="@FormatearFechaEntrada(filtro.FechaDesde)"
+                               @onchange="CambiarFechaDesde" />
+                    </label>
+
+                    <label class="field">
+                        <span>Hasta</span>
+                        <input id="reporte-hasta"
+                               type="date"
+                               value="@FormatearFechaEntrada(filtro.FechaHasta)"
+                               @onchange="CambiarFechaHasta" />
+                    </label>
+                </div>
+
+                <div class="toolbar__group">
+                    <button class="btn btn--secondary"
+                            type="button"
+                            @onclick="LimpiarFiltros">
+                        Limpiar
+                    </button>
+                    <button class="btn btn--primary"
+                            type="button"
+                            @onclick="GenerarReporteAsync"
+                            disabled="@(generando || cargandoCatalogos)">
+                        @(generando ? "Generando..." : "Generar reporte")
+                    </button>
+                </div>
+            </section>
+        </article>
+
+        @if (cargandoCatalogos)
+        {
+            <div class="empty-state">
+                <strong>Cargando criterios</strong>
+                <p class="text-muted">Estamos recuperando los proyectos y activos disponibles.</p>
+            </div>
+        }
+        else if (reporte is null)
+        {
+            <div class="empty-state">
+                <strong>Configure la consulta</strong>
+                <p class="text-muted">
+                    Seleccione un @TextoEntidad.ToLowerInvariant() y genere el reporte.
+                </p>
+            </div>
+        }
+        else
+        {
+            <article class="table-card">
+                <div class="table-toolbar">
+                    <div>
+                        <p class="eyebrow">Reporte por @reporte.Encabezado.TipoReporte.ToLowerInvariant()</p>
+                        <h2 class="card__title">
+                            @reporte.Encabezado.CodigoReferencia · @reporte.Encabezado.NombreReferencia
+                        </h2>
+                        <p class="card__meta">@TextoPeriodo(reporte)</p>
+                    </div>
+                </div>
+
+                <section class="kpi-grid" aria-label="Resumen del reporte">
+                    <article class="stat-card">
+                        <span class="stat-label">Costo estimado</span>
+                        <strong class="stat-value">@FormatearMonto(reporte.CostoEstimadoTotal)</strong>
+                        <small class="card__meta">Valores planificados registrados</small>
+                    </article>
+                    <article class="stat-card">
+                        <span class="stat-label">Costo real</span>
+                        <strong class="stat-value">@FormatearMonto(reporte.CostoRealTotal)</strong>
+                        <small class="card__meta">Valores reales registrados</small>
+                    </article>
+                    <article class="stat-card">
+                        <span class="stat-label">Registros de uso</span>
+                        <strong class="stat-value">@reporte.RegistrosUso.Count</strong>
+                        <small class="card__meta">Lecturas incluidas</small>
+                    </article>
+                    <article class="stat-card">
+                        <span class="stat-label">Mantenimientos</span>
+                        <strong class="stat-value">@reporte.Mantenimientos.Count</strong>
+                        <small class="card__meta">Órdenes incluidas</small>
+                    </article>
+                </section>
+            </article>
+
+            <article class="table-card">
+                <div class="table-toolbar">
+                    <div>
+                        <p class="eyebrow">Utilización</p>
+                        <h2 class="card__title">Totales por tipo de medición</h2>
+                        <p class="card__meta">
+                            Las unidades distintas se presentan por separado.
+                        </p>
+                    </div>
+                </div>
+
+                @if (reporte.TotalesUtilizacion.Count == 0)
+                {
+                    <div class="empty-state">
+                        <strong>Sin utilización registrada</strong>
+                        <p class="text-muted">No existen lecturas para los criterios seleccionados.</p>
+                    </div>
+                }
+                else
+                {
+                    <section class="kpi-grid" aria-label="Totales de utilización">
+                        @foreach (var total in reporte.TotalesUtilizacion)
+                        {
+                            <article class="stat-card">
+                                <span class="stat-label">@total.TipoMedicion</span>
+                                <strong class="stat-value">@FormatearLectura(total.CantidadUsoTotal)</strong>
+                                <small class="card__meta">@TextoRegistros(total.CantidadRegistros)</small>
+                            </article>
+                        }
+                    </section>
+                }
+            </article>
+
+            <article class="table-card">
+                <div class="table-toolbar">
+                    <div>
+                        <p class="eyebrow">Detalle operativo</p>
+                        <h2 class="card__title">Registros de uso</h2>
+                    </div>
+                    <span class="badge badge--info">@TextoRegistros(reporte.RegistrosUso.Count)</span>
+                </div>
+
+                @if (reporte.RegistrosUso.Count == 0)
+                {
+                    <div class="empty-state">
+                        <strong>No hay registros de uso</strong>
+                        <p class="text-muted">Pruebe con otro período o seleccione otra entidad.</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Activo</th>
+                                    <th>Proyecto</th>
+                                    <th>Medición</th>
+                                    <th>Lecturas</th>
+                                    <th>Utilización</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var registro in reporte.RegistrosUso)
+                                {
+                                    <tr>
+                                        <td>@FormatearFecha(registro.FechaRegistro)</td>
+                                        <td>
+                                            <strong>@registro.CodigoActivo</strong>
+                                            <div class="card__meta">@registro.Activo</div>
+                                        </td>
+                                        <td>
+                                            <strong>@TextoOpcional(registro.CodigoProyecto)</strong>
+                                            <div class="card__meta">@TextoOpcional(registro.Proyecto)</div>
+                                        </td>
+                                        <td>@TextoOpcional(registro.TipoMedicion)</td>
+                                        <td>
+                                            <div class="stack--tight">
+                                                <span>Anterior: @FormatearLectura(registro.LecturaAnterior)</span>
+                                                <span>Nueva: @FormatearLectura(registro.LecturaNueva)</span>
+                                            </div>
+                                        </td>
+                                        <td>@FormatearLectura(registro.CantidadUso)</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </article>
+
+            <article class="table-card">
+                <div class="table-toolbar">
+                    <div>
+                        <p class="eyebrow">Detalle financiero</p>
+                        <h2 class="card__title">Costos de mantenimiento</h2>
+                        <p class="card__meta">
+                            El filtro usa la fecha efectiva de cada estado de mantenimiento.
+                        </p>
+                    </div>
+                    <span class="badge badge--info">@TextoMantenimientos(reporte.Mantenimientos.Count)</span>
+                </div>
+
+                @if (reporte.Mantenimientos.Count == 0)
+                {
+                    <div class="empty-state">
+                        <strong>No hay mantenimientos</strong>
+                        <p class="text-muted">No existen órdenes para los criterios seleccionados.</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Fecha efectiva</th>
+                                    <th>Activo</th>
+                                    <th>Proyecto</th>
+                                    <th>Orden</th>
+                                    <th>Fechas</th>
+                                    <th>Costos</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var mantenimiento in reporte.Mantenimientos)
+                                {
+                                    <tr>
+                                        <td>@FormatearFechaHora(mantenimiento.FechaEfectiva)</td>
+                                        <td>
+                                            <strong>@mantenimiento.CodigoActivo</strong>
+                                            <div class="card__meta">@mantenimiento.Activo</div>
+                                        </td>
+                                        <td>
+                                            <strong>@TextoOpcional(mantenimiento.CodigoProyecto)</strong>
+                                            <div class="card__meta">@TextoOpcional(mantenimiento.Proyecto)</div>
+                                        </td>
+                                        <td>
+                                            <span class="badge badge--ink">@mantenimiento.TipoMantenimiento</span>
+                                            <div>
+                                                <span class="badge @ClaseEstado(mantenimiento.EstadoMantenimiento)">
+                                                    @mantenimiento.EstadoMantenimiento
+                                                </span>
+                                            </div>
+                                            <div class="card__meta">@TextoOpcional(mantenimiento.Descripcion)</div>
+                                        </td>
+                                        <td>
+                                            <div class="stack--tight">
+                                                <span>Programada: @FormatearFecha(mantenimiento.FechaProgramada)</span>
+                                                <span>Inicio: @FormatearFechaHora(mantenimiento.FechaInicio)</span>
+                                                <span>Fin: @FormatearFechaHora(mantenimiento.FechaFin)</span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="stack--tight">
+                                                <span>Estimado: @FormatearMonto(mantenimiento.CostoEstimado)</span>
+                                                <span>Real: @FormatearMonto(mantenimiento.CostoReal)</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </article>
+        }
+    </div>
+</section>
+
+@code {
+    private const string ReportePorProyecto = "Proyecto";
+    private const string ReportePorActivo = "Activo";
+
+    private IReadOnlyList<ProyectoResumen> proyectos = [];
+    private IReadOnlyList<ActivoResumen> activos = [];
+    private FiltroPeriodoReporte filtro = new();
+    private ReporteUtilizacionCostosResumen? reporte;
+    private string tipoReporte = ReportePorProyecto;
+    private string busqueda = string.Empty;
+    private long idSeleccionado;
+    private bool cargandoCatalogos = true;
+    private bool generando;
+    private string? mensajeEstado;
+
+    private bool EsReporteProyecto =>
+        string.Equals(
+            tipoReporte,
+            ReportePorProyecto,
+            StringComparison.Ordinal);
+
+    private string TextoEntidad =>
+        EsReporteProyecto ? "Proyecto" : "Activo";
+
+    private string TextoSeleccionEntidad =>
+        EsReporteProyecto
+            ? "Seleccione un proyecto"
+            : "Seleccione un activo";
+
+    private string TextoPlaceholderBusqueda =>
+        EsReporteProyecto
+            ? "Código o nombre del proyecto"
+            : "Código o nombre del activo";
+
+    private IEnumerable<ProyectoResumen> ProyectosFiltrados =>
+        proyectos.Where(proyecto =>
+            CoincideBusqueda(
+                proyecto.CodigoProyecto,
+                proyecto.NombreProyecto));
+
+    private IEnumerable<ActivoResumen> ActivosFiltrados =>
+        activos.Where(activo =>
+            CoincideBusqueda(
+                activo.CodigoActivo,
+                activo.NombreActivo));
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            proyectos =
+                await ProyectoService.ObtenerProyectosAsync();
+            activos =
+                await ActivoService.ObtenerActivosAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(
+                ex,
+                "No se pudieron cargar los criterios de los reportes de activos.");
+            mensajeEstado =
+                "No se pudieron cargar los proyectos y activos. Intente nuevamente.";
+        }
+        finally
+        {
+            cargandoCatalogos = false;
+        }
+    }
+
+    private void CambiarTipoReporte(ChangeEventArgs evento)
+    {
+        tipoReporte = evento.Value?.ToString()
+            == ReportePorActivo
+                ? ReportePorActivo
+                : ReportePorProyecto;
+        busqueda = string.Empty;
+        idSeleccionado = 0;
+        LimpiarResultado();
+    }
+
+    private void CambiarBusqueda(ChangeEventArgs evento)
+    {
+        busqueda = evento.Value?.ToString() ?? string.Empty;
+
+        var seleccionVisible = EsReporteProyecto
+            ? ProyectosFiltrados.Any(proyecto =>
+                proyecto.IdProyecto == idSeleccionado)
+            : ActivosFiltrados.Any(activo =>
+                activo.IdActivo == idSeleccionado);
+
+        if (idSeleccionado > 0 && !seleccionVisible)
+        {
+            idSeleccionado = 0;
+        }
+
+        LimpiarResultado();
+    }
+
+    private void CambiarEntidadSeleccionada(ChangeEventArgs evento)
+    {
+        idSeleccionado = long.TryParse(
+            evento.Value?.ToString(),
+            out var id)
+                ? id
+                : 0;
+        LimpiarResultado();
+    }
+
+    private void CambiarFechaDesde(ChangeEventArgs evento)
+    {
+        filtro.FechaDesde = ConvertirFecha(evento.Value);
+        LimpiarResultado();
+    }
+
+    private void CambiarFechaHasta(ChangeEventArgs evento)
+    {
+        filtro.FechaHasta = ConvertirFecha(evento.Value);
+        LimpiarResultado();
+    }
+
+    private async Task GenerarReporteAsync()
+    {
+        if (idSeleccionado <= 0)
+        {
+            mensajeEstado =
+                $"Seleccione un {TextoEntidad.ToLowerInvariant()} para generar el reporte.";
+            reporte = null;
+            return;
+        }
+
+        generando = true;
+        mensajeEstado = null;
+        reporte = null;
+
+        try
+        {
+            reporte = EsReporteProyecto
+                ? await ReporteService.GenerarPorProyectoAsync(
+                    idSeleccionado,
+                    filtro)
+                : await ReporteService.GenerarPorActivoAsync(
+                    idSeleccionado,
+                    filtro);
+        }
+        catch (ArgumentException ex)
+        {
+            mensajeEstado = ex.Message;
+        }
+        catch (InvalidOperationException ex)
+            when (EsErrorFuncional(ex))
+        {
+            mensajeEstado = ex.Message;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(
+                ex,
+                "No se pudo generar el reporte {TipoReporte} para la entidad {IdReferencia}.",
+                tipoReporte,
+                idSeleccionado);
+            mensajeEstado =
+                "Ocurrió un error al consultar el reporte. Intente nuevamente.";
+        }
+        finally
+        {
+            generando = false;
+        }
+    }
+
+    private void LimpiarFiltros()
+    {
+        busqueda = string.Empty;
+        idSeleccionado = 0;
+        filtro = new FiltroPeriodoReporte();
+        LimpiarResultado();
+    }
+
+    private void LimpiarResultado()
+    {
+        reporte = null;
+        mensajeEstado = null;
+    }
+
+    private bool CoincideBusqueda(
+        string codigo,
+        string nombre)
+    {
+        if (string.IsNullOrWhiteSpace(busqueda))
+        {
+            return true;
+        }
+
+        var criterio = busqueda.Trim();
+        return codigo.Contains(
+                criterio,
+                StringComparison.OrdinalIgnoreCase)
+            || nombre.Contains(
+                criterio,
+                StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool EsErrorFuncional(
+        InvalidOperationException excepcion)
+    {
+        return excepcion.Message.StartsWith(
+                "No se encontró el proyecto seleccionado.",
+                StringComparison.Ordinal)
+            || excepcion.Message.StartsWith(
+                "No se encontró el activo seleccionado.",
+                StringComparison.Ordinal);
+    }
+
+    private static DateTime? ConvertirFecha(object? valor)
+    {
+        return DateTime.TryParse(
+            valor?.ToString(),
+            out var fecha)
+                ? fecha.Date
+                : null;
+    }
+
+    private static string FormatearFechaEntrada(DateTime? fecha)
+    {
+        return fecha?.ToString("yyyy-MM-dd") ?? string.Empty;
+    }
+
+    private static string TextoPeriodo(
+        ReporteUtilizacionCostosResumen resultado)
+    {
+        if (!resultado.FechaDesde.HasValue
+            && !resultado.FechaHasta.HasValue)
+        {
+            return "Todo el historial registrado";
+        }
+
+        if (resultado.FechaDesde.HasValue
+            && resultado.FechaHasta.HasValue)
+        {
+            return $"Del {FormatearFecha(resultado.FechaDesde.Value)} al {FormatearFecha(resultado.FechaHasta.Value)}";
+        }
+
+        return resultado.FechaDesde.HasValue
+            ? $"Desde el {FormatearFecha(resultado.FechaDesde.Value)}"
+            : $"Hasta el {FormatearFecha(resultado.FechaHasta!.Value)}";
+    }
+
+    private static string TextoRegistros(int cantidad)
+    {
+        return cantidad == 1
+            ? "1 registro"
+            : $"{cantidad} registros";
+    }
+
+    private static string TextoMantenimientos(int cantidad)
+    {
+        return cantidad == 1
+            ? "1 mantenimiento"
+            : $"{cantidad} mantenimientos";
+    }
+
+    private static string TextoOpcional(string? texto)
+    {
+        return string.IsNullOrWhiteSpace(texto) ? "—" : texto;
+    }
+
+    private static string FormatearFecha(DateTime fecha)
+    {
+        return fecha.ToString("dd/MM/yyyy");
+    }
+
+    private static string FormatearFechaHora(DateTime? fecha)
+    {
+        return fecha?.ToString("dd/MM/yyyy HH:mm") ?? "—";
+    }
+
+    private static string FormatearLectura(decimal? valor)
+    {
+        return valor?.ToString("N2") ?? "—";
+    }
+
+    private static string FormatearMonto(decimal? monto)
+    {
+        return monto.HasValue
+            ? $"₡{monto.Value:N2}"
+            : "—";
+    }
+
+    private static string ClaseEstado(string estado)
+    {
+        return estado switch
+        {
+            "Programado" => "badge--info",
+            "En proceso" => "badge--accent",
+            "Finalizado" => "badge--success",
+            "Cancelado" => "badge--ink",
+            _ => "badge--ink"
+        };
+    }
+}

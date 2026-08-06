@@ -1,6 +1,7 @@
 @page "/galeria"
 @using SIGECDC.Application.SitioPublico
 @inject IGaleriaService GaleriaService
+@inject ILogger<Galeria> Logger
 
 <PageTitle>Galería | SIGE-CDC</PageTitle>
 
@@ -19,6 +20,15 @@
             <div class="empty-state">
                 <strong>Cargando galería</strong>
                 <p class="text-muted">Estamos recuperando el contenido multimedia disponible.</p>
+            </div>
+        }
+        else if (!string.IsNullOrWhiteSpace(mensajeError))
+        {
+            <div class="alert alert--danger stack--tight" role="alert">
+                <span>@mensajeError</span>
+                <div>
+                    <a class="btn btn--secondary" href="/galeria" data-enhance-nav="false">Reintentar</a>
+                </div>
             </div>
         }
         else if (galerias.Count == 0)
@@ -76,12 +86,20 @@
 @code {
     private IReadOnlyList<GaleriaDetalle> galerias = [];
     private bool cargando = true;
+    private string? mensajeError;
 
     protected override async Task OnInitializedAsync()
     {
+        galerias = [];
+        mensajeError = null;
         try
         {
             galerias = await GaleriaService.ObtenerPublicadasConImagenesAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudo cargar la galería pública.");
+            mensajeError = "No pudimos cargar la galería en este momento.";
         }
         finally
         {

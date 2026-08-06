@@ -3,6 +3,7 @@
 @rendermode InteractiveServer
 @using SIGECDC.Application.Operaciones
 @inject IProyectoService ProyectoService
+@inject AuthenticationStateProvider Autenticacion
 @inject ILogger<Proyectos> Logger
 
 <PageTitle>Proyectos | SIGE-CDC</PageTitle>
@@ -211,7 +212,9 @@
 
         try
         {
-            await ProyectoService.GuardarProyectoAsync(solicitud);
+            await ProyectoService.GuardarProyectoAsync(
+                solicitud,
+                await ObtenerIdUsuarioActualAsync());
             PrepararNuevoProyecto();
             mensajeFormulario = "Proyecto guardado correctamente.";
             await CargarProyectosAsync();
@@ -258,6 +261,17 @@
     {
         solicitud = new SolicitudProyecto();
         mensajeFormulario = null;
+    }
+
+    private async Task<string> ObtenerIdUsuarioActualAsync()
+    {
+        var estadoAutenticacion =
+            await Autenticacion.GetAuthenticationStateAsync();
+        return estadoAutenticacion.User.FindFirst(
+                System.Security.Claims.ClaimTypes.NameIdentifier)
+            ?.Value
+            ?? throw new InvalidOperationException(
+                "No se pudo identificar al usuario actual.");
     }
 
     private static string TextoFecha(DateTime? fecha)

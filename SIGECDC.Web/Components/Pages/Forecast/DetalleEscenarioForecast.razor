@@ -1,0 +1,723 @@
+@page "/rrhh/forecast/{IdForecastEscenario:long}"
+@rendermode InteractiveServer
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Recursos Humanos")]
+@using SIGECDC.Application.Forecast
+@using SIGECDC.Domain.Forecast
+@using SIGECDC.Domain.Planillas
+@using System.ComponentModel.DataAnnotations
+@inject IForecastEscenarioService ForecastEscenarioService
+@inject IForecastParametroService ForecastParametroService
+@inject IForecastParticipanteService ForecastParticipanteService
+@inject IForecastMovimientoPersonalService ForecastMovimientoPersonalService
+@inject IForecastAsignacionProyectoService ForecastAsignacionProyectoService
+@inject IForecastCalculoService ForecastCalculoService
+@inject AuthenticationStateProvider Autenticacion
+@inject ILogger<DetalleEscenarioForecast> Logger
+
+<PageTitle>Detalle de escenario forecast | SIGE-CDC</PageTitle>
+
+<section class="page-banner">
+    <div class="container page-banner__inner stack--tight">
+        <p class="eyebrow">Recursos Humanos / Forecast</p>
+        <h1>@(escenario?.Nombre ?? "Detalle del escenario")</h1>
+        <p class="lead">Consulte la definición persistida, sus períodos futuros y las fuentes históricas utilizadas.</p>
+    </div>
+</section>
+
+<section class="section-shell">
+    <div class="container stack">
+        @if (!string.IsNullOrWhiteSpace(mensajeError))
+        {
+            <div class="alert alert--danger" role="alert">
+                <strong>No se pudo cargar el escenario</strong>
+                <span>@mensajeError</span>
+            </div>
+        }
+
+        @if (!string.IsNullOrWhiteSpace(mensajeOperacion))
+        {
+            <div class="alert alert--success" role="status">
+                <strong>Operación completada</strong>
+                <span>@mensajeOperacion</span>
+            </div>
+        }
+
+        @if (!string.IsNullOrWhiteSpace(mensajeErrorOperacion))
+        {
+            <div class="alert alert--warning" role="alert">
+                <strong>No se pudo completar la operación</strong>
+                <span>@mensajeErrorOperacion</span>
+            </div>
+        }
+
+        <div class="page-header">
+            <div>
+                <p class="eyebrow">Definición de forecast</p>
+                <h2>@(escenario?.Nombre ?? "Escenario no disponible")</h2>
+            </div>
+            <div class="page-actions">
+                @if (escenario?.FechaCalculo.HasValue == true)
+                {
+                    <a class="btn btn--primary" href="@($"rrhh/forecast/{IdForecastEscenario}/resultados")">Ver resultados</a>
+                }
+                @if (PuedeGuardarEscenario)
+                {
+                    <button class="btn btn--primary"
+                            type="button"
+                            disabled="@guardando"
+                            @onclick="GuardarEscenarioAsync">
+                        @(guardando ? "Guardando..." : "Guardar escenario")
+                    </button>
+                }
+                @if (PuedeCompararEscenario)
+                {
+                    <a class="btn btn--secondary" href="@($"rrhh/forecast/comparar?base={IdForecastEscenario}")">Comparar escenario</a>
+                    <a class="btn btn--secondary" href="@($"rrhh/forecast/{IdForecastEscenario}/comparacion-real")">Comparar con planilla real</a>
+                }
+                @if (PuedeGenerarForecast)
+                {
+                    <button class="btn btn--primary"
+                            type="button"
+                            disabled="@generando"
+                            @onclick="GenerarForecastAsync">
+                        @(generando ? "Generando..." : "Generar forecast")
+                    </button>
+                }
+                @if (configuracionParametros?.PuedeEditar == true)
+                {
+                    <a class="btn btn--primary" href="@($"rrhh/forecast/{IdForecastEscenario}/parametros")">Configurar parámetros</a>
+                }
+                @if (configuracionParticipantes?.PuedeEditar == true)
+                {
+                    <a class="btn btn--primary" href="@($"rrhh/forecast/{IdForecastEscenario}/participantes")">Gestionar colaboradores</a>
+                }
+                @if (configuracionMovimientos?.PuedeEditar == true)
+                {
+                    <a class="btn btn--primary" href="@($"rrhh/forecast/{IdForecastEscenario}/movimientos")">Gestionar cambios previstos</a>
+                }
+                @if (configuracionAsignaciones?.PuedeEditar == true)
+                {
+                    <a class="btn btn--primary" href="@($"rrhh/forecast/{IdForecastEscenario}/asignaciones-proyecto")">Distribuir por proyecto</a>
+                }
+                <a class="btn btn--secondary" href="rrhh/forecast">Volver a escenarios</a>
+            </div>
+        </div>
+
+        @if (cargando)
+        {
+            <div class="empty-state">
+                <strong>Cargando escenario</strong>
+                <p class="text-muted">Estamos recuperando la definición persistida.</p>
+            </div>
+        }
+        else if (escenario is null)
+        {
+            <div class="empty-state">
+                <strong>Escenario no encontrado</strong>
+                <p class="text-muted">El escenario solicitado no existe o no está activo.</p>
+                <a class="btn btn--primary" href="rrhh/forecast">Ver escenarios</a>
+            </div>
+        }
+        else
+        {
+            <section class="kpi-grid">
+                <article class="stat-card">
+                    <span class="stat-label">Estado</span>
+                    <strong class="stat-value">@escenario.EstadoEscenario</strong>
+                    <span class="stat-delta">Definición persistida</span>
+                </article>
+                <article class="stat-card">
+                    <span class="stat-label">Períodos</span>
+                    <strong class="stat-value">@escenario.CantidadPeriodos</strong>
+                    <span class="stat-delta">Rangos futuros activos</span>
+                </article>
+                <article class="stat-card">
+                    <span class="stat-label">Fuentes históricas</span>
+                    <strong class="stat-value">@escenario.CantidadFuentesHistoricas</strong>
+                    <span class="stat-delta">Orden de uso conservado</span>
+                </article>
+                <article class="stat-card">
+                    <span class="stat-label">Creación</span>
+                    <strong class="stat-value">@escenario.FechaCreacion.ToString("dd/MM/yyyy")</strong>
+                    <span class="stat-delta">@escenario.FechaCreacion.ToString("HH:mm")</span>
+                </article>
+            </section>
+
+            <section class="page-grid">
+                <div class="page-main stack">
+                    <article class="card stack">
+                        <div>
+                            <p class="eyebrow">Resumen</p>
+                            <h2>Datos del escenario</h2>
+                        </div>
+                        <div class="metric-list">
+                            <div class="metric-row">
+                                <span>Rango de proyección</span>
+                                <strong>@TextoRango(escenario.FechaInicioProyeccion, escenario.FechaFinProyeccion)</strong>
+                            </div>
+                            <div class="metric-row">
+                                <span>Históricos considerados</span>
+                                <strong>@escenario.PeriodosHistoricosConsiderados</strong>
+                            </div>
+                            <div class="metric-row">
+                                <span>Monto proyectado</span>
+                                <strong>@TextoMontoProyectado</strong>
+                            </div>
+                        </div>
+                        @if (!string.IsNullOrWhiteSpace(escenario.Descripcion))
+                        {
+                            <div>
+                                <h3>Descripción</h3>
+                                <p>@escenario.Descripcion</p>
+                            </div>
+                        }
+                    </article>
+
+                    @if (escenario.FechaCalculo.HasValue)
+                    {
+                        <article class="card card--accent stack">
+                            <div>
+                                <p class="eyebrow">Resultado generado</p>
+                                <h2>Proyección del escenario</h2>
+                            </div>
+                            <div class="metric-list">
+                                <div class="metric-row">
+                                    <span>Total bruto proyectado</span>
+                                    <strong>@TextoMontoProyectado</strong>
+                                </div>
+                                <div class="metric-row">
+                                    <span>Fecha de cálculo</span>
+                                    <strong>@escenario.FechaCalculo.Value.ToString("dd/MM/yyyy HH:mm")</strong>
+                                </div>
+                                <div class="metric-row">
+                                    <span>Períodos generados</span>
+                                    <strong>@escenario.CantidadPeriodos</strong>
+                                </div>
+                            </div>
+                            <p class="text-muted">El desglose por colaborador, departamento, proyecto y período se habilitará en la consulta de resultados.</p>
+                        </article>
+                    }
+
+                    <article class="table-card">
+                        <div class="table-toolbar">
+                            <div>
+                                <h2 class="card__title">Distribución por proyecto</h2>
+                                <p class="card__meta">Completitud de la dimensión proyecto para cada participante incluido y período activo.</p>
+                            </div>
+                            <span class="badge @(configuracionAsignaciones?.EstaListaParaCalculo == true ? "badge--success" : "badge--warning")">
+                                @(configuracionAsignaciones?.EstaListaParaCalculo == true ? "Lista para cálculo" : "Distribución pendiente")
+                            </span>
+                        </div>
+                        @if (configuracionAsignaciones is null || configuracionAsignaciones.CeldasRequeridas == 0)
+                        {
+                            <div class="empty-state">
+                                <strong>No existe una matriz por distribuir</strong>
+                                <p class="text-muted">Guarde participantes incluidos y períodos activos antes de configurar proyectos.</p>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="metric-list">
+                                <div class="metric-row">
+                                    <span>Celdas completas</span>
+                                    <strong>@configuracionAsignaciones.CeldasCompletas / @configuracionAsignaciones.CeldasRequeridas</strong>
+                                </div>
+                                <div class="metric-row">
+                                    <span>Celdas pendientes</span>
+                                    <strong>@Math.Max(0, configuracionAsignaciones.CeldasRequeridas - configuracionAsignaciones.CeldasCompletas)</strong>
+                                </div>
+                            </div>
+                            @if (configuracionAsignaciones.PuedeEditar)
+                            {
+                                <div class="form-actions">
+                                    <a class="btn btn--primary" href="@($"rrhh/forecast/{IdForecastEscenario}/asignaciones-proyecto")">Distribuir por proyecto</a>
+                                </div>
+                            }
+                        }
+                    </article>
+
+                    <article class="table-card">
+                        <div class="table-toolbar">
+                            <div>
+                                <h2 class="card__title">Parámetros de proyección</h2>
+                                <p class="card__meta">Configuración persistida utilizada por el cálculo del escenario.</p>
+                            </div>
+                            <span class="badge badge--info">@ParametrosActivos.Count</span>
+                        </div>
+                        @if (ParametrosActivos.Count == 0)
+                        {
+                            <div class="empty-state">
+                                <strong>No hay parámetros configurados</strong>
+                                <p class="text-muted">El escenario conserva únicamente sus períodos y fuentes históricas.</p>
+                                @if (configuracionParametros?.PuedeEditar == true)
+                                {
+                                    <a class="btn btn--primary" href="@($"rrhh/forecast/{IdForecastEscenario}/parametros")">Configurar parámetros</a>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="table-responsive">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Parámetro</th>
+                                            <th>Tipo</th>
+                                            <th>Valor</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var parametro in ParametrosActivos)
+                                        {
+                                            <tr>
+                                                <td>
+                                                    <strong>@parametro.Nombre</strong>
+                                                    <p class="card__meta">@parametro.Codigo</p>
+                                                </td>
+                                                <td>@parametro.TipoParametro</td>
+                                                <td>@TextoValorParametro(parametro)</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                    </article>
+
+                    <article class="table-card">
+                        <div class="table-toolbar">
+                            <div>
+                                <h2 class="card__title">Composición de colaboradores</h2>
+                                <p class="card__meta">Snapshots persistidos que determinan la composición incluida en el cálculo.</p>
+                            </div>
+                            <span class="badge badge--info">@ParticipantesPersistidos.Count</span>
+                        </div>
+                        @if (ParticipantesPersistidos.Count == 0)
+                        {
+                            <div class="empty-state">
+                                <strong>La composición aún no se ha guardado</strong>
+                                <p class="text-muted">Seleccione los colaboradores que formarán parte del escenario.</p>
+                                @if (configuracionParticipantes?.PuedeEditar == true)
+                                {
+                                    <a class="btn btn--primary" href="@($"rrhh/forecast/{IdForecastEscenario}/participantes")">Gestionar colaboradores</a>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="table-toolbar">
+                                <span class="badge badge--success">@ParticipantesPersistidos.Count(item => item.EstaIncluido) incluidos</span>
+                                <span class="badge badge--warning">@ParticipantesPersistidos.Count(item => !item.EstaIncluido) excluidos</span>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Colaborador</th>
+                                            <th>Departamento</th>
+                                            <th>Puesto</th>
+                                            <th>Salario mensual</th>
+                                            <th>Estado</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var participante in ParticipantesPersistidos)
+                                        {
+                                            <tr>
+                                                <td>
+                                                    <strong>@participante.Etiqueta</strong>
+                                                    <p class="card__meta">@participante.CodigoParticipante</p>
+                                                </td>
+                                                <td>@participante.Departamento</td>
+                                                <td>@participante.Puesto</td>
+                                                <td>@TextoSalario(participante.SalarioBaseMensual)</td>
+                                                <td>
+                                                    <span class="badge @(participante.EstaIncluido ? "badge--success" : "badge--warning")">
+                                                        @(participante.EstaIncluido ? "Incluido" : "Excluido")
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                    </article>
+
+                    <article class="table-card">
+                        <div class="table-toolbar">
+                            <div>
+                                <h2 class="card__title">Cambios previstos de personal</h2>
+                                <p class="card__meta">Altas anónimas y primer día sin costo de las salidas planificadas.</p>
+                            </div>
+                            <span class="badge badge--info">@(ContratacionesPrevistas.Count + SalidasPrevistas.Count)</span>
+                        </div>
+                        @if (ContratacionesPrevistas.Count == 0 && SalidasPrevistas.Count == 0)
+                        {
+                            <div class="empty-state">
+                                <strong>No hay cambios previstos</strong>
+                                <p class="text-muted">El escenario no contiene contrataciones ni salidas planificadas.</p>
+                                @if (configuracionMovimientos?.PuedeEditar == true)
+                                {
+                                    <a class="btn btn--primary" href="@($"rrhh/forecast/{IdForecastEscenario}/movimientos")">Gestionar cambios previstos</a>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            @if (ContratacionesPrevistas.Count > 0)
+                            {
+                                <div class="table-toolbar">
+                                    <strong>Contrataciones previstas</strong>
+                                    <span class="badge badge--success">@ContratacionesPrevistas.Count</span>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="data-table">
+                                        <thead><tr><th>Código</th><th>Plaza</th><th>Departamento</th><th>Salario</th><th>Primer día</th></tr></thead>
+                                        <tbody>
+                                            @foreach (var contratacion in ContratacionesPrevistas)
+                                            {
+                                                <tr>
+                                                    <td><strong>@contratacion.CodigoParticipante</strong></td>
+                                                    <td>@contratacion.Puesto</td>
+                                                    <td>@contratacion.Departamento</td>
+                                                    <td>@TextoSalario(contratacion.SalarioBaseMensual)</td>
+                                                    <td>@contratacion.FechaInicioAplicacion.ToString("dd/MM/yyyy")</td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            }
+                            @if (SalidasPrevistas.Count > 0)
+                            {
+                                <div class="table-toolbar">
+                                    <strong>Salidas previstas</strong>
+                                    <span class="badge badge--warning">@SalidasPrevistas.Count</span>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="data-table">
+                                        <thead><tr><th>Colaborador</th><th>Departamento</th><th>Puesto</th><th>Primer día sin costo</th></tr></thead>
+                                        <tbody>
+                                            @foreach (var salida in SalidasPrevistas)
+                                            {
+                                                <tr>
+                                                    <td><strong>@salida.Etiqueta</strong><p class="card__meta">@salida.CodigoParticipante</p></td>
+                                                    <td>@salida.Departamento</td>
+                                                    <td>@salida.Puesto</td>
+                                                    <td>@salida.FechaSalidaPrevista?.ToString("dd/MM/yyyy")</td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            }
+                        }
+                    </article>
+
+                    <article class="table-card">
+                        <div class="table-toolbar">
+                            <div>
+                                <h2 class="card__title">Períodos futuros</h2>
+                                <p class="card__meta">Orden y fechas persistidos para este escenario.</p>
+                            </div>
+                            <span class="badge badge--info">@escenario.Periodos.Count</span>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Orden</th>
+                                        <th>Tipo</th>
+                                        <th>Fecha inicial</th>
+                                        <th>Fecha final</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var periodo in escenario.Periodos)
+                                    {
+                                        <tr>
+                                            <td><strong>@periodo.NumeroOrden</strong></td>
+                                            <td>@periodo.TipoPeriodo</td>
+                                            <td>@periodo.FechaInicio.ToString("dd/MM/yyyy")</td>
+                                            <td>@periodo.FechaFin.ToString("dd/MM/yyyy")</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </article>
+
+                    <article class="table-card">
+                        <div class="table-toolbar">
+                            <div>
+                                <h2 class="card__title">Fuentes históricas</h2>
+                                <p class="card__meta">Planillas exactas y secuencia de uso del escenario.</p>
+                            </div>
+                            <span class="badge badge--accent">@escenario.FuentesHistoricas.Count</span>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Orden</th>
+                                        <th>Período</th>
+                                        <th>Rango</th>
+                                        <th>Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var fuente in escenario.FuentesHistoricas)
+                                    {
+                                        <tr>
+                                            <td><strong>@fuente.NumeroOrden</strong></td>
+                                            <td>
+                                                <strong>@fuente.CodigoPeriodo</strong>
+                                                <p class="card__meta">@fuente.NombrePeriodo</p>
+                                            </td>
+                                            <td>@TextoRango(fuente.FechaInicio, fuente.FechaFin)</td>
+                                            <td><span class="badge badge--success">@fuente.EstadoPlanilla</span></td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </article>
+                </div>
+
+                <aside class="page-aside stack">
+                    <article class="card card--accent stack">
+                        <p class="eyebrow">Alcance actual</p>
+                        <h2>Escenario reproducible</h2>
+                        <p>El escenario conserva parámetros, composición, cambios previstos, distribución por proyecto y resultados calculados.</p>
+                    </article>
+                    <article class="alert alert--info" role="status">
+                        <strong>Consulta de solo lectura</strong>
+                        <span>Los períodos y las fuentes no pueden modificarse desde esta pantalla.</span>
+                    </article>
+                </aside>
+            </section>
+        }
+    </div>
+</section>
+
+@code {
+    [Parameter]
+    public long IdForecastEscenario { get; set; }
+
+    private EscenarioForecastDetalle? escenario;
+    private ConfiguracionParametrosForecast? configuracionParametros;
+    private ConfiguracionParticipantesForecast? configuracionParticipantes;
+    private ConfiguracionMovimientosForecast? configuracionMovimientos;
+    private ConfiguracionAsignacionesProyectoForecast? configuracionAsignaciones;
+    private bool cargando = true;
+    private bool generando;
+    private bool guardando;
+    private string? mensajeError;
+    private string? mensajeOperacion;
+    private string? mensajeErrorOperacion;
+
+    private bool PuedeGenerarForecast => escenario is not null
+        && escenario.EstadoEscenario == EstadosEscenarioForecast.Borrador
+        && configuracionAsignaciones?.EstaListaParaCalculo == true;
+
+    private bool PuedeGuardarEscenario => escenario?.EstadoEscenario == EstadosEscenarioForecast.Calculado;
+
+    private bool PuedeCompararEscenario => escenario?.EstadoEscenario is
+        EstadosEscenarioForecast.Guardado or EstadosEscenarioForecast.Comparado;
+
+    private string TextoMontoProyectado => escenario is not null
+        && string.Equals(escenario.EstadoEscenario, EstadosEscenarioForecast.Borrador, StringComparison.OrdinalIgnoreCase)
+            ? "Pendiente de cálculo"
+            : $"₡{escenario?.MontoProyectadoTotal:N2}";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        cargando = true;
+        mensajeError = null;
+
+        try
+        {
+            var idActor = await ObtenerIdUsuarioActualAsync();
+            await CargarDatosAsync(idActor);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudo cargar el escenario forecast {IdForecastEscenario}.", IdForecastEscenario);
+            escenario = null;
+            configuracionParametros = null;
+            configuracionParticipantes = null;
+            configuracionMovimientos = null;
+            configuracionAsignaciones = null;
+            mensajeError = "No se pudo cargar el detalle del escenario.";
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private async Task GenerarForecastAsync()
+    {
+        if (generando)
+        {
+            return;
+        }
+
+        mensajeOperacion = null;
+        mensajeErrorOperacion = null;
+        if (!PuedeGenerarForecast)
+        {
+            mensajeErrorOperacion = "Complete la composición y la distribución por proyecto antes de generar el forecast.";
+            return;
+        }
+
+        generando = true;
+        try
+        {
+            var idActor = await ObtenerIdUsuarioActualAsync();
+            var resultado = await ForecastCalculoService.GenerarForecastAsync(
+                IdForecastEscenario,
+                idActor);
+            await CargarDatosAsync(idActor);
+            mensajeOperacion = $"Se calcularon {resultado.CantidadPeriodos} período(s), "
+                + $"{resultado.CantidadParticipantes} participante(s) y {resultado.CantidadDetalles} detalle(s).";
+        }
+        catch (Exception ex) when (ex is ValidationException
+            or InvalidOperationException
+            or KeyNotFoundException
+            or ArgumentException)
+        {
+            Logger.LogWarning(ex, "La configuración del escenario forecast {IdForecastEscenario} no permite calcularlo.", IdForecastEscenario);
+            mensajeErrorOperacion = ex.Message;
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            Logger.LogWarning(ex, "Una cuenta no autorizada intentó calcular el escenario forecast {IdForecastEscenario}.", IdForecastEscenario);
+            mensajeErrorOperacion = "La cuenta actual no está autorizada para generar forecast.";
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudo generar el escenario forecast {IdForecastEscenario}.", IdForecastEscenario);
+            mensajeErrorOperacion = "Ocurrió un error al generar el forecast. Intente nuevamente.";
+        }
+        finally
+        {
+            generando = false;
+        }
+    }
+
+    private async Task GuardarEscenarioAsync()
+    {
+        if (guardando || !PuedeGuardarEscenario)
+        {
+            return;
+        }
+
+        mensajeOperacion = null;
+        mensajeErrorOperacion = null;
+        guardando = true;
+        try
+        {
+            var idActor = await ObtenerIdUsuarioActualAsync();
+            await ForecastEscenarioService.GuardarAsync(IdForecastEscenario, idActor);
+            await CargarDatosAsync(idActor);
+            mensajeOperacion = "El escenario fue guardado con su configuración y resultados persistidos.";
+        }
+        catch (Exception ex) when (ex is ValidationException
+            or InvalidOperationException
+            or KeyNotFoundException
+            or ArgumentException)
+        {
+            Logger.LogWarning(ex, "El escenario forecast {IdForecastEscenario} no se pudo guardar.", IdForecastEscenario);
+            mensajeErrorOperacion = ex.Message;
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            Logger.LogWarning(ex, "Una cuenta no autorizada intentó guardar el escenario forecast {IdForecastEscenario}.", IdForecastEscenario);
+            mensajeErrorOperacion = "La cuenta actual no está autorizada para guardar escenarios.";
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudo guardar el escenario forecast {IdForecastEscenario}.", IdForecastEscenario);
+            mensajeErrorOperacion = "Ocurrió un error al guardar el escenario. Intente nuevamente.";
+        }
+        finally
+        {
+            guardando = false;
+        }
+    }
+
+    private async Task CargarDatosAsync(string idActor)
+    {
+        escenario = await ForecastEscenarioService.ObtenerDetalleAsync(
+            IdForecastEscenario,
+            idActor);
+        configuracionParametros = escenario is null
+            ? null
+            : await ForecastParametroService.ObtenerConfiguracionAsync(
+                IdForecastEscenario,
+                idActor);
+        configuracionParticipantes = escenario is null
+            ? null
+            : await ForecastParticipanteService.ObtenerConfiguracionAsync(
+                IdForecastEscenario,
+                idActor);
+        configuracionMovimientos = escenario is null
+            ? null
+            : await ForecastMovimientoPersonalService.ObtenerConfiguracionAsync(
+                IdForecastEscenario,
+                idActor);
+        configuracionAsignaciones = escenario is null
+            ? null
+            : await ForecastAsignacionProyectoService.ObtenerConfiguracionAsync(
+                IdForecastEscenario,
+                idActor);
+    }
+
+    private async Task<string> ObtenerIdUsuarioActualAsync()
+    {
+        var estadoAutenticacion = await Autenticacion.GetAuthenticationStateAsync();
+        return estadoAutenticacion.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+            ?? throw new UnauthorizedAccessException("No fue posible autorizar la cuenta actual.");
+    }
+
+    private static string TextoRango(DateTime inicio, DateTime fin) =>
+        $"{inicio:dd/MM/yyyy} – {fin:dd/MM/yyyy}";
+
+    private static string TextoSalario(decimal? salario) =>
+        salario.HasValue ? $"₡{salario:N2}" : "No disponible";
+
+    private IReadOnlyList<ParametroForecastConfigurado> ParametrosActivos =>
+        configuracionParametros?.Parametros
+            .Where(parametro => parametro.EstaHabilitado)
+            .ToList() ?? [];
+
+    private IReadOnlyList<ParticipanteForecastConfigurado> ParticipantesPersistidos =>
+        configuracionParticipantes?.Participantes
+            .Where(participante => participante.EstaPersistido)
+            .ToList() ?? [];
+
+    private IReadOnlyList<ContratacionPrevistaForecastResumen> ContratacionesPrevistas =>
+        configuracionMovimientos?.Contrataciones ?? [];
+
+    private IReadOnlyList<ColaboradorSalidaPrevistaForecast> SalidasPrevistas =>
+        configuracionMovimientos?.Colaboradores
+            .Where(colaborador => colaborador.FechaSalidaPrevista.HasValue)
+            .ToList() ?? [];
+
+    private static string TextoValorParametro(ParametroForecastConfigurado parametro)
+    {
+        if (parametro.ValorDecimal is null)
+        {
+            return "-";
+        }
+
+        return string.Equals(
+            parametro.TipoParametro,
+            TiposParametroPlanilla.Porcentaje,
+            StringComparison.OrdinalIgnoreCase)
+                ? $"{parametro.ValorDecimal:N4} %"
+                : $"₡{parametro.ValorDecimal:N4}";
+    }
+}

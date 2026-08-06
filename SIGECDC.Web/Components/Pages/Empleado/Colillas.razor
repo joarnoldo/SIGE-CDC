@@ -1,0 +1,239 @@
+@page "/empleado/colillas"
+@rendermode InteractiveServer
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Empleado")]
+@using SIGECDC.Application.Planillas
+@inject IColillaPagoService ColillaPagoService
+@inject AuthenticationStateProvider Autenticacion
+@inject ILogger<Colillas> Logger
+
+<PageTitle>Mis colillas | SIGE-CDC</PageTitle>
+
+<section class="page-banner">
+    <div class="container page-banner__inner stack--tight">
+        <p class="eyebrow">Empleado / Planilla</p>
+        <h1>Mis colillas de pago</h1>
+        <p class="lead">Consulte el resultado de sus períodos procesados y descargue su comprobante.</p>
+    </div>
+</section>
+
+<section class="section-shell">
+    <div class="container stack">
+        @if (!string.IsNullOrWhiteSpace(mensajeEstado))
+        {
+            <div class="alert alert--danger" role="alert">
+                <strong>No se pudo completar la consulta</strong>
+                <span>@mensajeEstado</span>
+            </div>
+        }
+
+        @if (cargando)
+        {
+            <div class="empty-state">
+                <strong>Cargando sus colillas</strong>
+                <p class="text-muted">Estamos consultando la información autorizada para su cuenta.</p>
+            </div>
+        }
+        else if (portal is null || !portal.TieneColaboradorVinculado)
+        {
+            <div class="empty-state">
+                <strong>Cuenta sin colaborador vinculado</strong>
+                <p class="text-muted">
+                    Su cuenta todavía no está vinculada con un expediente laboral. Contacte a Recursos Humanos para solicitar la asociación.
+                </p>
+            </div>
+        }
+        else
+        {
+            <section class="kpi-grid">
+                <article class="stat-card">
+                    <span class="stat-label">Colaborador</span>
+                    <strong class="stat-value">@portal.NombreColaborador</strong>
+                    <span class="stat-delta">@portal.CodigoColaborador</span>
+                </article>
+                <article class="stat-card">
+                    <span class="stat-label">Departamento</span>
+                    <strong class="stat-value">@portal.Departamento</strong>
+                    <span class="stat-delta">@portal.Puesto</span>
+                </article>
+                <article class="stat-card">
+                    <span class="stat-label">Colillas disponibles</span>
+                    <strong class="stat-value">@portal.Colillas.Count</strong>
+                    <span class="stat-delta">Períodos con comprobante</span>
+                </article>
+            </section>
+
+            @if (portal.CantidadPeriodosPendientes > 0)
+            {
+                <div class="alert alert--info" role="status">
+                    <strong>Colillas pendientes</strong>
+                    <span>
+                        Hay @portal.CantidadPeriodosPendientes período(s) calculado(s) cuya colilla todavía debe generar Recursos Humanos.
+                    </span>
+                </div>
+            }
+
+            @if (portal.Colillas.Count == 0)
+            {
+                <div class="empty-state">
+                    <strong>No hay colillas disponibles</strong>
+                    <p class="text-muted">No existe una colilla generada para sus períodos de planilla procesados.</p>
+                </div>
+            }
+            else
+            {
+                <article class="form-section stack">
+                    <div>
+                        <p class="eyebrow">Consulta por período</p>
+                        <h2>Seleccione una colilla</h2>
+                    </div>
+                    <div class="form-field">
+                        <label for="periodo-colilla">Período disponible</label>
+                        <select id="periodo-colilla"
+                                @bind="idColillaSeleccionada"
+                                @bind:after="SeleccionarColillaAsync">
+                            @foreach (var colilla in portal.Colillas)
+                            {
+                                <option value="@colilla.IdColillaPago">
+                                    @colilla.CodigoPeriodo · @colilla.NombrePeriodo (@colilla.FechaInicio.ToString("dd/MM/yyyy") – @colilla.FechaFin.ToString("dd/MM/yyyy"))
+                                </option>
+                            }
+                        </select>
+                    </div>
+                </article>
+
+                @if (cargandoDetalle)
+                {
+                    <div class="empty-state">
+                        <strong>Cargando detalle</strong>
+                    </div>
+                }
+                else if (detalle is not null)
+                {
+                    <article class="table-card">
+                        <div class="table-toolbar">
+                            <div>
+                                <h2 class="card__title">@detalle.NombrePeriodo</h2>
+                                <p class="card__meta">
+                                    @detalle.CodigoPeriodo · @detalle.EstadoPlanilla · generada @detalle.FechaGeneracion.ToString("dd/MM/yyyy HH:mm")
+                                </p>
+                            </div>
+                            <a class="btn btn--primary"
+                               href="@($"empleado/colillas/{detalle.IdColillaPago}/pdf")"
+                               data-enhance-nav="false">
+                                Descargar PDF
+                            </a>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Concepto</th>
+                                        <th>Monto</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td>Salario base</td><td>@TextoMoneda(detalle.SalarioBase)</td></tr>
+                                    <tr><td>Salario proporcional</td><td>@TextoMoneda(detalle.SalarioProporcional)</td></tr>
+                                    <tr><td>Horas extra</td><td>@TextoMoneda(detalle.TotalHorasExtra)</td></tr>
+                                    <tr><td>Bonos</td><td>@TextoMoneda(detalle.TotalBonos)</td></tr>
+                                    <tr><td>Beneficios configurables</td><td>@TextoMoneda(detalle.TotalBeneficiosConfigurables)</td></tr>
+                                    <tr><td>Ausencias</td><td>@TextoMoneda(detalle.TotalAusencias)</td></tr>
+                                    <tr><td><strong>Salario bruto</strong></td><td><strong>@TextoMoneda(detalle.SalarioBruto)</strong></td></tr>
+                                    <tr><td><strong>Deducciones</strong></td><td><strong>@TextoMoneda(detalle.TotalDeducciones)</strong></td></tr>
+                                    <tr><td><strong>Salario neto</strong></td><td><strong>@TextoMoneda(detalle.SalarioNeto)</strong></td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </article>
+                }
+            }
+        }
+    </div>
+</section>
+
+@code {
+    private PortalColillasEmpleado? portal;
+    private ColillaPagoDetalle? detalle;
+    private long idColillaSeleccionada;
+    private bool cargando = true;
+    private bool cargandoDetalle;
+    private string? mensajeEstado;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarAsync();
+    }
+
+    private async Task CargarAsync()
+    {
+        cargando = true;
+        mensajeEstado = null;
+
+        try
+        {
+            var idUsuario = await ObtenerIdUsuarioActualAsync();
+            portal = await ColillaPagoService.ObtenerPortalPropioAsync(idUsuario);
+
+            if (portal.Colillas.Count > 0)
+            {
+                idColillaSeleccionada = portal.Colillas[0].IdColillaPago;
+                await CargarDetalleAsync(idUsuario);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudieron consultar las colillas del usuario autenticado.");
+            portal = null;
+            detalle = null;
+            mensajeEstado = "No se pudieron cargar sus colillas. Intente nuevamente.";
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private async Task SeleccionarColillaAsync()
+    {
+        mensajeEstado = null;
+        cargandoDetalle = true;
+
+        try
+        {
+            await CargarDetalleAsync(await ObtenerIdUsuarioActualAsync());
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudo consultar la colilla seleccionada.");
+            detalle = null;
+            mensajeEstado = "No se pudo cargar la colilla seleccionada.";
+        }
+        finally
+        {
+            cargandoDetalle = false;
+        }
+    }
+
+    private async Task CargarDetalleAsync(string idUsuario)
+    {
+        detalle = await ColillaPagoService.ObtenerDetallePropioAsync(
+            idColillaSeleccionada,
+            idUsuario);
+
+        if (detalle is null)
+        {
+            throw new InvalidOperationException("La colilla seleccionada no está disponible para su cuenta.");
+        }
+    }
+
+    private async Task<string> ObtenerIdUsuarioActualAsync()
+    {
+        var estadoAutenticacion = await Autenticacion.GetAuthenticationStateAsync();
+        return estadoAutenticacion.User
+            .FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+            ?? throw new InvalidOperationException("No se pudo identificar al usuario autenticado.");
+    }
+
+    private static string TextoMoneda(decimal monto) => $"₡{monto:N2}";
+}

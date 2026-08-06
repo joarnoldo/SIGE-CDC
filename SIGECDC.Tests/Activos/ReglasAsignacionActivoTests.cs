@@ -53,6 +53,9 @@ public sealed class ReglasAsignacionActivoTests
         Assert.Equal(
             esperado,
             ReglasAsignacionActivo.EsEstadoCompatibleConAsignacionVigente(estado));
+        Assert.Equal(
+            estado is EstadosActivo.Disponible or EstadosActivo.Asignado,
+            ReglasAsignacionActivo.EsEstadoReservable(estado));
     }
 
     [Fact]
@@ -74,7 +77,7 @@ public sealed class ReglasAsignacionActivoTests
 
     [Theory]
     [InlineData(EstadosActivo.Disponible, false, true)]
-    [InlineData(EstadosActivo.Asignado, false, false)]
+    [InlineData(EstadosActivo.Asignado, false, true)]
     [InlineData(EstadosActivo.Disponible, true, false)]
     [InlineData(EstadosActivo.Asignado, true, false)]
     [InlineData(EstadosActivo.EnMantenimiento, false, false)]
@@ -96,5 +99,38 @@ public sealed class ReglasAsignacionActivoTests
             tieneConflictoDeAsignacion: true);
 
         Assert.Contains("asignación vigente", motivo, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void EstaDisponible_ConMantenimientoEnProceso_RetornaFalso()
+    {
+        Assert.False(ReglasAsignacionActivo.EstaDisponible(
+            EstadosActivo.Disponible,
+            tieneConflictoDeAsignacion: false,
+            tieneMantenimientoEnProceso: true));
+    }
+
+    [Fact]
+    public void DescribirDisponibilidad_ConMantenimiento_ExplicaLaRestriccionSeparada()
+    {
+        var motivo = ReglasAsignacionActivo.DescribirDisponibilidad(
+            EstadosActivo.Disponible,
+            tieneConflictoDeAsignacion: false,
+            tieneMantenimientoEnProceso: true);
+
+        Assert.Contains("mantenimiento en proceso", motivo, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("asignación vigente", motivo, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void DescribirDisponibilidad_ConAsignacionYMantenimiento_IncluyeAmbasRazones()
+    {
+        var motivo = ReglasAsignacionActivo.DescribirDisponibilidad(
+            EstadosActivo.Disponible,
+            tieneConflictoDeAsignacion: true,
+            tieneMantenimientoEnProceso: true);
+
+        Assert.Contains("asignación vigente", motivo, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("mantenimiento en proceso", motivo, StringComparison.OrdinalIgnoreCase);
     }
 }

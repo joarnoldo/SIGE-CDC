@@ -26,6 +26,10 @@ public interface IGaleriaService
 
     Task<long> AdjuntarImagenAsync(SolicitudImagenGaleria solicitud, string? idUsuarioActual = null, CancellationToken cancellationToken = default);
 
+    Task ActualizarImagenAsync(long idImagenGaleria, SolicitudActualizarImagenGaleria solicitud, string? idUsuarioActual = null, CancellationToken cancellationToken = default);
+
+    Task ReemplazarImagenAsync(long idImagenGaleria, SolicitudImagenGaleria solicitud, string? idUsuarioActual = null, CancellationToken cancellationToken = default);
+
     Task DesactivarImagenAsync(long idImagenGaleria, string? idUsuarioActual = null, CancellationToken cancellationToken = default);
 
     Task<ArchivoDescarga?> AbrirImagenPublicaAsync(long idImagenGaleria, CancellationToken cancellationToken = default);

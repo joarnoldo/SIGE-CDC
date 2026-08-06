@@ -20,6 +20,7 @@
   <ItemGroup>
     <ProjectReference Include="..\SIGECDC.Application\SIGECDC.Application.csproj" />
     <ProjectReference Include="..\SIGECDC.Domain\SIGECDC.Domain.csproj" />
+    <ProjectReference Include="..\SIGECDC.Infrastructure\SIGECDC.Infrastructure.csproj" />
     <ProjectReference Include="..\SIGECDC.Persistence\SIGECDC.Persistence.csproj" />
   </ItemGroup>
 

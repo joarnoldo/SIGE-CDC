@@ -70,6 +70,11 @@
             Logger.LogWarning("Cuenta de usuario bloqueada.");
             RedirectManager.RedirectTo("Account/Lockout");
         }
+        else if (result.IsNotAllowed)
+        {
+            Logger.LogWarning("Inicio con código de recuperación rechazado para una cuenta no habilitada.");
+            message = "Error: no fue posible iniciar sesión. Verifique sus credenciales o contacte al administrador.";
+        }
         else
         {
             Logger.LogWarning("Código de recuperación inválido para el usuario con ID '{UserId}' ", userId);

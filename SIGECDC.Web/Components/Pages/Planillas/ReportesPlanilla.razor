@@ -1,0 +1,285 @@
+@page "/rrhh/reportes-planilla"
+@rendermode InteractiveServer
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Recursos Humanos")]
+@using SIGECDC.Application.Planillas
+@inject IReportePlanillaService ReporteService
+@inject ILogger<ReportesPlanilla> Logger
+
+<PageTitle>Reportes de planilla | SIGE-CDC</PageTitle>
+
+<section class="page-banner">
+    <div class="container page-banner__inner stack--tight">
+        <p class="eyebrow">Recursos Humanos / Planillas</p>
+        <h1>Reportes de planilla.</h1>
+        <p class="lead">Consulte la información consolidada de un período procesado y expórtela a PDF o Excel.</p>
+    </div>
+</section>
+
+<section class="section-shell">
+    <div class="container stack">
+        @if (!string.IsNullOrWhiteSpace(mensajeEstado))
+        {
+            <div class="alert alert--@(mensajeEsError ? "danger" : "info")" role="alert">
+                <strong>@(mensajeEsError ? "No se pudo generar el reporte" : "Información del reporte")</strong>
+                <span>@mensajeEstado</span>
+            </div>
+        }
+
+        <article class="table-card">
+            <div class="table-toolbar">
+                <div>
+                    <p class="eyebrow">Criterio de consulta</p>
+                    <h2 class="card__title">Seleccione un período procesado</h2>
+                    <p class="card__meta">Se incluyen únicamente planillas Calculadas, Aprobadas o Cerradas.</p>
+                </div>
+            </div>
+
+            <section class="toolbar" aria-label="Criterio del reporte de planilla">
+                <div class="toolbar__group">
+                    <label class="field">
+                        <span>Período</span>
+                        <select id="reporte-planilla-periodo"
+                                value="@idPeriodoSeleccionado"
+                                @onchange="CambiarPeriodo"
+                                disabled="@(cargandoPeriodos || periodos.Count == 0)">
+                            <option value="0">Seleccione un período</option>
+                            @foreach (var periodo in periodos)
+                            {
+                                <option value="@periodo.IdPeriodoPlanilla">
+                                    @periodo.CodigoPeriodo · @periodo.NombrePeriodo · @periodo.EstadoPlanilla
+                                </option>
+                            }
+                        </select>
+                    </label>
+                </div>
+                <div class="toolbar__group">
+                    <button class="btn btn--primary"
+                            type="button"
+                            disabled="@(cargandoReporte || cargandoPeriodos || periodos.Count == 0)"
+                            @onclick="GenerarReporteAsync">
+                        @(cargandoReporte ? "Generando..." : "Generar reporte")
+                    </button>
+                </div>
+            </section>
+        </article>
+
+        @if (cargandoPeriodos)
+        {
+            <div class="empty-state">
+                <strong>Cargando períodos</strong>
+                <p class="text-muted">Estamos buscando planillas disponibles para reportar.</p>
+            </div>
+        }
+        else if (periodos.Count == 0)
+        {
+            <div class="empty-state">
+                <strong>No hay períodos disponibles</strong>
+                <p class="text-muted">Calcule o apruebe una planilla antes de generar el reporte.</p>
+            </div>
+        }
+        else if (reporte is null)
+        {
+            <div class="empty-state">
+                <strong>Seleccione el criterio</strong>
+                <p class="text-muted">El reporte mostrará exclusivamente el período seleccionado.</p>
+            </div>
+        }
+        else
+        {
+            <article class="table-card">
+                <div class="table-toolbar">
+                    <div>
+                        <p class="eyebrow">@reporte.CodigoPeriodo · @reporte.EstadoPlanilla</p>
+                        <h2 class="card__title">@reporte.NombrePeriodo</h2>
+                        <p class="card__meta">
+                            @reporte.TipoPeriodo · @reporte.FechaInicio.ToString("dd/MM/yyyy") al @reporte.FechaFin.ToString("dd/MM/yyyy")
+                        </p>
+                    </div>
+                    @if (TieneFilas)
+                    {
+                        <div class="page-actions">
+                            <a class="btn btn--secondary"
+                               href="@RutaPdf"
+                               data-enhance-nav="false">
+                                Descargar PDF
+                            </a>
+                            <a class="btn btn--primary"
+                               href="@RutaExcel"
+                               data-enhance-nav="false">
+                                Descargar Excel
+                            </a>
+                        </div>
+                    }
+                </div>
+
+                <section class="kpi-grid" aria-label="Totales oficiales de planilla">
+                    <article class="stat-card">
+                        <span class="stat-label">Salario bruto</span>
+                        <strong class="stat-value">@TextoMoneda(reporte.SalarioBrutoTotal)</strong>
+                        <span class="stat-delta">Total almacenado en la planilla</span>
+                    </article>
+                    <article class="stat-card">
+                        <span class="stat-label">Deducciones</span>
+                        <strong class="stat-value">@TextoMoneda(reporte.DeduccionesTotal)</strong>
+                        <span class="stat-delta">Total almacenado en la planilla</span>
+                    </article>
+                    <article class="stat-card">
+                        <span class="stat-label">Salario neto</span>
+                        <strong class="stat-value">@TextoMoneda(reporte.SalarioNetoTotal)</strong>
+                        <span class="stat-delta">Total a pagar</span>
+                    </article>
+                    <article class="stat-card">
+                        <span class="stat-label">Colaboradores</span>
+                        <strong class="stat-value">@reporte.Detalles.Count</strong>
+                        <span class="stat-delta">Filas de detalle persistidas</span>
+                    </article>
+                </section>
+            </article>
+
+            @if (!TieneFilas)
+            {
+                <div class="empty-state">
+                    <strong>El reporte no contiene datos</strong>
+                    <p class="text-muted">La planilla seleccionada no tiene detalles disponibles para mostrar o exportar.</p>
+                </div>
+            }
+            else
+            {
+                <article class="table-card">
+                    <div class="table-toolbar">
+                        <div>
+                            <h2 class="card__title">Resultado por colaborador</h2>
+                            <p class="card__meta">Los archivos exportados contienen estas mismas filas, columnas y totales.</p>
+                        </div>
+                        <span class="badge badge--info">@reporte.Detalles.Count</span>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Código</th>
+                                    <th>Colaborador</th>
+                                    <th>Departamento</th>
+                                    <th>Salario del período</th>
+                                    <th>Horas extra</th>
+                                    <th>Bonos</th>
+                                    <th>Beneficios</th>
+                                    <th>Ausencias</th>
+                                    <th>Salario bruto</th>
+                                    <th>Deducciones</th>
+                                    <th>Salario neto</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var detalle in reporte.Detalles)
+                                {
+                                    <tr>
+                                        <td><strong>@detalle.CodigoColaborador</strong></td>
+                                        <td>@detalle.NombreColaborador</td>
+                                        <td>@detalle.Departamento</td>
+                                        <td>@TextoMoneda(detalle.SalarioProporcional)</td>
+                                        <td>@TextoMoneda(detalle.TotalHorasExtra)</td>
+                                        <td>@TextoMoneda(detalle.TotalBonos)</td>
+                                        <td>@TextoMoneda(detalle.TotalBeneficiosConfigurables)</td>
+                                        <td>@TextoMoneda(detalle.TotalAusencias)</td>
+                                        <td>@TextoMoneda(detalle.SalarioBruto)</td>
+                                        <td>@TextoMoneda(detalle.TotalDeducciones)</td>
+                                        <td><strong>@TextoMoneda(detalle.SalarioNeto)</strong></td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </article>
+            }
+        }
+    </div>
+</section>
+
+@code {
+    private IReadOnlyList<PeriodoReportePlanillaOpcion> periodos = [];
+    private ReportePlanilla? reporte;
+    private long idPeriodoSeleccionado;
+    private bool cargandoPeriodos = true;
+    private bool cargandoReporte;
+    private bool mensajeEsError;
+    private string? mensajeEstado;
+
+    private bool TieneFilas => reporte?.Detalles.Count > 0;
+    private string RutaPdf => $"rrhh/reportes-planilla/{reporte!.IdPeriodoPlanilla}/pdf";
+    private string RutaExcel => $"rrhh/reportes-planilla/{reporte!.IdPeriodoPlanilla}/excel";
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            periodos = await ReporteService.ObtenerPeriodosDisponiblesAsync();
+        }
+        catch (Exception excepcion)
+        {
+            Logger.LogError(excepcion, "No se pudieron cargar los períodos disponibles para reportes de planilla.");
+            mensajeEsError = true;
+            mensajeEstado = "No se pudieron cargar los períodos disponibles.";
+            periodos = [];
+        }
+        finally
+        {
+            cargandoPeriodos = false;
+        }
+    }
+
+    private void CambiarPeriodo(ChangeEventArgs evento)
+    {
+        idPeriodoSeleccionado = long.TryParse(evento.Value?.ToString(), out var idPeriodo)
+            ? idPeriodo
+            : 0;
+        reporte = null;
+        mensajeEstado = null;
+        mensajeEsError = false;
+    }
+
+    private async Task GenerarReporteAsync()
+    {
+        if (idPeriodoSeleccionado <= 0)
+        {
+            mensajeEsError = true;
+            mensajeEstado = "Seleccione un período antes de generar el reporte.";
+            return;
+        }
+
+        cargandoReporte = true;
+        mensajeEstado = null;
+        mensajeEsError = false;
+
+        try
+        {
+            reporte = await ReporteService.ObtenerReporteAsync(idPeriodoSeleccionado);
+            if (reporte is null)
+            {
+                mensajeEsError = true;
+                mensajeEstado = "El período seleccionado no está disponible para reportes.";
+            }
+            else if (reporte.Detalles.Count == 0)
+            {
+                mensajeEstado = "La planilla seleccionada no contiene detalles para exportar.";
+            }
+        }
+        catch (Exception excepcion)
+        {
+            Logger.LogError(
+                excepcion,
+                "No se pudo generar el reporte del período {IdPeriodoPlanilla}.",
+                idPeriodoSeleccionado);
+            reporte = null;
+            mensajeEsError = true;
+            mensajeEstado = "No se pudo generar el reporte de planilla.";
+        }
+        finally
+        {
+            cargandoReporte = false;
+        }
+    }
+
+    private static string TextoMoneda(decimal monto) => $"₡{monto:N2}";
+}

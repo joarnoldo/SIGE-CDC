@@ -6,6 +6,8 @@ public sealed class MantenimientoResumen
 
 	public long IdActivo { get; set; }
 
+	public string CodigoActivo { get; set; } = string.Empty;
+
 	public string Activo { get; set; } = string.Empty;
 
 	public long? IdProyecto { get; set; }
@@ -35,4 +37,6 @@ public sealed class MantenimientoResumen
 	public string? Resultado { get; set; }
 
 	public string? Responsable { get; set; }
+
+	public IReadOnlyList<EvidenciaMantenimientoResumen> Evidencias { get; set; } = [];
 }

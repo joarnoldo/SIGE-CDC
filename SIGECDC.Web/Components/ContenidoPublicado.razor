@@ -1,7 +1,29 @@
 @using SIGECDC.Application.SitioPublico
 @inject IPaginaContenidoService PaginaContenidoService
+@inject ILogger<ContenidoPublicado> Logger
+@inject NavigationManager Navigation
 
-@if (pagina is not null && !string.IsNullOrWhiteSpace(pagina.Contenido))
+@if (cargando)
+{
+    <section class="section-shell section-shell--compact" aria-live="polite">
+        <div class="container empty-state">
+            <strong>Cargando contenido</strong>
+            <p class="text-muted">Estamos recuperando la información institucional.</p>
+        </div>
+    </section>
+}
+else if (!string.IsNullOrWhiteSpace(mensajeError))
+{
+    <section class="section-shell section-shell--compact">
+        <div class="container alert alert--danger stack--tight" role="alert">
+            <span>@mensajeError</span>
+            <div>
+                <a class="btn btn--secondary" href="@Navigation.Uri" data-enhance-nav="false">Reintentar</a>
+            </div>
+        </div>
+    </section>
+}
+else if (pagina is not null && !string.IsNullOrWhiteSpace(pagina.Contenido))
 {
     <section class="section-shell section-shell--compact">
         <div class="container panel-highlight stack">
@@ -17,12 +39,36 @@
     public string CodigoPagina { get; set; } = string.Empty;
 
     private PaginaContenidoResumen? pagina;
+    private bool cargando;
+    private string? mensajeError;
 
     protected override async Task OnParametersSetAsync()
     {
-        if (!string.IsNullOrWhiteSpace(CodigoPagina))
+        pagina = null;
+        mensajeError = null;
+
+        if (string.IsNullOrWhiteSpace(CodigoPagina))
+        {
+            cargando = false;
+            return;
+        }
+
+        cargando = true;
+        try
         {
             pagina = await PaginaContenidoService.ObtenerPaginaPublicadaAsync(CodigoPagina);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(
+                ex,
+                "No se pudo cargar el contenido institucional {CodigoPagina}.",
+                CodigoPagina);
+            mensajeError = "No pudimos cargar el contenido institucional en este momento.";
+        }
+        finally
+        {
+            cargando = false;
         }
     }
 }

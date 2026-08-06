@@ -14,7 +14,8 @@ public static class ReglasEstadoActivo
     public static void ValidarTransicion(
         string? estadoActual,
         string? estadoNuevo,
-        bool tieneAsignacionNoFinalizada)
+        bool tieneAsignacionNoFinalizada,
+        bool tieneMantenimientoEnProceso = false)
     {
         if (!EsEstadoOficial(estadoActual) || !EsEstadoOficial(estadoNuevo))
         {
@@ -27,7 +28,20 @@ public static class ReglasEstadoActivo
             throw new InvalidOperationException("Un activo dado de baja no puede regresar a un estado operativo.");
         }
 
+        if (tieneMantenimientoEnProceso
+            && (string.Equals(estadoNuevo, EstadosActivo.Disponible, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(estadoNuevo, EstadosActivo.Asignado, StringComparison.OrdinalIgnoreCase)))
+        {
+            throw new InvalidOperationException(
+                "El activo posee un mantenimiento en proceso y no puede pasar a Disponible o Asignado.");
+        }
+
+        var conservaEstadoEnMantenimiento =
+            string.Equals(estadoActual, EstadosActivo.EnMantenimiento, StringComparison.OrdinalIgnoreCase)
+            && string.Equals(estadoNuevo, EstadosActivo.EnMantenimiento, StringComparison.OrdinalIgnoreCase);
+
         if (tieneAsignacionNoFinalizada
+            && !conservaEstadoEnMantenimiento
             && !ReglasAsignacionActivo.EsEstadoCompatibleConAsignacionVigente(estadoNuevo))
         {
             throw new InvalidOperationException(

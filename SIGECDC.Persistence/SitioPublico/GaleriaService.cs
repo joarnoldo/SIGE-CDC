@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using SIGECDC.Application.Archivos;
 using SIGECDC.Application.SitioPublico;
 using SIGECDC.Domain.RecursosHumanos;
@@ -9,7 +10,8 @@ namespace SIGECDC.Persistence.SitioPublico;
 
 public sealed class GaleriaService(
     ApplicationDbContext contexto,
-    IAlmacenamientoArchivosService almacenamientoArchivos) : IGaleriaService
+    IAlmacenamientoArchivosService almacenamientoArchivos,
+    ILogger<GaleriaService> logger) : IGaleriaService
 {
     private const string EstadoRegistroActivo = "Activo";
     private const string EstadoRegistroInactivo = "Inactivo";
@@ -266,8 +268,8 @@ public sealed class GaleriaService(
         {
             IdGaleria = solicitud.IdGaleria,
             DocumentoArchivo = documento,
-            Titulo = LimpiarOpcional(solicitud.Titulo),
-            Descripcion = LimpiarOpcional(solicitud.Descripcion),
+            Titulo = LimpiarOpcionalLimitado(solicitud.Titulo, 150, "El título"),
+            Descripcion = LimpiarOpcionalLimitado(solicitud.Descripcion, 300, "La descripción"),
             Orden = solicitud.Orden,
             EstadoRegistro = EstadoRegistroActivo
         };
@@ -280,6 +282,7 @@ public sealed class GaleriaService(
         }
         catch
         {
+            contexto.ChangeTracker.Clear();
             try
             {
                 await almacenamientoArchivos.EliminarAsync(archivo.RutaRelativa, CancellationToken.None);
@@ -293,6 +296,111 @@ public sealed class GaleriaService(
         }
 
         return imagen.IdImagenGaleria;
+    }
+
+    public async Task ActualizarImagenAsync(
+        long idImagenGaleria,
+        SolicitudActualizarImagenGaleria solicitud,
+        string? idUsuarioActual = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(solicitud);
+        var imagen = await ObtenerImagenEditableAsync(idImagenGaleria, cancellationToken);
+        AplicarMetadatosImagen(imagen, solicitud.Titulo, solicitud.Descripcion, solicitud.Orden);
+        await contexto.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task ReemplazarImagenAsync(
+        long idImagenGaleria,
+        SolicitudImagenGaleria solicitud,
+        string? idUsuarioActual = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(solicitud);
+        var imagen = await ObtenerImagenEditableAsync(idImagenGaleria, cancellationToken);
+        var documentoAnterior = imagen.DocumentoArchivo
+            ?? throw new InvalidOperationException("La imagen no tiene un archivo asociado.");
+        var rutaAnterior = documentoAnterior.RutaRelativa;
+        var nombreOriginal = LimpiarObligatorio(
+            solicitud.NombreOriginal,
+            "El nombre del archivo es obligatorio.");
+        var mimeTypeSeguro = ObtenerMimeTypeImagen(nombreOriginal, solicitud.MimeType);
+        ValidarOrden(solicitud.Orden);
+
+        await using var contenidoValidado = await CopiarYValidarImagenAsync(
+            solicitud.Contenido,
+            solicitud.TamanoBytes,
+            mimeTypeSeguro,
+            cancellationToken);
+        var archivoNuevo = await almacenamientoArchivos.GuardarAsync(
+            contenidoValidado,
+            nombreOriginal,
+            mimeTypeSeguro,
+            contenidoValidado.Length,
+            $"galerias/{imagen.IdGaleria}",
+            cancellationToken);
+
+        await using var transaccion = await contexto.Database.BeginTransactionAsync(cancellationToken);
+        try
+        {
+            var documentoNuevo = new DocumentoArchivo
+            {
+                EntidadRelacionada = EntidadGaleria,
+                IdEntidadRelacionada = imagen.IdGaleria,
+                IdTipoDocumento = documentoAnterior.IdTipoDocumento,
+                NombreOriginal = nombreOriginal,
+                NombreAlmacenado = archivoNuevo.NombreAlmacenado,
+                RutaRelativa = archivoNuevo.RutaRelativa,
+                MimeType = archivoNuevo.MimeType,
+                TamanoBytes = archivoNuevo.TamanoBytes,
+                FechaCarga = DateTime.Now,
+                CargadoPor = idUsuarioActual,
+                EstadoRegistro = EstadoRegistroActivo
+            };
+
+            documentoAnterior.EstadoRegistro = EstadoRegistroInactivo;
+            imagen.DocumentoArchivo = documentoNuevo;
+            AplicarMetadatosImagen(
+                imagen,
+                solicitud.Titulo,
+                solicitud.Descripcion,
+                solicitud.Orden);
+
+            await contexto.SaveChangesAsync(cancellationToken);
+            await transaccion.CommitAsync(cancellationToken);
+        }
+        catch
+        {
+            await transaccion.RollbackAsync(CancellationToken.None);
+            contexto.ChangeTracker.Clear();
+            try
+            {
+                await almacenamientoArchivos.EliminarAsync(
+                    archivoNuevo.RutaRelativa,
+                    CancellationToken.None);
+            }
+            catch (Exception limpiezaEx)
+            {
+                logger.LogWarning(
+                    limpiezaEx,
+                    "No se pudo retirar el archivo nuevo {RutaRelativa} tras fallar el reemplazo de galería.",
+                    archivoNuevo.RutaRelativa);
+            }
+
+            throw;
+        }
+
+        try
+        {
+            await almacenamientoArchivos.EliminarAsync(rutaAnterior, CancellationToken.None);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(
+                ex,
+                "El reemplazo se completó, pero no se pudo retirar el archivo anterior {RutaRelativa}.",
+                rutaAnterior);
+        }
     }
 
     public async Task DesactivarImagenAsync(long idImagenGaleria, string? idUsuarioActual = null, CancellationToken cancellationToken = default)
@@ -366,6 +474,24 @@ public sealed class GaleriaService(
             ?? throw new InvalidOperationException("No se encontro la galeria solicitada.");
     }
 
+    private async Task<ImagenGaleria> ObtenerImagenEditableAsync(
+        long idImagenGaleria,
+        CancellationToken cancellationToken)
+    {
+        return await contexto.ImagenesGaleria
+            .Include(imagen => imagen.Galeria)
+            .Include(imagen => imagen.DocumentoArchivo)
+            .FirstOrDefaultAsync(
+                imagen => imagen.IdImagenGaleria == idImagenGaleria
+                    && imagen.EstadoRegistro == EstadoRegistroActivo
+                    && imagen.Galeria != null
+                    && imagen.Galeria.EstadoRegistro == EstadoRegistroActivo
+                    && imagen.DocumentoArchivo != null
+                    && imagen.DocumentoArchivo.EstadoRegistro == EstadoRegistroActivo,
+                cancellationToken)
+            ?? throw new InvalidOperationException("No se encontró la imagen solicitada.");
+    }
+
     private async Task ValidarGaleriaActivaAsync(long idGaleria, CancellationToken cancellationToken)
     {
         var existe = await contexto.Galerias
@@ -409,6 +535,40 @@ public sealed class GaleriaService(
     private static string? LimpiarOpcional(string? valor)
     {
         return string.IsNullOrWhiteSpace(valor) ? null : valor.Trim();
+    }
+
+    private static string? LimpiarOpcionalLimitado(
+        string? valor,
+        int longitudMaxima,
+        string nombreCampo)
+    {
+        var limpio = LimpiarOpcional(valor);
+        if (limpio?.Length > longitudMaxima)
+        {
+            throw new ArgumentException($"{nombreCampo} no debe superar los {longitudMaxima} caracteres.");
+        }
+
+        return limpio;
+    }
+
+    private static void AplicarMetadatosImagen(
+        ImagenGaleria imagen,
+        string? titulo,
+        string? descripcion,
+        int orden)
+    {
+        ValidarOrden(orden);
+        imagen.Titulo = LimpiarOpcionalLimitado(titulo, 150, "El título");
+        imagen.Descripcion = LimpiarOpcionalLimitado(descripcion, 300, "La descripción");
+        imagen.Orden = orden;
+    }
+
+    private static void ValidarOrden(int orden)
+    {
+        if (orden < 0)
+        {
+            throw new ArgumentException("El orden no puede ser negativo.");
+        }
     }
 
     private static string ObtenerMimeTypeImagen(string nombreOriginal, string? mimeTypeInformado)

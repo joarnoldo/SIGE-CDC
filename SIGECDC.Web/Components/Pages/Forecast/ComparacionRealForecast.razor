@@ -1,0 +1,442 @@
+@page "/rrhh/forecast/{IdForecastEscenario:long}/comparacion-real"
+@rendermode InteractiveServer
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Recursos Humanos")]
+@using System.ComponentModel.DataAnnotations
+@using SIGECDC.Application.Forecast
+@using SIGECDC.Domain.Forecast
+@inject IForecastDesviacionService ForecastDesviacionService
+@inject AuthenticationStateProvider Autenticacion
+@inject ILogger<ComparacionRealForecast> Logger
+
+<PageTitle>Forecast contra planilla real | SIGE-CDC</PageTitle>
+
+<section class="page-banner">
+    <div class="container page-banner__inner stack--tight">
+        <p class="eyebrow">Recursos Humanos / Forecast</p>
+        <h1>Forecast contra planilla real.</h1>
+        <p class="lead">Revise lado a lado los importes proyectados y la planilla aprobada que corresponde exactamente al período.</p>
+    </div>
+</section>
+
+<section class="section-shell">
+    <div class="container stack">
+        @if (!string.IsNullOrWhiteSpace(mensajeError))
+        {
+            <div class="alert alert--danger" role="alert">
+                <strong>No se pudo realizar la comparación</strong>
+                <span>@mensajeError</span>
+            </div>
+        }
+
+        <div class="page-header">
+            <div>
+                <p class="eyebrow">Comparación de solo lectura</p>
+                <h2>@(comparacion?.Disponibilidad.NombreEscenario ?? "Escenario forecast")</h2>
+            </div>
+            <div class="page-actions">
+                <a class="btn btn--secondary" href="@($"rrhh/forecast/{IdForecastEscenario}/resultados")">Ver resultados</a>
+                <a class="btn btn--secondary" href="@($"rrhh/forecast/{IdForecastEscenario}")">Volver al escenario</a>
+            </div>
+        </div>
+
+        @if (cargando)
+        {
+            <div class="empty-state">
+                <strong>Cargando disponibilidad</strong>
+                <p class="text-muted">Buscando planillas reales aprobadas para los períodos del escenario.</p>
+            </div>
+        }
+        else if (comparacion is null)
+        {
+            <div class="empty-state">
+                <strong>Escenario no encontrado</strong>
+                <p class="text-muted">El escenario solicitado no existe, no está activo o todavía no está guardado.</p>
+            </div>
+        }
+        else
+        {
+            <section class="kpi-grid">
+                <article class="stat-card">
+                    <span class="stat-label">Estado</span>
+                    <strong class="stat-value">@comparacion.Disponibilidad.EstadoEscenario</strong>
+                    <span class="stat-delta">Calculado @comparacion.Disponibilidad.FechaCalculo?.ToString("dd/MM/yyyy HH:mm")</span>
+                </article>
+                <article class="stat-card">
+                    <span class="stat-label">Disponibles</span>
+                    <strong class="stat-value">@comparacion.Disponibilidad.CantidadPeriodosDisponibles</strong>
+                    <span class="stat-delta">Períodos con planilla aprobada</span>
+                </article>
+                <article class="stat-card">
+                    <span class="stat-label">Pendientes</span>
+                    <strong class="stat-value">@comparacion.Disponibilidad.CantidadPeriodosPendientes</strong>
+                    <span class="stat-delta">Incluye correspondencias ambiguas</span>
+                </article>
+            </section>
+
+            @if (comparacion.Disponibilidad.CantidadPeriodosDisponibles == 0)
+            {
+                <div class="alert alert--warning" role="status">
+                    <strong>Comparación todavía no disponible</strong>
+                    <span>Ningún período del escenario tiene una única planilla real aprobada o cerrada.</span>
+                </div>
+            }
+
+            <div class="alert alert--info" role="note">
+                <strong>Alcance dimensional</strong>
+                <span>Departamento compara el snapshot del forecast con el departamento vigente del colaborador. Proyecto muestra la proyección, pero permanece no calculable porque la planilla real no conserva atribución de costo laboral por proyecto.</span>
+            </div>
+
+            <article class="table-card">
+                <div class="table-toolbar">
+                    <div>
+                        <h2 class="card__title">Correspondencia de períodos</h2>
+                        <p class="card__meta">La coincidencia exige el mismo tipo, fecha inicial y fecha final.</p>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Período forecast</th>
+                                <th>Rango</th>
+                                <th>Planilla real</th>
+                                <th>Estado</th>
+                                <th>Detalle</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var periodo in comparacion.Disponibilidad.Periodos)
+                            {
+                                <tr @key="periodo.IdForecastPeriodo">
+                                    <td><strong>P@periodo.NumeroOrden.ToString("00") · @periodo.TipoPeriodo</strong></td>
+                                    <td>@TextoRango(periodo.FechaInicio, periodo.FechaFin)</td>
+                                    <td>
+                                        @if (periodo.EstaDisponible)
+                                        {
+                                            <strong>@periodo.CodigoPeriodoReal</strong>
+                                            <p class="card__meta">@periodo.EstadoPlanillaReal</p>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">No disponible</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <span class="badge @(periodo.EstaDisponible ? "badge--success" : periodo.EsAmbigua ? "badge--danger" : "badge--warning")">
+                                            @(periodo.EstaDisponible ? "Disponible" : periodo.EsAmbigua ? "Ambigua" : "Pendiente")
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span>@periodo.MensajeDisponibilidad</span>
+                                        @if (periodo.EsConsistenteConDetalles == false)
+                                        {
+                                            <p class="text-danger">Los totales de la planilla no coinciden con sus detalles.</p>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </article>
+
+            <article class="card stack">
+                <div class="form-grid form-grid--compact">
+                    <div class="field-group">
+                        <label for="dimension-real">Vista</label>
+                        <select id="dimension-real" class="form-control" @bind="dimensionSeleccionada" disabled="@consultando">
+                            <option value="@DimensionesComparacionRealForecast.Periodo">Por período</option>
+                            <option value="@DimensionesComparacionRealForecast.Colaborador">Por colaborador</option>
+                            <option value="@DimensionesComparacionRealForecast.Departamento">Por departamento</option>
+                            <option value="@DimensionesComparacionRealForecast.Proyecto">Por proyecto</option>
+                        </select>
+                    </div>
+                    @if (DimensionesComparacionRealForecast.RequierePeriodo(dimensionSeleccionada))
+                    {
+                        <div class="field-group">
+                            <label for="periodo-real">Período disponible</label>
+                            <select id="periodo-real" class="form-control" @bind="idPeriodoSeleccionado" disabled="@consultando">
+                                <option value="0">Seleccione un período</option>
+                                @foreach (var periodo in comparacion.Disponibilidad.Periodos.Where(item => item.EstaDisponible))
+                                {
+                                    <option value="@periodo.IdForecastPeriodo">
+                                        P@periodo.NumeroOrden.ToString("00") · @periodo.TipoPeriodo · @TextoRango(periodo.FechaInicio, periodo.FechaFin)
+                                    </option>
+                                }
+                            </select>
+                        </div>
+                    }
+                </div>
+                <div class="form-actions">
+                    <button class="btn btn--primary"
+                            type="button"
+                            disabled="@(consultando || (DimensionesComparacionRealForecast.RequierePeriodo(dimensionSeleccionada) && idPeriodoSeleccionado == 0))"
+                            @onclick="CompararAsync">
+                        @(consultando ? "Consultando..." : "Consultar comparación")
+                    </button>
+                </div>
+            </article>
+
+            @if (comparacion.Dimension == DimensionesComparacionRealForecast.Proyecto)
+            {
+                <div class="alert alert--warning" role="status">
+                    <strong>Valores reales por proyecto no disponibles</strong>
+                    <span>Se muestran los importes proyectados por proyecto sin distribuir artificialmente los totales de la planilla real.</span>
+                </div>
+            }
+
+            <article class="table-card">
+                <div class="table-toolbar">
+                    <div>
+                        <h2 class="card__title">Desviaciones del alcance comparable</h2>
+                        <p class="card__meta">La desviación absoluta es |real − forecast| y el porcentaje utiliza |forecast| como base.</p>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Métrica</th>
+                                <th>Forecast</th>
+                                <th>Real</th>
+                                <th>Desviación absoluta</th>
+                                <th>Desviación porcentual</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var metrica in MetricasTotales())
+                            {
+                                <tr>
+                                    <td><strong>@metrica.Nombre</strong></td>
+                                    <td>@Moneda(metrica.Resultado.MontoForecast)</td>
+                                    <td>@Moneda(metrica.Resultado.MontoReal)</td>
+                                    <td>@MonedaDesviacion(metrica.Resultado)</td>
+                                    <td>@Porcentaje(metrica.Resultado)</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </article>
+
+            @if (analisis?.Filas.Count == 0)
+            {
+                <div class="empty-state">
+                    <strong>No hay información comparable</strong>
+                    <p class="text-muted">La planilla existe, pero no contiene detalles para la consulta seleccionada.</p>
+                </div>
+            }
+            else
+            {
+                <article class="table-card">
+                    <div class="table-toolbar">
+                        <div>
+                            <h2 class="card__title">Desviaciones por @NombreDimension(comparacion.Dimension).ToLowerInvariant()</h2>
+                            <p class="card__meta">Una fila sin correspondencia permanece visible y se identifica como no calculable.</p>
+                        </div>
+                        <span class="badge badge--info">@analisis!.Filas.Count filas</span>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>@NombreDimension(comparacion.Dimension)</th>
+                                    <th>Correspondencia</th>
+                                    <th>Salario bruto</th>
+                                    <th>Deducciones</th>
+                                    <th>Salario neto</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var fila in analisis!.Filas)
+                                {
+                                    <tr @key="fila.Clave">
+                                        <td>
+                                            <strong>@fila.Etiqueta</strong>
+                                            @if (!string.IsNullOrWhiteSpace(fila.Codigo))
+                                            {
+                                                <p class="card__meta">@fila.Codigo</p>
+                                            }
+                                            @if (!string.IsNullOrWhiteSpace(fila.Detalle))
+                                            {
+                                                <p class="card__meta">@fila.Detalle</p>
+                                            }
+                                        </td>
+                                        <td><span class="badge @ClaseCorrespondencia(fila)">@TextoCorrespondencia(fila)</span></td>
+                                        <td>@ResumenMetrica(fila.Metricas.SalarioBruto)</td>
+                                        <td>@ResumenMetrica(fila.Metricas.Deducciones)</td>
+                                        <td>@ResumenMetrica(fila.Metricas.SalarioNeto)</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </article>
+            }
+        }
+    </div>
+</section>
+
+@code {
+    [Parameter]
+    public long IdForecastEscenario { get; set; }
+
+    private AnalisisDesviacionesForecast? analisis;
+    private ComparacionForecastReal? comparacion => analisis?.Comparacion;
+    private string dimensionSeleccionada = DimensionesComparacionRealForecast.Periodo;
+    private long idPeriodoSeleccionado;
+    private bool cargando = true;
+    private bool consultando;
+    private string? mensajeError;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        cargando = true;
+        mensajeError = null;
+        dimensionSeleccionada = DimensionesComparacionRealForecast.Periodo;
+        idPeriodoSeleccionado = 0;
+        try
+        {
+            await CargarComparacionAsync();
+        }
+        catch (Exception ex)
+        {
+            RegistrarError(ex);
+            analisis = null;
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private async Task CompararAsync()
+    {
+        if (consultando)
+        {
+            return;
+        }
+
+        consultando = true;
+        mensajeError = null;
+        try
+        {
+            await CargarComparacionAsync();
+        }
+        catch (Exception ex)
+        {
+            RegistrarError(ex);
+        }
+        finally
+        {
+            consultando = false;
+        }
+    }
+
+    private async Task CargarComparacionAsync()
+    {
+        var idActor = await ObtenerIdUsuarioActualAsync();
+        analisis = await ForecastDesviacionService.CalcularAsync(
+            IdForecastEscenario,
+            new SolicitudCompararForecastReal
+            {
+                Dimension = dimensionSeleccionada,
+                IdForecastPeriodo = DimensionesComparacionRealForecast.RequierePeriodo(dimensionSeleccionada)
+                    ? idPeriodoSeleccionado
+                    : null
+            },
+            idActor);
+    }
+
+    private async Task<string> ObtenerIdUsuarioActualAsync()
+    {
+        var estado = await Autenticacion.GetAuthenticationStateAsync();
+        return estado.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+            ?? throw new UnauthorizedAccessException("No fue posible autorizar la cuenta actual.");
+    }
+
+    private void RegistrarError(Exception ex)
+    {
+        if (ex is UnauthorizedAccessException)
+        {
+            Logger.LogWarning(ex, "Una cuenta no autorizada intentó comparar forecast con planilla real.");
+            mensajeError = "La cuenta actual no está autorizada para consultar esta comparación.";
+            return;
+        }
+
+        if (ex is ValidationException or InvalidOperationException or ArgumentException)
+        {
+            Logger.LogWarning(ex, "La comparación real del escenario {IdForecastEscenario} no está disponible.", IdForecastEscenario);
+            mensajeError = MensajeArgumento(ex.Message);
+            return;
+        }
+
+        Logger.LogError(ex, "No se pudo comparar el escenario {IdForecastEscenario} con la planilla real.", IdForecastEscenario);
+        mensajeError = "Ocurrió un error al consultar la comparación. Intente nuevamente.";
+    }
+
+    private IEnumerable<(string Nombre, ResultadoDesviacionForecast Resultado)> MetricasTotales()
+    {
+        if (analisis is null)
+        {
+            return [];
+        }
+
+        return
+        [
+            ("Salario bruto", analisis.Totales.SalarioBruto),
+            ("Deducciones", analisis.Totales.Deducciones),
+            ("Salario neto", analisis.Totales.SalarioNeto)
+        ];
+    }
+
+    private static string TextoCorrespondencia(FilaDesviacionForecast fila) => fila switch
+    {
+        { EsContratacionPrevista: true } => "Contratación prevista",
+        { TieneForecast: true, TieneReal: true } => "Forecast y real",
+        { TieneForecast: true } => "Solo forecast",
+        _ => "Solo real"
+    };
+
+    private static string ClaseCorrespondencia(FilaDesviacionForecast fila) => fila switch
+    {
+        { TieneForecast: true, TieneReal: true } => "badge--success",
+        { EsContratacionPrevista: true } => "badge--info",
+        _ => "badge--warning"
+    };
+
+    private static string NombreDimension(string dimension) => dimension switch
+    {
+        DimensionesComparacionRealForecast.Colaborador => "Colaborador",
+        DimensionesComparacionRealForecast.Departamento => "Departamento",
+        DimensionesComparacionRealForecast.Proyecto => "Proyecto",
+        _ => "Período"
+    };
+
+    private static string TextoRango(DateTime inicio, DateTime fin) =>
+        $"{inicio:dd/MM/yyyy} – {fin:dd/MM/yyyy}";
+
+    private static string Moneda(decimal? monto) => monto.HasValue
+        ? $"₡{monto.Value:N2}"
+        : "No disponible";
+
+    private static string MonedaDesviacion(ResultadoDesviacionForecast resultado) =>
+        resultado.DesviacionAbsoluta.HasValue
+            ? $"₡{resultado.DesviacionAbsoluta.Value:N2}"
+            : "No calculable";
+
+    private static string Porcentaje(ResultadoDesviacionForecast resultado) =>
+        resultado.DesviacionPorcentual.HasValue
+            ? $"{resultado.DesviacionPorcentual.Value:N2} %"
+            : "No calculable";
+
+    private static string ResumenMetrica(ResultadoDesviacionForecast resultado) =>
+        $"Forecast: {Moneda(resultado.MontoForecast)} · Real: {Moneda(resultado.MontoReal)} · "
+        + $"Absoluta: {MonedaDesviacion(resultado)} · Porcentual: {Porcentaje(resultado)}";
+
+    private static string MensajeArgumento(string mensaje)
+    {
+        var indice = mensaje.LastIndexOf(" (", StringComparison.Ordinal);
+        return indice >= 0 ? mensaje[..indice] : mensaje;
+    }
+}

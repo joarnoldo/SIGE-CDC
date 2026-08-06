@@ -20,6 +20,12 @@ public static class ReglasAsignacionActivo
         return string.Equals(estado, EstadosActivo.Asignado, StringComparison.OrdinalIgnoreCase);
     }
 
+    public static bool EsEstadoReservable(string? estado)
+    {
+        return EsEstadoAsignable(estado)
+            || EsEstadoCompatibleConAsignacionVigente(estado);
+    }
+
     public static void ValidarEstadoAsignable(string? estado)
     {
         if (!EsEstadoAsignable(estado))
@@ -29,21 +35,50 @@ public static class ReglasAsignacionActivo
         }
     }
 
-    public static bool EstaDisponible(string? estado, bool tieneConflictoDeAsignacion)
+    public static void ValidarEstadoReservable(string? estado)
     {
-        return EsEstadoAsignable(estado) && !tieneConflictoDeAsignacion;
+        if (!EsEstadoReservable(estado))
+        {
+            throw new InvalidOperationException(
+                $"El activo estÃ¡ en estado {estado ?? "Sin estado"} y no se encuentra disponible para asignaciÃ³n.");
+        }
     }
 
-    public static string DescribirDisponibilidad(string? estado, bool tieneConflictoDeAsignacion)
+    public static bool EstaDisponible(
+        string? estado,
+        bool tieneConflictoDeAsignacion,
+        bool tieneMantenimientoEnProceso = false)
     {
-        if (!EsEstadoAsignable(estado))
+        return EsEstadoReservable(estado)
+            && !tieneConflictoDeAsignacion
+            && !tieneMantenimientoEnProceso;
+    }
+
+    public static string DescribirDisponibilidad(
+        string? estado,
+        bool tieneConflictoDeAsignacion,
+        bool tieneMantenimientoEnProceso = false)
+    {
+        var razones = new List<string>();
+
+        if (!EsEstadoReservable(estado))
         {
-            return $"No disponible por estado {estado ?? "Sin estado"}.";
+            razones.Add($"estado {estado ?? "Sin estado"}");
         }
 
-        return tieneConflictoDeAsignacion
-            ? "No disponible por una asignación vigente en el rango consultado."
-            : "Disponible para el rango consultado.";
+        if (tieneConflictoDeAsignacion)
+        {
+            razones.Add("una asignación vigente en el rango consultado");
+        }
+
+        if (tieneMantenimientoEnProceso)
+        {
+            razones.Add("un mantenimiento en proceso");
+        }
+
+        return razones.Count == 0
+            ? "Disponible para el rango consultado."
+            : $"No disponible por {string.Join(" y por ", razones)}.";
     }
 
     public static bool HayTraslape(

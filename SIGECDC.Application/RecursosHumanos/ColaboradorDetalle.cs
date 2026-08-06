@@ -40,5 +40,9 @@ public sealed class ColaboradorDetalle
 
     public string Puesto { get; set; } = string.Empty;
 
+    public string? IdUsuario { get; set; }
+
+    public string? CuentaUsuario { get; set; }
+
     public string? Observaciones { get; set; }
 }

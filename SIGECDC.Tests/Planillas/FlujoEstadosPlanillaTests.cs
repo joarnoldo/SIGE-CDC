@@ -50,11 +50,11 @@ public sealed class FlujoEstadosPlanillaTests
     }
 
     [Theory]
+    [InlineData(EstadosPlanilla.Calculada, true)]
     [InlineData(EstadosPlanilla.Aprobada, true)]
     [InlineData(EstadosPlanilla.Cerrada, true)]
-    [InlineData(EstadosPlanilla.Calculada, false)]
     [InlineData(null, false)]
-    public void EstaBloqueada_IdentificaEstadosFinales(string? estado, bool esperado)
+    public void EstaBloqueada_IdentificaSnapshotsNoEditables(string? estado, bool esperado)
     {
         Assert.Equal(esperado, FlujoEstadosPlanilla.EstaBloqueada(estado));
     }

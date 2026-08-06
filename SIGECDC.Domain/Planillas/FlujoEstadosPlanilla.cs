@@ -4,8 +4,19 @@ public static class FlujoEstadosPlanilla
 {
     public static bool EstaBloqueada(string? estado)
     {
-        return EsEstado(estado, EstadosPlanilla.Aprobada)
+        return EsEstado(estado, EstadosPlanilla.Calculada)
+            || EsEstado(estado, EstadosPlanilla.Aprobada)
             || EsEstado(estado, EstadosPlanilla.Cerrada);
+    }
+
+    public static void ValidarReapertura(string? estadoPeriodo, string? estadoPlanilla)
+    {
+        ValidarCoherencia(estadoPeriodo, estadoPlanilla);
+
+        if (!EsEstado(estadoPlanilla, EstadosPlanilla.Calculada))
+        {
+            throw new InvalidOperationException("Solo se puede reabrir una planilla en estado Calculada.");
+        }
     }
 
     public static void ValidarAprobacion(string? estadoPeriodo, string? estadoPlanilla)

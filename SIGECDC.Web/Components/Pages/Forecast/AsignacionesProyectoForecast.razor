@@ -1,0 +1,528 @@
+@page "/rrhh/forecast/{IdForecastEscenario:long}/asignaciones-proyecto"
+@rendermode InteractiveServer
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Recursos Humanos")]
+@using System.ComponentModel.DataAnnotations
+@using System.Globalization
+@using SIGECDC.Application.Forecast
+@inject IForecastAsignacionProyectoService ForecastAsignacionProyectoService
+@inject AuthenticationStateProvider Autenticacion
+@inject ILogger<AsignacionesProyectoForecast> Logger
+
+<PageTitle>Distribución por proyecto | SIGE-CDC</PageTitle>
+
+<section class="page-banner">
+    <div class="container page-banner__inner stack--tight">
+        <p class="eyebrow">Recursos Humanos / Forecast</p>
+        <h1>Distribución por proyecto.</h1>
+        <p class="lead">Asigne cada participante a uno o varios proyectos para cada período del escenario.</p>
+    </div>
+</section>
+
+<section class="section-shell">
+    <div class="container stack">
+        @if (!string.IsNullOrWhiteSpace(mensajeError))
+        {
+            <div class="alert alert--danger" role="alert">
+                <strong>No se pudo actualizar la distribución</strong>
+                <span>@mensajeError</span>
+            </div>
+        }
+        @if (!string.IsNullOrWhiteSpace(mensajeExito))
+        {
+            <div class="alert alert--success" role="status">
+                <strong>Distribución actualizada</strong>
+                <span>@mensajeExito</span>
+            </div>
+        }
+
+        <div class="page-header">
+            <div>
+                <p class="eyebrow">Dimensión de proyecto</p>
+                <h2>@(configuracion?.NombreEscenario ?? "Escenario no disponible")</h2>
+            </div>
+            <div class="page-actions">
+                <a class="btn btn--secondary" href="@($"rrhh/forecast/{IdForecastEscenario}")">Volver al detalle</a>
+            </div>
+        </div>
+
+        @if (cargando)
+        {
+            <div class="empty-state">
+                <strong>Cargando distribución</strong>
+                <p class="text-muted">Estamos evaluando participantes, períodos y proyectos elegibles.</p>
+            </div>
+        }
+        else if (configuracion is null)
+        {
+            <div class="empty-state">
+                <strong>Escenario no encontrado</strong>
+                <p class="text-muted">El escenario solicitado no existe o no está activo.</p>
+                <a class="btn btn--primary" href="rrhh/forecast">Ver escenarios</a>
+            </div>
+        }
+        else
+        {
+            <section class="kpi-grid">
+                <article class="stat-card">
+                    <span class="stat-label">Estado</span>
+                    <strong class="stat-value">@configuracion.EstadoEscenario</strong>
+                    <span class="stat-delta">Estado oficial</span>
+                </article>
+                <article class="stat-card">
+                    <span class="stat-label">Celdas completas</span>
+                    <strong class="stat-value">@configuracion.CeldasCompletas / @configuracion.CeldasRequeridas</strong>
+                    <span class="stat-delta">Suma exacta de 100.0000 %</span>
+                </article>
+                <article class="stat-card">
+                    <span class="stat-label">Pendientes</span>
+                    <strong class="stat-value">@CeldasPendientes</strong>
+                    <span class="stat-delta">Participante y período</span>
+                </article>
+                <article class="stat-card">
+                    <span class="stat-label">Preparación</span>
+                    <strong class="stat-value">@(configuracion.EstaListaParaCalculo ? "Lista" : "Pendiente")</strong>
+                    <span class="stat-delta">Sin ejecutar cálculos</span>
+                </article>
+            </section>
+
+            @if (!configuracion.PuedeEditar)
+            {
+                <article class="alert alert--info" role="status">
+                    <strong>Distribución bloqueada</strong>
+                    <span>Las asignaciones solo pueden modificarse mientras el escenario esté en estado Borrador.</span>
+                </article>
+            }
+
+            @if (configuracion.Participantes.Count == 0 || configuracion.Periodos.Count == 0)
+            {
+                <div class="empty-state">
+                    <strong>No existe una matriz por distribuir</strong>
+                    <p class="text-muted">El escenario requiere al menos un participante incluido y un período activo.</p>
+                </div>
+            }
+            else
+            {
+                <article class="table-card">
+                    <div class="table-toolbar">
+                        <div>
+                            <h2 class="card__title">Matriz de distribución</h2>
+                            <p class="card__meta">Seleccione una celda para consultar o editar su distribución.</p>
+                        </div>
+                        <span class="badge @(configuracion.EstaListaParaCalculo ? "badge--success" : "badge--warning")">
+                            @(configuracion.EstaListaParaCalculo ? "Lista para cálculo" : "Distribución pendiente")
+                        </span>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Participante</th>
+                                    @foreach (var periodo in configuracion.Periodos)
+                                    {
+                                        <th>@periodo.NumeroOrden. @periodo.TipoPeriodo<br /><small>@TextoRango(periodo.FechaInicio, periodo.FechaFin)</small></th>
+                                    }
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var participante in configuracion.Participantes)
+                                {
+                                    <tr @key="participante.IdForecastParticipante">
+                                        <td>
+                                            <strong>@participante.Etiqueta</strong>
+                                            <p class="card__meta">@participante.CodigoParticipante · @participante.Departamento</p>
+                                        </td>
+                                        @foreach (var periodo in configuracion.Periodos)
+                                        {
+                                            var celda = ObtenerCelda(participante.IdForecastParticipante, periodo.IdForecastPeriodo);
+                                            <td>
+                                                <button class="btn btn--secondary"
+                                                        type="button"
+                                                        disabled="@procesando"
+                                                        @onclick="() => SeleccionarCelda(participante.IdForecastParticipante, periodo.IdForecastPeriodo)">
+                                                    @(celda?.EstaCompleta == true ? "Completa" : "Pendiente")
+                                                </button>
+                                                <p class="card__meta">@((celda?.PorcentajeTotal ?? 0m).ToString("N4")) %</p>
+                                            </td>
+                                        }
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </article>
+
+                @if (ParticipanteSeleccionado is not null && PeriodoSeleccionado is not null)
+                {
+                    <article class="card stack">
+                        <div class="table-toolbar">
+                            <div>
+                                <p class="eyebrow">Celda seleccionada</p>
+                                <h2>@ParticipanteSeleccionado.Etiqueta</h2>
+                                <p class="card__meta">@PeriodoSeleccionado.TipoPeriodo · @TextoRango(PeriodoSeleccionado.FechaInicio, PeriodoSeleccionado.FechaFin)</p>
+                            </div>
+                            <span class="badge @(TotalEditado == 100.0000m ? "badge--success" : "badge--warning")">@TotalEditado.ToString("N4") %</span>
+                        </div>
+
+                        @if (filasEdicion.Count == 0)
+                        {
+                            <div class="empty-state">
+                                <strong>Distribución pendiente</strong>
+                                <p class="text-muted">Esta combinación todavía no tiene proyectos asignados.</p>
+                            </div>
+                        }
+                        else
+                        {
+                            @if (filasEdicion.Any(item => !item.EsProyectoElegible))
+                            {
+                                <div class="alert alert--warning" role="status">
+                                    <strong>Proyecto no elegible</strong>
+                                    <span>La distribución conserva una asignación cuyo proyecto cambió de estado o dejó de superponerse con el período. Debe reemplazarla antes de guardar.</span>
+                                </div>
+                            }
+                            <div class="table-responsive">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Proyecto</th>
+                                            <th>Porcentaje</th>
+                                            @if (configuracion.PuedeEditar)
+                                            {
+                                                <th>Acción</th>
+                                            }
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var fila in filasEdicion)
+                                        {
+                                            <tr @key="fila.ClaveInterfaz">
+                                                <td>
+                                                    <select class="form-control" @bind="fila.IdProyecto" disabled="@(!configuracion.PuedeEditar || procesando)">
+                                                        <option value="0">Seleccione un proyecto</option>
+                                                        @if (!fila.EsProyectoElegible && fila.IdProyecto > 0)
+                                                        {
+                                                            <option value="@fila.IdProyecto">@fila.NombreProyecto · No elegible</option>
+                                                        }
+                                                        @foreach (var proyecto in ProyectosElegiblesPeriodo)
+                                                        {
+                                                            <option value="@proyecto.IdProyecto">@proyecto.CodigoProyecto · @proyecto.NombreProyecto (@proyecto.EstadoProyecto)</option>
+                                                        }
+                                                    </select>
+                                                </td>
+                                                <td>
+                                                    <input class="form-control"
+                                                           type="number"
+                                                           min="0.0001"
+                                                           max="100.0000"
+                                                           step="0.0001"
+                                                           value="@TextoPorcentajeEntrada(fila.Porcentaje)"
+                                                           @oninput="evento => CambiarPorcentaje(fila, evento)"
+                                                           disabled="@(!configuracion.PuedeEditar || procesando)" />
+                                                </td>
+                                                @if (configuracion.PuedeEditar)
+                                                {
+                                                    <td>
+                                                        <button class="btn btn--secondary" type="button" disabled="@procesando" @onclick="() => QuitarFila(fila)">Quitar</button>
+                                                    </td>
+                                                }
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+
+                        @if (configuracion.PuedeEditar)
+                        {
+                            <div class="page-actions">
+                                <button class="btn btn--secondary" type="button" disabled="@(procesando || ProyectosElegiblesPeriodo.Count == 0)" @onclick="AgregarFila">Agregar proyecto</button>
+                                <button class="btn btn--primary" type="button" disabled="@(procesando || filasEdicion.Count == 0)" @onclick="GuardarAsync">@(procesando ? "Procesando..." : "Guardar distribución")</button>
+                                <button class="btn btn--secondary" type="button" disabled="@procesando" @onclick="LimpiarAsync">Limpiar distribución</button>
+                            </div>
+
+                            <div class="stack--tight">
+                                <h3>Copiar a otros períodos</h3>
+                                <p class="card__meta">La distribución de origen debe estar completa y sus proyectos deben ser elegibles en todos los destinos.</p>
+                                <div class="check-grid">
+                                    @foreach (var periodo in PeriodosDestino)
+                                    {
+                                        <label class="checkbox-card">
+                                            <input type="checkbox"
+                                                   checked="@idsPeriodosDestino.Contains(periodo.IdForecastPeriodo)"
+                                                   disabled="@procesando"
+                                                   @onchange="evento => CambiarPeriodoDestino(periodo.IdForecastPeriodo, evento)" />
+                                            <span>@periodo.NumeroOrden. @periodo.TipoPeriodo · @TextoRango(periodo.FechaInicio, periodo.FechaFin)</span>
+                                        </label>
+                                    }
+                                </div>
+                                @if (PeriodosDestino.Count == 0)
+                                {
+                                    <p class="text-muted">No hay otros períodos disponibles.</p>
+                                }
+                                <div class="form-actions">
+                                    <button class="btn btn--primary" type="button" disabled="@(procesando || idsPeriodosDestino.Count == 0)" @onclick="CopiarAsync">Copiar distribución</button>
+                                </div>
+                            </div>
+                        }
+                    </article>
+                }
+            }
+        }
+    </div>
+</section>
+
+@code {
+    [Parameter]
+    public long IdForecastEscenario { get; set; }
+
+    private ConfiguracionAsignacionesProyectoForecast? configuracion;
+    private readonly List<FilaDistribucion> filasEdicion = [];
+    private readonly HashSet<long> idsPeriodosDestino = [];
+    private long? idParticipanteSeleccionado;
+    private long? idPeriodoSeleccionado;
+    private bool cargando = true;
+    private bool procesando;
+    private string? mensajeError;
+    private string? mensajeExito;
+
+    private int CeldasPendientes => Math.Max(0, (configuracion?.CeldasRequeridas ?? 0) - (configuracion?.CeldasCompletas ?? 0));
+    private decimal TotalEditado => filasEdicion.Sum(item => item.Porcentaje);
+    private ParticipanteAsignacionForecast? ParticipanteSeleccionado => configuracion?.Participantes.FirstOrDefault(item => item.IdForecastParticipante == idParticipanteSeleccionado);
+    private PeriodoForecastResumen? PeriodoSeleccionado => configuracion?.Periodos.FirstOrDefault(item => item.IdForecastPeriodo == idPeriodoSeleccionado);
+    private IReadOnlyList<PeriodoForecastResumen> PeriodosDestino => configuracion?.Periodos.Where(item => item.IdForecastPeriodo != idPeriodoSeleccionado).ToList() ?? [];
+    private IReadOnlyList<ProyectoAsignableForecast> ProyectosElegiblesPeriodo => configuracion?.Proyectos
+        .Where(item => idPeriodoSeleccionado.HasValue && item.IdsPeriodosElegibles.Contains(idPeriodoSeleccionado.Value))
+        .ToList() ?? [];
+
+    protected override async Task OnParametersSetAsync()
+    {
+        cargando = true;
+        LimpiarMensajes();
+        try
+        {
+            await CargarConfiguracionAsync();
+            SeleccionarPrimeraCelda();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudo cargar la distribución forecast {IdForecastEscenario}.", IdForecastEscenario);
+            configuracion = null;
+            mensajeError = "No se pudo cargar la distribución por proyecto.";
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private void SeleccionarPrimeraCelda()
+    {
+        var participante = configuracion?.Participantes.FirstOrDefault();
+        var periodo = configuracion?.Periodos.FirstOrDefault();
+        if (participante is not null && periodo is not null)
+        {
+            SeleccionarCelda(participante.IdForecastParticipante, periodo.IdForecastPeriodo);
+        }
+    }
+
+    private void SeleccionarCelda(long idParticipante, long idPeriodo)
+    {
+        idParticipanteSeleccionado = idParticipante;
+        idPeriodoSeleccionado = idPeriodo;
+        idsPeriodosDestino.Clear();
+        filasEdicion.Clear();
+        if (configuracion is null)
+        {
+            return;
+        }
+
+        filasEdicion.AddRange(configuracion.Asignaciones
+            .Where(item => item.IdForecastParticipante == idParticipante && item.IdForecastPeriodo == idPeriodo)
+            .OrderBy(item => item.NombreProyecto)
+            .Select(item => new FilaDistribucion
+            {
+                IdProyecto = item.IdProyecto,
+                Porcentaje = item.Porcentaje,
+                NombreProyecto = item.NombreProyecto,
+                EsProyectoElegible = item.EsProyectoElegible
+            }));
+    }
+
+    private void AgregarFila() => filasEdicion.Add(new FilaDistribucion());
+    private void QuitarFila(FilaDistribucion fila) => filasEdicion.Remove(fila);
+
+    private static string TextoPorcentajeEntrada(decimal porcentaje) =>
+        porcentaje.ToString("0.####", CultureInfo.InvariantCulture);
+
+    private static void CambiarPorcentaje(FilaDistribucion fila, ChangeEventArgs evento)
+    {
+        var texto = Convert.ToString(evento.Value, CultureInfo.InvariantCulture);
+        fila.Porcentaje = decimal.TryParse(
+            texto,
+            NumberStyles.Number,
+            CultureInfo.InvariantCulture,
+            out var porcentaje)
+            ? porcentaje
+            : 0m;
+    }
+
+    private async Task GuardarAsync()
+    {
+        if (!PuedeProcesarCelda())
+        {
+            return;
+        }
+
+        await EjecutarOperacionAsync(async idActor =>
+        {
+            await ForecastAsignacionProyectoService.GuardarDistribucionAsync(
+                IdForecastEscenario,
+                idParticipanteSeleccionado!.Value,
+                idPeriodoSeleccionado!.Value,
+                new SolicitudGuardarDistribucionForecast
+                {
+                    Asignaciones = filasEdicion.Select(item => new SolicitudAsignacionProyectoForecast
+                    {
+                        IdProyecto = item.IdProyecto,
+                        Porcentaje = item.Porcentaje
+                    }).ToList()
+                },
+                idActor);
+            mensajeExito = "La celda quedó distribuida sin modificar resultados ni totales.";
+        });
+    }
+
+    private async Task LimpiarAsync()
+    {
+        if (!PuedeProcesarCelda())
+        {
+            return;
+        }
+
+        await EjecutarOperacionAsync(async idActor =>
+        {
+            await ForecastAsignacionProyectoService.LimpiarDistribucionAsync(
+                IdForecastEscenario,
+                idParticipanteSeleccionado!.Value,
+                idPeriodoSeleccionado!.Value,
+                idActor);
+            mensajeExito = "La celda quedó pendiente y sus asignaciones se conservaron como inactivas.";
+        });
+    }
+
+    private async Task CopiarAsync()
+    {
+        if (!PuedeProcesarCelda() || idsPeriodosDestino.Count == 0)
+        {
+            return;
+        }
+
+        await EjecutarOperacionAsync(async idActor =>
+        {
+            await ForecastAsignacionProyectoService.CopiarDistribucionAsync(
+                IdForecastEscenario,
+                idParticipanteSeleccionado!.Value,
+                idPeriodoSeleccionado!.Value,
+                idsPeriodosDestino.OrderBy(item => item).ToList(),
+                idActor);
+            mensajeExito = "La distribución fue copiada de forma atómica a los períodos seleccionados.";
+        });
+    }
+
+    private async Task EjecutarOperacionAsync(Func<string, Task> operacion)
+    {
+        if (procesando || configuracion?.PuedeEditar != true)
+        {
+            return;
+        }
+
+        procesando = true;
+        LimpiarMensajes();
+        var participante = idParticipanteSeleccionado;
+        var periodo = idPeriodoSeleccionado;
+        try
+        {
+            var idActor = await ObtenerIdUsuarioActualAsync();
+            await operacion(idActor);
+            await CargarConfiguracionAsync(idActor);
+            if (participante.HasValue && periodo.HasValue)
+            {
+                SeleccionarCelda(participante.Value, periodo.Value);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudo actualizar la distribución forecast {IdForecastEscenario}.", IdForecastEscenario);
+            mensajeError = MensajeSeguro(ex);
+        }
+        finally
+        {
+            procesando = false;
+        }
+    }
+
+    private bool PuedeProcesarCelda() =>
+        !procesando
+        && configuracion?.PuedeEditar == true
+        && idParticipanteSeleccionado.HasValue
+        && idPeriodoSeleccionado.HasValue;
+
+    private CeldaAsignacionForecastResumen? ObtenerCelda(long idParticipante, long idPeriodo) =>
+        configuracion?.Celdas.FirstOrDefault(item => item.IdForecastParticipante == idParticipante && item.IdForecastPeriodo == idPeriodo);
+
+    private void CambiarPeriodoDestino(long idPeriodo, ChangeEventArgs evento)
+    {
+        if (evento.Value is bool seleccionado && seleccionado)
+        {
+            idsPeriodosDestino.Add(idPeriodo);
+        }
+        else
+        {
+            idsPeriodosDestino.Remove(idPeriodo);
+        }
+    }
+
+    private async Task CargarConfiguracionAsync(string? idActor = null)
+    {
+        idActor ??= await ObtenerIdUsuarioActualAsync();
+        configuracion = await ForecastAsignacionProyectoService.ObtenerConfiguracionAsync(
+            IdForecastEscenario,
+            idActor);
+    }
+
+    private async Task<string> ObtenerIdUsuarioActualAsync()
+    {
+        var estado = await Autenticacion.GetAuthenticationStateAsync();
+        return estado.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+            ?? throw new UnauthorizedAccessException("No fue posible autorizar la cuenta actual.");
+    }
+
+    private void LimpiarMensajes()
+    {
+        mensajeError = null;
+        mensajeExito = null;
+    }
+
+    private static string TextoRango(DateTime inicio, DateTime fin) => $"{inicio:dd/MM/yyyy} – {fin:dd/MM/yyyy}";
+
+    private static string MensajeSeguro(Exception ex)
+    {
+        if (ex is ArgumentException argumento)
+        {
+            var indice = argumento.Message.LastIndexOf(" (", StringComparison.Ordinal);
+            return indice >= 0 ? argumento.Message[..indice] : argumento.Message;
+        }
+
+        return ex is ValidationException or InvalidOperationException or KeyNotFoundException
+            ? ex.Message
+            : "No se pudo actualizar la distribución. Recargue los datos e intente nuevamente.";
+    }
+
+    private sealed class FilaDistribucion
+    {
+        public Guid ClaveInterfaz { get; } = Guid.NewGuid();
+        public long IdProyecto { get; set; }
+        public decimal Porcentaje { get; set; }
+        public string NombreProyecto { get; set; } = string.Empty;
+        public bool EsProyectoElegible { get; set; } = true;
+    }
+}

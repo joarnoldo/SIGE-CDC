@@ -1,0 +1,289 @@
+@page "/operaciones/mantenimientos-preventivos"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Administrador,Operaciones")]
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Components.Authorization
+@using SIGECDC.Application.Activos
+@inject IMantenimientoService MantenimientoService
+@inject IActivoService ActivoService
+@inject AuthenticationStateProvider Autenticacion
+@inject ILogger<MantenimientosPreventivos> Logger
+
+<PageTitle>Mantenimiento preventivo | SIGE-CDC</PageTitle>
+
+<section class="page-banner">
+    <div class="container page-banner__inner stack--tight">
+        <p class="eyebrow">Operaciones</p>
+        <h1>Mantenimiento preventivo</h1>
+        <p class="lead">Defina la próxima intervención preventiva de un activo sin alterar su estado ni disponibilidad actual.</p>
+    </div>
+</section>
+
+<section class="section-shell">
+    <div class="container admin-grid">
+        <article class="form-section">
+            <h2>Definir plan preventivo</h2>
+            <p class="card__meta">El plan se registrará con estado Programado.</p>
+
+            @if (!string.IsNullOrWhiteSpace(mensajeExito))
+            {
+                <div class="alert alert--success" role="status">@mensajeExito</div>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(mensajeError))
+            {
+                <div class="alert alert--danger" role="alert">@mensajeError</div>
+            }
+
+            @if (!cargando && activosElegibles.Count == 0)
+            {
+                <div class="alert alert--info" role="status">
+                    No hay activos elegibles para definir mantenimiento preventivo.
+                </div>
+            }
+
+            <EditForm Model="solicitud" OnValidSubmit="DefinirPlanPreventivoAsync">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <div class="form-grid">
+                    <div class="field field--span-2">
+                        <label for="activoPreventivo">Activo</label>
+                        <InputSelect id="activoPreventivo"
+                                     class="form-control"
+                                     @bind-Value="solicitud.IdActivo">
+                            <option value="0">Seleccione un activo</option>
+                            @foreach (var activo in activosElegibles)
+                            {
+                                <option value="@activo.IdActivo">
+                                    @activo.CodigoActivo - @activo.NombreActivo
+                                </option>
+                            }
+                        </InputSelect>
+                    </div>
+
+                    <div class="field field--span-2">
+                        <label for="fechaProgramada">Próxima fecha de intervención</label>
+                        <InputDate id="fechaProgramada"
+                                   class="form-control"
+                                   min="@DateTime.Today.ToString("yyyy-MM-dd")"
+                                   @bind-Value="solicitud.FechaProgramada" />
+                    </div>
+
+                    <div class="field field--span-2">
+                        <label for="descripcionPreventiva">Descripción</label>
+                        <InputTextArea id="descripcionPreventiva"
+                                       class="form-control"
+                                       rows="4"
+                                       maxlength="500"
+                                       @bind-Value="solicitud.Descripcion" />
+                    </div>
+                </div>
+
+                <div class="form-actions mt-3">
+                    <button class="btn btn--primary"
+                            type="submit"
+                            disabled="@(guardando || cargando || activosElegibles.Count == 0)">
+                        @(guardando ? "Guardando..." : "Definir plan preventivo")
+                    </button>
+                    <button class="btn btn--secondary"
+                            type="button"
+                            disabled="@guardando"
+                            @onclick="LimpiarFormulario">
+                        Limpiar
+                    </button>
+                </div>
+            </EditForm>
+        </article>
+
+        <article class="table-card">
+            <div class="table-toolbar">
+                <div>
+                    <h2 class="card__title">Intervenciones pendientes</h2>
+                    <p class="card__meta">Planes preventivos programados, incluidos los que requieren atención por atraso.</p>
+                </div>
+                <span class="badge badge--info">@TextoCantidad</span>
+            </div>
+
+            @if (cargando)
+            {
+                <div class="empty-state">
+                    <strong>Cargando intervenciones</strong>
+                    <p class="text-muted">Estamos recuperando los planes preventivos pendientes.</p>
+                </div>
+            }
+            else if (mantenimientosPendientes.Count == 0)
+            {
+                <div class="empty-state">
+                    <strong>No hay intervenciones pendientes</strong>
+                    <p class="text-muted">Defina un plan preventivo desde el formulario.</p>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Activo</th>
+                                <th>Fecha programada</th>
+                                <th>Estado</th>
+                                <th>Descripción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var mantenimiento in mantenimientosPendientes)
+                            {
+                                <tr>
+                                    <td>
+                                        <strong>
+                                            @mantenimiento.CodigoActivo - @mantenimiento.Activo
+                                        </strong>
+                                    </td>
+                                    <td>@mantenimiento.FechaProgramada.ToString("dd/MM/yyyy")</td>
+                                    <td>
+                                        <div class="stack--tight">
+                                            <span class="badge badge--info">Programado</span>
+                                            @if (EstaAtrasado(mantenimiento))
+                                            {
+                                                <span class="badge badge--danger">Atrasado</span>
+                                            }
+                                        </div>
+                                    </td>
+                                    <td>
+                                        @(string.IsNullOrWhiteSpace(mantenimiento.Descripcion)
+                                            ? "-"
+                                            : mantenimiento.Descripcion)
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </article>
+    </div>
+</section>
+
+@code {
+    private List<ActivoResumen> activosElegibles = [];
+    private List<MantenimientoResumen> mantenimientosPendientes = [];
+    private SolicitudDefinirMantenimientoPreventivo solicitud = CrearSolicitudInicial();
+    private bool cargando = true;
+    private bool guardando;
+    private string? mensajeExito;
+    private string? mensajeError;
+
+    private string TextoCantidad => mantenimientosPendientes.Count == 1
+        ? "1 pendiente"
+        : $"{mantenimientosPendientes.Count} pendientes";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarDatosAsync();
+    }
+
+    private async Task CargarDatosAsync()
+    {
+        cargando = true;
+        mensajeError = null;
+
+        try
+        {
+            var activos = await ActivoService.ObtenerActivosAsync();
+            activosElegibles =
+            [
+                .. activos.Where(activo =>
+                    !string.Equals(
+                        activo.EstadoActivo,
+                        "Dado de baja",
+                        StringComparison.OrdinalIgnoreCase))
+            ];
+
+            mantenimientosPendientes =
+            [
+                .. await MantenimientoService.ObtenerMantenimientosPreventivosPendientesAsync()
+            ];
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudo cargar el mantenimiento preventivo.");
+            mensajeError = "No se pudo cargar la información de mantenimiento preventivo. Intente nuevamente.";
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private async Task DefinirPlanPreventivoAsync()
+    {
+        if (guardando)
+        {
+            return;
+        }
+
+        guardando = true;
+        mensajeExito = null;
+        mensajeError = null;
+
+        try
+        {
+            await MantenimientoService.DefinirMantenimientoPreventivoAsync(
+                solicitud,
+                await ObtenerIdUsuarioActualAsync());
+
+            solicitud = CrearSolicitudInicial();
+            mensajeExito = "Plan preventivo registrado correctamente con estado Programado.";
+            await CargarDatosAsync();
+        }
+        catch (ArgumentException ex)
+        {
+            mensajeError = ex.Message;
+        }
+        catch (InvalidOperationException ex)
+        {
+            mensajeError = ex.Message;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(
+                ex,
+                "No se pudo definir el plan preventivo para el activo {IdActivo}.",
+                solicitud.IdActivo);
+            mensajeError = "No se pudo registrar el plan preventivo. Intente nuevamente.";
+        }
+        finally
+        {
+            guardando = false;
+        }
+    }
+
+    private void LimpiarFormulario()
+    {
+        solicitud = CrearSolicitudInicial();
+        mensajeExito = null;
+        mensajeError = null;
+    }
+
+    private static SolicitudDefinirMantenimientoPreventivo CrearSolicitudInicial()
+    {
+        return new SolicitudDefinirMantenimientoPreventivo
+        {
+            FechaProgramada = DateTime.Today
+        };
+    }
+
+    private static bool EstaAtrasado(MantenimientoResumen mantenimiento)
+    {
+        return mantenimiento.FechaProgramada.Date < DateTime.Today;
+    }
+
+    private async Task<string> ObtenerIdUsuarioActualAsync()
+    {
+        var estadoAutenticacion = await Autenticacion.GetAuthenticationStateAsync();
+        return estadoAutenticacion.User
+            .FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)
+            ?.Value
+            ?? throw new InvalidOperationException("No se pudo identificar al usuario actual.");
+    }
+}
