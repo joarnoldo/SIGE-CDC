@@ -8,6 +8,8 @@ public sealed class Planilla
 
     public int IdEstadoPlanilla { get; set; }
 
+    public long? IdEjecucionPlanillaVigente { get; set; }
+
     public DateTime? FechaCalculo { get; set; }
 
     public decimal SalarioBrutoTotal { get; set; }
@@ -43,4 +45,8 @@ public sealed class Planilla
     public EstadoPlanilla? EstadoPlanilla { get; set; }
 
     public ICollection<DetallePlanilla> Detalles { get; set; } = [];
+
+    public ICollection<EjecucionPlanilla> Ejecuciones { get; set; } = [];
+
+    public EjecucionPlanilla? EjecucionVigente { get; set; }
 }

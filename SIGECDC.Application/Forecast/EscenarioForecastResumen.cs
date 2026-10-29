@@ -14,6 +14,8 @@ public class EscenarioForecastResumen
 
     public string EstadoEscenario { get; set; } = string.Empty;
 
+    public string? VersionMotor { get; set; }
+
     public decimal MontoProyectadoTotal { get; set; }
 
     public decimal? MontoRealTotal { get; set; }

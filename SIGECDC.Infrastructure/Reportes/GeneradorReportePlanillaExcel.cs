@@ -47,7 +47,7 @@ public sealed class GeneradorReportePlanillaExcel : IGeneradorReportePlanillaExc
         hoja.Row(1).Height = 30;
 
         hoja.Range("A2:K2").Merge();
-        hoja.Cell("A2").SetValue("Canales y Drenajes del Caribe S.R.L.");
+        hoja.Cell("A2").SetValue($"{reporte.Rotulo} · Ejecución {reporte.IdEjecucionPlanilla} · V{reporte.NumeroVersion}");
         hoja.Cell("A2").Style.Font.SetBold().Font.SetFontColor(XLColor.DarkSlateGray);
         hoja.Row(2).Height = 21;
 
@@ -114,7 +114,7 @@ public sealed class GeneradorReportePlanillaExcel : IGeneradorReportePlanillaExc
             fila++;
         }
 
-        hoja.Cell(fila, 1).SetValue("Totales oficiales");
+        hoja.Cell(fila, 1).SetValue(reporte.EstadoPlanilla == "Calculada" ? "Totales de revisión" : "Totales oficiales");
         hoja.Range(fila, 1, fila, 8).Merge();
         hoja.Cell(fila, 1).Style.Font.SetBold();
         EscribirMonto(hoja.Cell(fila, 9), reporte.SalarioBrutoTotal);
@@ -147,6 +147,7 @@ public sealed class GeneradorReportePlanillaExcel : IGeneradorReportePlanillaExc
         hoja.PageSetup.Margins.SetLeft(0.3).SetRight(0.3).SetTop(0.5).SetBottom(0.5);
         hoja.PageSetup.SetRowsToRepeatAtTop(filaEncabezado, filaEncabezado);
 
+        AgregarDesgloses(libro, reporte);
         var memoria = new MemoryStream();
         libro.SaveAs(memoria);
         memoria.Position = 0;
@@ -231,7 +232,63 @@ public sealed class GeneradorReportePlanillaExcel : IGeneradorReportePlanillaExc
 
     private static void EscribirMonto(IXLCell celda, decimal monto)
     {
-        celda.SetValue(monto);
+        EscribirNumeroExacto(celda, monto);
         celda.Style.NumberFormat.Format = FormatoMoneda;
+    }
+
+    private static void EscribirNumeroExacto(IXLCell celda, decimal valor)
+    {
+        celda.SetValue(valor);
+        if (celda.GetValue<decimal>() != valor)
+            throw new InvalidOperationException("EXPORTACION_PRECISION_NO_REPRESENTABLE");
+    }
+
+    private static void AgregarDesgloses(XLWorkbook libro, ReportePlanilla reporte)
+    {
+        IXLWorksheet Hoja(string nombre, string[] columnas)
+        {
+            var h = libro.Worksheets.Add(nombre); h.ShowGridLines = false;
+            h.Cell(1, 1).SetValue(reporte.Rotulo); h.Cell(2, 1).SetValue($"Ejecución {reporte.IdEjecucionPlanilla} · V{reporte.NumeroVersion}");
+            h.Cell(3, 1).SetValue(reporte.FechaInicio); h.Cell(3, 2).SetValue(reporte.FechaFin);
+            h.Range(3, 1, 3, 2).Style.DateFormat.Format = "dd/mm/yyyy";
+            for (var i = 0; i < columnas.Length; i++) h.Cell(5, i + 1).SetValue(columnas[i]);
+            h.Range(5, 1, 5, columnas.Length).Style.Font.SetBold(); h.SheetView.FreezeRows(5);
+            h.Columns(1, columnas.Length).Width = 23; h.Column(2).Width = 36;
+            h.PageSetup.PageOrientation = XLPageOrientation.Landscape; h.PageSetup.FitToPages(1, 0);
+            h.PageSetup.SetRowsToRepeatAtTop(1, 5); return h;
+        }
+        var lineas = Hoja("Conceptos", ["Código", "Colaborador", "Concepto", "Clasificación", "Efecto", "Fecha", "Cantidad", "Unidad", "Monto"]);
+        var segmentos = Hoja("Segmentos", ["Código", "Colaborador", "Desde", "Hasta", "Puesto", "Departamento", "Contrato", "Jornada", "Horas/día", "Salario mensual", "Días base 30"]);
+        var resumen = Hoja("Agregados", ["Código", "Colaborador", "Bruto salarial", "No salariales", "Bruto pagadero", "Cuotas obreras", "Renta", "Otras deducciones", "Deducciones", "Neto", "Carga patronal", "RT", "Otros costos", "Costo laboral total"]);
+        var f = 6; var s = 6; var r = 6;
+        foreach (var d in reporte.Detalles)
+        {
+            resumen.Cell(r, 1).SetValue(d.CodigoColaborador); resumen.Cell(r, 2).SetValue(d.NombreColaborador);
+            decimal[] valores = [d.SalarioBruto, d.IngresosNoSalariales, d.BrutoPagadero, d.CuotasObreras, d.ImpuestoSalario,
+                d.OtrasDeducciones, d.TotalDeducciones, d.SalarioNeto, d.CargasPatronales, d.RiesgosTrabajo, d.OtrosCostosPatronales, d.CostoLaboralTotal];
+            for (var i = 0; i < valores.Length; i++) EscribirMonto(resumen.Cell(r, i + 3), valores[i]); r++;
+            foreach (var l in d.Lineas)
+            {
+                lineas.Cell(f, 1).SetValue(d.CodigoColaborador); lineas.Cell(f, 2).SetValue(d.NombreColaborador);
+                lineas.Cell(f, 3).SetValue(l.Descripcion); lineas.Cell(f, 4).SetValue(l.Clasificacion); lineas.Cell(f, 5).SetValue(l.EtiquetaEfecto);
+                if (l.Fecha is { } fecha) { lineas.Cell(f, 6).SetValue(fecha); lineas.Cell(f, 6).Style.DateFormat.Format = "dd/mm/yyyy"; }
+                if (l.Cantidad is { } cantidad) EscribirNumeroExacto(lineas.Cell(f, 7), cantidad);
+                lineas.Cell(f, 8).SetValue(l.Unidad ?? ""); EscribirMonto(lineas.Cell(f, 9), l.Monto); f++;
+            }
+            foreach (var tramo in d.Segmentos)
+            {
+                segmentos.Cell(s, 1).SetValue(d.CodigoColaborador); segmentos.Cell(s, 2).SetValue(d.NombreColaborador);
+                segmentos.Cell(s, 3).SetValue(tramo.Inicio); segmentos.Cell(s, 4).SetValue(tramo.Fin);
+                segmentos.Range(s, 3, s, 4).Style.DateFormat.Format = "dd/mm/yyyy";
+                segmentos.Cell(s, 5).SetValue(tramo.Puesto); segmentos.Cell(s, 6).SetValue(tramo.Departamento);
+                segmentos.Cell(s, 7).SetValue(tramo.TipoContrato); segmentos.Cell(s, 8).SetValue(tramo.Jornada);
+                EscribirNumeroExacto(segmentos.Cell(s, 9), tramo.HorasDia); EscribirMonto(segmentos.Cell(s, 10), tramo.SalarioMensual);
+                EscribirNumeroExacto(segmentos.Cell(s, 11), tramo.DiasBase30); s++;
+            }
+        }
+        resumen.Cell(r, 1).SetValue("Totales de ejecución");
+        foreach (var par in new[] { (3, reporte.SalarioBrutoTotal), (4, reporte.IngresosNoSalarialesTotal), (5, reporte.BrutoPagaderoTotal),
+            (9, reporte.DeduccionesTotal), (10, reporte.SalarioNetoTotal), (11, reporte.CargasPatronalesTotal), (12, reporte.RiesgosTrabajoTotal),
+            (13, reporte.OtrosCostosPatronalesTotal), (14, reporte.CostoLaboralTotal) }) EscribirMonto(resumen.Cell(r, par.Item1), par.Item2);
     }
 }

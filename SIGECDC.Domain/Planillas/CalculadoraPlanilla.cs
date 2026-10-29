@@ -98,7 +98,7 @@ public static class CalculadoraPlanilla
 
     public static decimal Redondear(decimal monto)
     {
-        return Math.Round(monto, 2, MidpointRounding.AwayFromZero);
+        return PrecisionMonetaria.R2(monto);
     }
 
     private static void ValidarMontoNoNegativo(decimal monto, string nombre)

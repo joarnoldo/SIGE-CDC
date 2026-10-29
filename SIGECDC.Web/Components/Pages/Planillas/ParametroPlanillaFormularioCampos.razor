@@ -1,88 +1,20 @@
-@using SIGECDC.Application.Planillas
-
-<section class="form-section">
-    <p class="eyebrow">Datos del parámetro</p>
-    <div class="form-grid">
-        <div class="field">
-            <label for="codigo">Código</label>
-            <InputText id="codigo" @bind-Value="Solicitud.Codigo" autocomplete="off" />
-            <ValidationMessage For="() => Solicitud.Codigo" />
-        </div>
-        <div class="field">
-            <label for="tipoParametro">Tipo</label>
-            <InputSelect id="tipoParametro" @bind-Value="Solicitud.TipoParametro">
-                @foreach (var tipo in TiposParametro)
-                {
-                    <option value="@tipo.Nombre">@tipo.Nombre</option>
-                }
-            </InputSelect>
-            <ValidationMessage For="() => Solicitud.TipoParametro" />
-        </div>
-        <div class="field">
-            <label for="naturalezaParametro">Naturaleza</label>
-            <InputSelect id="naturalezaParametro" @bind-Value="Solicitud.Naturaleza">
-                <option value="">Referencia técnica / no aplica</option>
-                @foreach (var naturaleza in NaturalezasParametro)
-                {
-                    <option value="@naturaleza.Nombre">@naturaleza.Nombre</option>
-                }
-            </InputSelect>
-            <span class="help-text">Solo las deducciones y beneficios pueden asignarse a colaboradores o períodos.</span>
-        </div>
-        <div class="field field--span-2">
-            <label for="nombre">Nombre</label>
-            <InputText id="nombre" @bind-Value="Solicitud.Nombre" autocomplete="off" />
-            <ValidationMessage For="() => Solicitud.Nombre" />
-        </div>
-        <div class="field field--span-2">
-            <label for="descripcion">Descripción</label>
-            <InputTextArea id="descripcion" @bind-Value="Solicitud.Descripcion" />
-            <ValidationMessage For="() => Solicitud.Descripcion" />
-        </div>
-        @if (UsaValorTexto)
-        {
-            <div class="field field--span-2">
-                <label for="valorTexto">Valor de texto</label>
-                <InputText id="valorTexto" @bind-Value="Solicitud.ValorTexto" autocomplete="off" />
-                <ValidationMessage For="() => Solicitud.ValorTexto" />
-            </div>
-        }
-        else
-        {
-            <div class="field">
-                <label for="valorDecimal">Valor numérico</label>
-                <InputNumber id="valorDecimal" @bind-Value="Solicitud.ValorDecimal" />
-                <ValidationMessage For="() => Solicitud.ValorDecimal" />
-                @if (EsPorcentaje)
-                {
-                    <span class="help-text">Ingrese el porcentaje en formato humano: 10 representa 10%.</span>
-                }
-            </div>
-        }
-        <div class="field">
-            <label for="fechaVigenciaInicio">Vigencia desde</label>
-            <InputDate id="fechaVigenciaInicio" @bind-Value="Solicitud.FechaVigenciaInicio" />
-            <ValidationMessage For="() => Solicitud.FechaVigenciaInicio" />
-        </div>
-        <div class="field">
-            <label for="fechaVigenciaFin">Vigencia hasta</label>
-            <InputDate id="fechaVigenciaFin" @bind-Value="Solicitud.FechaVigenciaFin" />
-            <ValidationMessage For="() => Solicitud.FechaVigenciaFin" />
-        </div>
-    </div>
-</section>
-
+<div class="form-grid">
+    <label>Código interno<InputText @bind-Value="Solicitud.Codigo" maxlength="100" /></label>
+    <label>Nombre<InputText @bind-Value="Solicitud.Nombre" maxlength="150" /></label>
+    <label>Concepto clasificado<InputSelect @bind-Value="Solicitud.IdConceptoVersion"><option value="0">Seleccione</option>
+        @foreach (var c in Conceptos.Where(RecorridoPlanilla.EsParametroInternoAdmitido)) { <option value="@c.IdVersion">@c.Nombre · @c.Clasificacion · @c.UnidadPermitida · desde @c.Vigencia.Inicio.ToString("dd/MM/yyyy")</option> }
+    </InputSelect></label>
+    <label>Valor<InputNumber @bind-Value="Solicitud.Valor" /></label>
+    <label>Vigencia desde<InputDate @bind-Value="Solicitud.Inicio" /></label>
+    <label>Vigencia hasta (opcional)<InputDate @bind-Value="Solicitud.Fin" /></label>
+    <label>Referencia de respaldo empresarial<InputTextArea @bind-Value="Solicitud.Soporte" maxlength="300" /></label>
+</div>
+@if (Conceptos.SingleOrDefault(c => c.IdVersion == Solicitud.IdConceptoVersion) is { } concepto)
+{
+    <p>@(concepto.UnidadPermitida == "Porcentaje" ? "Ingrese el porcentaje en formato humano: 10 representa 10 %. La base es el salario devengado del tramo confirmado; el motor calcula el importe." : "Ingrese el monto documentado en CRC. Cero se admite solo si es un valor explícito válido.")</p>
+    <p>La clasificación, la unidad y la base proceden del concepto gobernado. No se sustituyen tasas normativas.</p>
+}
 @code {
-    [Parameter, EditorRequired]
-    public SolicitudParametroPlanilla Solicitud { get; set; } = default!;
-
-    [Parameter]
-    public IReadOnlyList<TipoParametroPlanillaOpcion> TiposParametro { get; set; } = [];
-
-    [Parameter]
-    public IReadOnlyList<NaturalezaParametroPlanillaOpcion> NaturalezasParametro { get; set; } = [];
-
-    private bool UsaValorTexto => string.Equals(Solicitud.TipoParametro, "Texto", StringComparison.OrdinalIgnoreCase);
-
-    private bool EsPorcentaje => string.Equals(Solicitud.TipoParametro, "Porcentaje", StringComparison.OrdinalIgnoreCase);
+    [Parameter, EditorRequired] public ParametroInternoInterfaz Solicitud { get; set; } = default!;
+    [Parameter] public IReadOnlyList<ConceptoMonetarioVersion> Conceptos { get; set; } = [];
 }

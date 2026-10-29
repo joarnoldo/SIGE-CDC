@@ -17,7 +17,7 @@ public sealed class ForecastAsignacionProyectoService(ApplicationDbContext conte
         string idUsuarioActual,
         CancellationToken cancellationToken = default)
     {
-        await ForecastAutorizacion.ValidarRecursosHumanosAsync(
+        await ForecastAutorizacion.ValidarAdministracionFinancieraAsync(
             contexto,
             idUsuarioActual,
             cancellationToken);
@@ -99,9 +99,9 @@ public sealed class ForecastAsignacionProyectoService(ApplicationDbContext conte
                 IdForecastAsignacionProyecto = item.IdForecastAsignacionProyecto,
                 IdForecastParticipante = item.IdForecastParticipante,
                 IdForecastPeriodo = item.IdForecastPeriodo,
-                IdProyecto = item.IdProyecto,
-                CodigoProyecto = item.Proyecto!.CodigoProyecto,
-                NombreProyecto = item.Proyecto.NombreProyecto,
+                IdProyecto = item.IdProyecto ?? 0,
+                CodigoProyecto = item.EsSinAsignar ? "SIN_ASIGNAR" : item.CodigoProyectoSnapshot ?? item.Proyecto!.CodigoProyecto,
+                NombreProyecto = item.EsSinAsignar ? "Sin asignar" : item.NombreProyectoSnapshot ?? item.Proyecto!.NombreProyecto,
                 Porcentaje = item.Porcentaje
             })
             .ToListAsync(cancellationToken);
@@ -120,7 +120,7 @@ public sealed class ForecastAsignacionProyectoService(ApplicationDbContext conte
                 CodigoProyecto = item.CodigoProyecto,
                 NombreProyecto = item.NombreProyecto,
                 Porcentaje = item.Porcentaje,
-                EsProyectoElegible = elegibilidad.Contains((item.IdProyecto, item.IdForecastPeriodo))
+                EsProyectoElegible = item.IdProyecto==0 || elegibilidad.Contains((item.IdProyecto, item.IdForecastPeriodo))
             })
             .ToList();
 
@@ -190,7 +190,7 @@ public sealed class ForecastAsignacionProyectoService(ApplicationDbContext conte
             var celda = ValidarCelda(datos, idForecastParticipante, idForecastPeriodo);
             var proyectos = await ValidarProyectosAsync(
                 celda.Periodo,
-                asignacionesSolicitadas.Select(item => item.IdProyecto).ToHashSet(),
+                asignacionesSolicitadas.Select(item => item.IdProyecto).OfType<long>().ToHashSet(),
                 cancellationToken);
             AplicarDistribucion(
                 datos,
@@ -262,7 +262,8 @@ public sealed class ForecastAsignacionProyectoService(ApplicationDbContext conte
             var asignacionesOrigen = datos.Asignaciones
                 .Where(item => item.IdForecastParticipante == idForecastParticipante
                     && item.IdForecastPeriodo == idForecastPeriodoOrigen
-                    && item.EstadoRegistro == EstadosRegistro.Activo)
+                    && item.EstadoRegistro == EstadosRegistro.Activo
+                    )
                 .OrderBy(item => item.IdProyecto)
                 .ToList();
 
@@ -273,7 +274,7 @@ public sealed class ForecastAsignacionProyectoService(ApplicationDbContext conte
                     "La distribución de origen debe estar completa antes de copiarla.");
             }
 
-            var idsProyectos = asignacionesOrigen.Select(item => item.IdProyecto).ToHashSet();
+            var idsProyectos = asignacionesOrigen.Select(item => item.IdProyecto).OfType<long>().ToHashSet();
             await ValidarProyectosAsync(origen.Periodo, idsProyectos, cancellationToken);
             var destinos = datos.Escenario.Periodos
                 .Where(item => idsPeriodosDestino.Contains(item.IdForecastPeriodo)
@@ -321,7 +322,7 @@ public sealed class ForecastAsignacionProyectoService(ApplicationDbContext conte
         string idUsuarioActual,
         CancellationToken cancellationToken)
     {
-        var idActor = await ForecastAutorizacion.ValidarRecursosHumanosAsync(
+        var idActor = await ForecastAutorizacion.ValidarAdministracionFinancieraAsync(
             contexto,
             idUsuarioActual,
             cancellationToken);
@@ -335,6 +336,7 @@ public sealed class ForecastAsignacionProyectoService(ApplicationDbContext conte
         long idForecastEscenario,
         CancellationToken cancellationToken)
     {
+        await BloqueoEscenarioForecast.ObtenerAsync(contexto,idForecastEscenario,cancellationToken);
         var escenario = await contexto.ForecastEscenarios
             .Include(item => item.Periodos)
             .Include(item => item.Participantes)
@@ -405,7 +407,7 @@ public sealed class ForecastAsignacionProyectoService(ApplicationDbContext conte
         var existentes = datos.Asignaciones
             .Where(item => item.IdForecastParticipante == participante.IdForecastParticipante
                 && item.IdForecastPeriodo == periodo.IdForecastPeriodo)
-            .ToDictionary(item => item.IdProyecto);
+            .ToDictionary(item => item.IdProyecto ?? 0);
 
         foreach (var existente in existentes.Values)
         {
@@ -414,8 +416,8 @@ public sealed class ForecastAsignacionProyectoService(ApplicationDbContext conte
 
         foreach (var solicitud in solicitudes)
         {
-            _ = proyectos[solicitud.IdProyecto];
-            if (!existentes.TryGetValue(solicitud.IdProyecto, out var asignacion))
+            if(solicitud.IdProyecto is {} proyecto) _ = proyectos[proyecto];
+            if (!existentes.TryGetValue(solicitud.IdProyecto ?? 0, out var asignacion))
             {
                 asignacion = new ForecastAsignacionProyecto
                 {
@@ -429,6 +431,9 @@ public sealed class ForecastAsignacionProyectoService(ApplicationDbContext conte
             }
 
             asignacion.Porcentaje = solicitud.Porcentaje;
+            asignacion.EsSinAsignar=solicitud.IdProyecto is null;
+            asignacion.CodigoProyectoSnapshot=solicitud.IdProyecto is {} id?proyectos[id].CodigoProyecto:null;
+            asignacion.NombreProyectoSnapshot=solicitud.IdProyecto is {} idNombre?proyectos[idNombre].NombreProyecto:"Sin asignar";
             asignacion.EstadoRegistro = EstadosRegistro.Activo;
         }
     }

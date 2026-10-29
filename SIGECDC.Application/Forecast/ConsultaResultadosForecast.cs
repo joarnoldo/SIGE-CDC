@@ -2,6 +2,17 @@ namespace SIGECDC.Application.Forecast;
 
 public sealed class ConsultaResultadosForecast
 {
+    public string? VersionMotor { get; init; }
+    public bool HistoricoLimitado { get; init; }
+    public int? CantidadFuentesHistoricas { get; init; }
+    public string? CodigoAdvertenciaHistorico => CantidadFuentesHistoricas == 0
+        ? "SIN_HISTORICO_DISPONIBLE" : HistoricoLimitado ? "HISTORICO_LIMITADO" : null;
+    public string? AdvertenciaHistorico => CantidadFuentesHistoricas == 0
+        ? "Sin histórico disponible: 0 fuentes. La proyección requiere entradas explícitas completas."
+        : HistoricoLimitado ? "Histórico limitado; ausencia no equivale a cero observado." : null;
+    public IReadOnlyList<SegmentoResultadoForecast> Segmentos { get; init; } = [];
+    public decimal BrutoSalarialTotalConsulta { get; init; }
+    public decimal CargasPatronalesTotalConsulta { get; init; }
     public long IdForecastEscenario { get; init; }
     public string NombreEscenario { get; init; } = string.Empty;
     public string EstadoEscenario { get; init; } = string.Empty;
@@ -26,6 +37,8 @@ public sealed record PeriodoResultadoForecastOpcion(
 
 public sealed class FilaResultadoForecast
 {
+    public decimal CostoLaboralTotalProyectado { get; init; }
+    public decimal CargasPatronalesProyectadas { get; init; }
     public string Clave { get; init; } = string.Empty;
     public string Codigo { get; init; } = string.Empty;
     public string Etiqueta { get; init; } = string.Empty;
@@ -43,4 +56,14 @@ public sealed record ConceptoResultadoForecast(
     string Nombre,
     decimal MontoBase,
     decimal MontoAjuste,
-    decimal MontoProyectado);
+    decimal MontoProyectado)
+{
+    public long? IdConceptoVersion { get; init; }
+    public string? Efecto { get; init; }
+    public int? ObservacionesMinimas { get; init; }
+    public int? ObservacionesMaximas { get; init; }
+    public bool HistoricoLimitado { get; init; }
+}
+
+public sealed record SegmentoResultadoForecast(long IdParticipante,long IdPeriodo,DateTime Inicio,DateTime Fin,
+    string Puesto,string Departamento,string Jornada,decimal SalarioMensual,int DiasBase30,string Origen);

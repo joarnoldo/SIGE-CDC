@@ -24,6 +24,12 @@ public sealed class ForecastEscenario
 
     public decimal? DiferenciaTotal { get; set; }
 
+    public string? VersionMotor { get; set; }
+
+    public string Moneda { get; set; } = "CRC";
+
+    public bool TieneHistoricoLimitado { get; set; }
+
     public DateTime? FechaCalculo { get; set; }
 
     public DateTime FechaCreacion { get; set; }
@@ -43,4 +49,6 @@ public sealed class ForecastEscenario
     public ICollection<ForecastParametro> Parametros { get; set; } = [];
 
     public ICollection<ForecastParticipante> Participantes { get; set; } = [];
+
+    public ICollection<ForecastObservacionHistorica> ObservacionesHistoricas { get; set; } = [];
 }

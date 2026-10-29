@@ -67,6 +67,7 @@ public sealed class GeneradorForecastPdf : IGeneradorForecastPdf
         }
 
         pagina.Dispose();
+        if(consulta.VersionMotor is not null)DibujarCondiciones(documento,consulta,fuentes);
         DibujarPaginacion(documento, fuentes);
 
         var memoria = new MemoryStream();
@@ -82,7 +83,8 @@ public sealed class GeneradorForecastPdf : IGeneradorForecastPdf
     private static PaginaExportacion CrearPagina(
         PdfDocument documento,
         ConsultaResultadosForecast consulta,
-        FuentesPdf fuentes)
+        FuentesPdf fuentes,
+        bool condiciones = false)
     {
         var paginaPdf = documento.AddPage();
         paginaPdf.Size = PdfSharp.PageSize.A4;
@@ -150,11 +152,18 @@ public sealed class GeneradorForecastPdf : IGeneradorForecastPdf
         var alcance = periodo is null
             ? "Todos los períodos"
             : $"{periodo.NumeroOrden}. {periodo.TipoPeriodo} - {periodo.FechaInicio:dd/MM/yyyy} al {periodo.FechaFin:dd/MM/yyyy}";
-        DibujarMetadato(graficos, fuentes, margen, y, "Alcance", alcance, ancho);
+        DibujarMetadato(graficos, fuentes, margen, y, "Alcance", alcance+(consulta.VersionMotor is null?"":" · "+consulta.VersionMotor+" · FIN-02 contenido; no autoriza pagos."), ancho);
         y += 22;
 
+        if(consulta.VersionMotor is not null && consulta.HistoricoLimitado)
+        {
+            graficos.DrawString(consulta.AdvertenciaHistorico!,
+                fuentes.Normal,XBrushes.DarkGoldenrod,new XRect(margen,y,ancho,12),XStringFormats.TopLeft);
+            y += 16;
+        }
+
         var anchoResumen = (ancho - 20) / 3;
-        DibujarTotal(graficos, fuentes, margen, y, anchoResumen, "Salario bruto", consulta.MontoProyectadoTotalConsulta);
+        DibujarTotal(graficos, fuentes, margen, y, anchoResumen, consulta.VersionMotor is null?"Salario bruto":"Costo laboral total", consulta.MontoProyectadoTotalConsulta);
         DibujarTotal(graficos, fuentes, margen + anchoResumen + 10, y, anchoResumen, "Deducciones", consulta.DeduccionesTotalConsulta);
         DibujarTotal(graficos, fuentes, margen + ((anchoResumen + 10) * 2), y, anchoResumen, "Salario neto", consulta.SalarioNetoTotalConsulta);
         y += 38;
@@ -177,7 +186,11 @@ public sealed class GeneradorForecastPdf : IGeneradorForecastPdf
             y += 27;
         }
 
-        DibujarEncabezadoResultados(graficos, fuentes, margen, y);
+        if (condiciones)
+            graficos.DrawString("Condiciones históricas de la proyección", fuentes.Subtitulo, XBrushes.DarkSlateGray,
+                new XRect(margen, y, ancho, 18), XStringFormats.TopLeft);
+        else
+            DibujarEncabezadoResultados(graficos, fuentes, margen, y);
         y += 24;
 
         return new PaginaExportacion(
@@ -333,7 +346,7 @@ public sealed class GeneradorForecastPdf : IGeneradorForecastPdf
     [
         fila.Etiqueta,
         Texto(fila.Codigo),
-        Texto(fila.Detalle),
+        Texto(fila.Detalle)+(fila.Conceptos.Any(c=>c.IdConceptoVersion is not null)?$" · Carga patronal {FormatearMoneda(fila.CargasPatronalesProyectadas)} · CTL {FormatearMoneda(fila.CostoLaboralTotalProyectado)}":""),
         TextoTipoParticipante(fila.TipoParticipante)
     ];
 
@@ -349,6 +362,23 @@ public sealed class GeneradorForecastPdf : IGeneradorForecastPdf
             new XRect(pagina.Margen, pagina.Y, pagina.Ancho, 13),
             XStringFormats.TopLeft);
         pagina.Y += 17;
+    }
+
+    private static void DibujarCondiciones(PdfDocument documento,ConsultaResultadosForecast consulta,FuentesPdf fuentes)
+    {
+        var pagina=CrearPagina(documento,consulta,fuentes,condiciones:true);
+        try
+        {
+            foreach(var s in consulta.Segmentos)
+            {
+                var texto=$"Participante {s.IdParticipante}; período {s.IdPeriodo}; {s.Inicio:dd/MM/yyyy} al {s.Fin:dd/MM/yyyy}; {s.Puesto}; {s.Departamento}; {s.Jornada}; salario mensual {FormatearMoneda(s.SalarioMensual)}; base 30: {s.DiasBase30}; {s.Origen}.";
+                var lineas=DividirLineas(pagina.Graficos,fuentes.Normal,texto,pagina.Ancho);
+                var alto=lineas.Count*AltoLinea+12;
+                if(pagina.Y+alto>pagina.LimiteInferior){pagina.Dispose();pagina=CrearPagina(documento,consulta,fuentes,condiciones:true);}
+                DibujarLineas(pagina.Graficos,fuentes.Normal,XBrushes.Black,lineas,pagina.Margen,pagina.Y,pagina.Ancho);pagina.Y+=alto;
+            }
+        }
+        finally{pagina.Dispose();}
     }
 
     private static void DibujarEncabezadoConceptos(PaginaExportacion pagina, FuentesPdf fuentes)

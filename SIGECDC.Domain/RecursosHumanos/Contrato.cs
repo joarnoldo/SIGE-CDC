@@ -1,3 +1,5 @@
+using SIGECDC.Domain.Planillas;
+
 namespace SIGECDC.Domain.RecursosHumanos;
 
 public class Contrato
@@ -16,6 +18,10 @@ public class Contrato
 
     public string? Jornada { get; set; }
 
+    public long? IdJornadaLaboral { get; set; }
+
+    public long? IdConfiguracionRiesgoTrabajo { get; set; }
+
     public string PeriodicidadPago { get; set; } = "Quincenal";
 
     public string EstadoContrato { get; set; } = "Activo";
@@ -33,4 +39,10 @@ public class Contrato
     public string EstadoRegistro { get; set; } = "Activo";
 
     public Colaborador? Colaborador { get; set; }
+
+    public JornadaLaboral? JornadaLaboral { get; set; }
+
+    public ICollection<CondicionLaboralVersion> CondicionesLaborales { get; set; } = new List<CondicionLaboralVersion>();
+
+    public ConfiguracionRiesgoTrabajo? ConfiguracionRiesgoTrabajo { get; set; }
 }

@@ -2,6 +2,8 @@ namespace SIGECDC.Application.Forecast;
 
 public sealed class ComparacionEscenariosForecast
 {
+    // FIN-FOR-V1: importes y presencia procedentes del lector de snapshots L.
+    public ComparacionSnapshotsForecast? Snapshot { get; init; }
     public EscenarioComparadoForecast EscenarioBase { get; init; } = new();
     public EscenarioComparadoForecast EscenarioAlternativo { get; init; } = new();
     public string Dimension { get; init; } = DimensionesResultadoForecast.Periodo;
@@ -14,6 +16,7 @@ public sealed class ComparacionEscenariosForecast
 
 public class EscenarioComparacionForecastOpcion
 {
+    public string? VersionMotor { get; init; }
     public long IdForecastEscenario { get; init; }
     public string Nombre { get; init; } = string.Empty;
     public string EstadoEscenario { get; init; } = string.Empty;

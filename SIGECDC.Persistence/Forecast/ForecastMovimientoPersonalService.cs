@@ -17,7 +17,7 @@ public sealed class ForecastMovimientoPersonalService(ApplicationDbContext conte
         string idUsuarioActual,
         CancellationToken cancellationToken = default)
     {
-        await ForecastAutorizacion.ValidarRecursosHumanosAsync(
+        await ForecastAutorizacion.ValidarAdministracionFinancieraAsync(
             contexto,
             idUsuarioActual,
             cancellationToken);
@@ -217,7 +217,7 @@ public sealed class ForecastMovimientoPersonalService(ApplicationDbContext conte
         string idUsuarioActual,
         CancellationToken cancellationToken = default)
     {
-        var idActor = await ForecastAutorizacion.ValidarRecursosHumanosAsync(
+        var idActor = await ForecastAutorizacion.ValidarAdministracionFinancieraAsync(
             contexto,
             idUsuarioActual,
             cancellationToken);
@@ -248,7 +248,7 @@ public sealed class ForecastMovimientoPersonalService(ApplicationDbContext conte
         string idUsuarioActual,
         CancellationToken cancellationToken = default)
     {
-        var idActor = await ForecastAutorizacion.ValidarRecursosHumanosAsync(
+        var idActor = await ForecastAutorizacion.ValidarAdministracionFinancieraAsync(
             contexto,
             idUsuarioActual,
             cancellationToken);
@@ -303,7 +303,7 @@ public sealed class ForecastMovimientoPersonalService(ApplicationDbContext conte
         string idUsuarioActual,
         CancellationToken cancellationToken)
     {
-        var idActor = await ForecastAutorizacion.ValidarRecursosHumanosAsync(
+        var idActor = await ForecastAutorizacion.ValidarAdministracionFinancieraAsync(
             contexto,
             idUsuarioActual,
             cancellationToken);
@@ -320,6 +320,7 @@ public sealed class ForecastMovimientoPersonalService(ApplicationDbContext conte
         long idForecastEscenario,
         CancellationToken cancellationToken)
     {
+        await BloqueoEscenarioForecast.ObtenerAsync(contexto,idForecastEscenario,cancellationToken);
         var escenario = await contexto.ForecastEscenarios
             .Include(item => item.Periodos)
             .Include(item => item.Participantes)

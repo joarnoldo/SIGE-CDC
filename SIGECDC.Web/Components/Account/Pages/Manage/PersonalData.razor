@@ -13,17 +13,17 @@
 
 <div class="row">
     <div class="col-md-6">
-        <p>Su cuenta contiene datos personales proporcionados al sistema. Esta página permite descargarlos o eliminarlos.</p>
-        <p>
-            <strong>Al eliminar estos datos, la cuenta se cerrará de forma permanente y no podrá recuperarse.</strong>
-        </p>
+        <p>Su cuenta contiene datos personales proporcionados al sistema. Esta página permite descargar la copia actualmente disponible.</p>
         <form action="Account/Manage/DescargarPersonalData" method="post">
             <AntiforgeryToken />
             <button class="btn btn-primary" type="submit">Descargar</button>
         </form>
-        <p>
-            <a href="Account/Manage/DeletePersonalData" class="btn btn-danger">Eliminar</a>
-        </p>
+        <div class="alert alert-info mt-3" role="alert">
+            <strong>La eliminación de cuentas no está disponible.</strong>
+            <p class="mb-0">
+                La administración de la cuenta debe gestionarse mediante el proceso administrativo autorizado.
+            </p>
+        </div>
     </div>
 </div>
 

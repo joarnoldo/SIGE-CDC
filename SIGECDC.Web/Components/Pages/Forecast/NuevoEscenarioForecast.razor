@@ -1,6 +1,6 @@
 @page "/rrhh/forecast/nuevo"
 @rendermode InteractiveServer
-@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Recursos Humanos")]
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Administrador,Recursos Humanos")]
 @using SIGECDC.Application.Forecast
 @using SIGECDC.Domain.Planillas
 @inject IForecastEscenarioService ForecastEscenarioService
@@ -130,7 +130,7 @@
                             {
                                 <div class="empty-state">
                                     <strong>No hay fuentes históricas disponibles</strong>
-                                    <p class="text-muted">Se necesita al menos una planilla activa Aprobada o Cerrada antes de crear un escenario.</p>
+                                    <p class="text-muted">Puede crear el escenario con cero fuentes. La proyección requiere condiciones y configuración completas; no se inventarán observaciones históricas.</p>
                                 </div>
                             }
                             else
@@ -182,7 +182,7 @@
                             {
                                 <div class="empty-state">
                                     <strong>No hay planillas seleccionadas</strong>
-                                    <p class="text-muted">Seleccione al menos una fuente histórica.</p>
+                                    <p class="text-muted">Sin selección manual se usarán las últimas tres fuentes comparables disponibles; una o dos producen histórico limitado. Si no existe ninguna, el escenario continúa sin histórico y requiere entradas proyectadas completas.</p>
                                 </div>
                             }
                             else
@@ -249,7 +249,7 @@
                     <a class="btn btn--secondary" href="rrhh/forecast">Cancelar</a>
                     <button class="btn btn--primary"
                             type="submit"
-                            disabled="@(guardando || fuentesDisponibles.Count == 0)">
+                            disabled="@guardando">
                         @(guardando ? "Guardando..." : "Crear escenario")
                     </button>
                 </div>

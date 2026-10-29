@@ -24,4 +24,13 @@ public sealed class ForecastParametro
     public string EstadoRegistro { get; set; } = EstadosRegistro.Activo;
 
     public ForecastEscenario? ForecastEscenario { get; set; }
+    public long? IdConceptoPlanillaVersion { get; set; }
+    public string? Unidad { get; set; }
+    public string? ReferenciaSoporte { get; set; }
+    public string? RegistradoPor { get; set; }
+    public DateTime? FechaRegistro { get; set; }
+    public bool? AutorizacionRequerida { get; set; }
+    public string? AutorizadoPor { get; set; }
+    public DateTime? FechaAutorizacion { get; set; }
+    public string? ReferenciaAutorizacion { get; set; }
 }

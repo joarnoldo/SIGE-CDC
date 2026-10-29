@@ -1,485 +1,105 @@
-using System.ComponentModel.DataAnnotations;
 using System.Data;
+using System.Globalization;
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using SIGECDC.Application.Forecast;
 using SIGECDC.Domain.Forecast;
-using SIGECDC.Domain.Operaciones;
 using SIGECDC.Domain.Planillas;
-using SIGECDC.Domain.SitioPublico;
 using SIGECDC.Persistence.Identity;
 
 namespace SIGECDC.Persistence.Forecast;
 
-public sealed class ForecastCalculoService(ApplicationDbContext contexto)
-    : IForecastCalculoService
+public sealed class ForecastCalculoService(ApplicationDbContext db) : IForecastCalculoService
 {
-    public async Task<ResultadoGeneracionForecast> GenerarForecastAsync(
-        long idForecastEscenario,
-        string idUsuarioActual,
-        CancellationToken cancellationToken = default)
-    {
-        var idActor = await ForecastAutorizacion.ValidarRecursosHumanosAsync(
-            contexto,
-            idUsuarioActual,
-            cancellationToken);
-        ValidarIdentificador(idForecastEscenario, nameof(idForecastEscenario));
+    // La ruta compatible no presume aplicabilidad empresarial por omisión.
+    public Task<ResultadoGeneracionForecast> GenerarForecastAsync(long idForecastEscenario,string idUsuarioActual,CancellationToken cancellationToken=default)
+        => GenerarForecastAsync(new SolicitudCalculoFinancieroForecast(idForecastEscenario,[]),idUsuarioActual,cancellationToken);
 
-        await using var transaccion = await contexto.Database.BeginTransactionAsync(
-            IsolationLevel.Serializable,
-            cancellationToken);
+    public async Task<ResultadoGeneracionForecast> GenerarForecastAsync(SolicitudCalculoFinancieroForecast solicitud,string idUsuarioActual,CancellationToken cancellationToken=default)
+    {
+        var ct=cancellationToken;
+        var actor=await ForecastAutorizacion.ValidarAdministracionFinancieraAsync(db,idUsuarioActual,ct);
+        await using var tx=await db.Database.BeginTransactionAsync(IsolationLevel.Serializable,ct);
         try
         {
-            var escenario = await CargarEscenarioAsync(idForecastEscenario, cancellationToken);
-            var periodos = await CargarPeriodosAsync(idForecastEscenario, cancellationToken);
-            var participantes = await CargarParticipantesAsync(idForecastEscenario, cancellationToken);
-            var fuentes = await CargarFuentesHistoricasAsync(idForecastEscenario, cancellationToken);
-            if (escenario.PeriodosHistoricosConsiderados != fuentes.Count)
+            var e=await BloqueoEscenarioForecast.ObtenerAsync(db,solicitud.IdEscenario,ct);
+            if(e.EstadoEscenario!=EstadosEscenarioForecast.Borrador)throw new InvalidOperationException("Solo se genera un Forecast Borrador.");
+            var periodos=await db.ForecastPeriodos.AsNoTracking().Where(p=>p.IdForecastEscenario==e.IdForecastEscenario && p.EstadoRegistro=="Activo")
+                .OrderBy(p=>p.FechaInicio).ThenBy(p=>p.NumeroOrden).ToArrayAsync(ct);
+            if(periodos.Length==0)throw new ConfiguracionConceptoException("PERIODO_FORECAST_FALTANTE");
+            foreach(var p in periodos)
             {
-                throw new ValidationException(
-                    "La cantidad de fuentes historicas no coincide con la definicion del escenario.");
+                new PeriodoSalarial(p.FechaInicio,p.FechaFin,p.TipoPeriodo).Validar();
+                if(p.FechaInicio<e.FechaInicioProyeccion || p.FechaFin>e.FechaFinProyeccion)throw new ConfiguracionConceptoException("PERIODO_FORECAST_FUERA_ESCENARIO");
             }
-            var parametros = await CargarParametrosAsync(idForecastEscenario, cancellationToken);
-            var asignaciones = await CargarYValidarAsignacionesAsync(
-                idForecastEscenario,
-                periodos,
-                participantes,
-                cancellationToken);
-            var historicos = await CargarHistoricosAsync(
-                fuentes,
-                participantes,
-                cancellationToken);
-
-            var detalles = CrearDetalles(
-                escenario,
-                periodos,
-                participantes,
-                parametros,
-                asignaciones,
-                historicos,
-                out var montoProyectadoTotal);
-
-            var detallesAnteriores = await contexto.ForecastDetalles
-                .Where(detalle => detalle.IdForecastEscenario == idForecastEscenario)
-                .ToListAsync(cancellationToken);
-            contexto.ForecastDetalles.RemoveRange(detallesAnteriores);
-            contexto.ForecastDetalles.AddRange(detalles);
-
-            var ahora = DateTime.Now;
-            escenario.EstadoEscenario = EstadosEscenarioForecast.Calculado;
-            escenario.MontoProyectadoTotal = montoProyectadoTotal;
-            escenario.MontoRealTotal = null;
-            escenario.DiferenciaTotal = null;
-            escenario.FechaCalculo = ahora;
-            escenario.FechaModificacion = ahora;
-            escenario.ModificadoPor = idActor;
-
-            await contexto.SaveChangesAsync(cancellationToken);
-            await transaccion.CommitAsync(cancellationToken);
-
-            return new ResultadoGeneracionForecast
+            if(periodos.Zip(periodos.Skip(1)).Any(x=>x.First.FechaFin>=x.Second.FechaInicio))throw new ConfiguracionConceptoException("PERIODOS_FORECAST_SOLAPADOS");
+            var personas=await db.ForecastParticipantes.AsNoTracking().Where(p=>p.IdForecastEscenario==e.IdForecastEscenario && p.EstadoRegistro=="Activo" && p.EstaIncluido)
+                .OrderBy(p=>p.CodigoParticipante).ThenBy(p=>p.IdForecastParticipante).ToArrayAsync(ct);
+            if(personas.Length==0)throw new ConfiguracionConceptoException("POBLACION_FORECAST_VACIA");
+            // Exclusivamente resultados transitorios del borrador bloqueado. Nunca toca legado ajeno.
+            // ExecuteDelete del proveedor emite DELETE FROM tabla AS alias, incompatible con MariaDB 10.11.
+            // Mantener parámetros, filtros y orden de dependencias dentro de la misma transacción.
+            await db.Database.ExecuteSqlInterpolatedAsync($"""
+                DELETE `a` FROM `ForecastAplicacionFinanciera` AS `a`
+                WHERE `a`.`IdForecastDetalle` IN (
+                    SELECT `d`.`IdForecastDetalle` FROM `ForecastDetalle` AS `d`
+                    WHERE `d`.`IdForecastEscenario` = {e.IdForecastEscenario}
+                )
+                """,ct);
+            await db.Database.ExecuteSqlInterpolatedAsync($"""
+                DELETE FROM `ForecastDetalle` WHERE `IdForecastEscenario` = {e.IdForecastEscenario}
+                """,ct);
+            await db.Database.ExecuteSqlInterpolatedAsync($"""
+                DELETE FROM `ForecastObservacionHistorica` WHERE `IdForecastEscenario` = {e.IdForecastEscenario}
+                """,ct);
+            var observaciones=await ForecastFuentesSnapshot.ObservarAsync(db,e,periodos,personas,ct);
+            e.PeriodosHistoricosConsiderados=await db.ForecastFuentesHistoricas.CountAsync(f=>f.IdForecastEscenario==e.IdForecastEscenario,ct);
+            var anteriores=new Dictionary<(long Persona,int Anio,int Mes),(AcumuladoMensualRenta Acumulado,IReadOnlyList<ForecastDetalle> Detalles)>();
+            decimal total=0;var cantidad=0;
+            foreach(var p in periodos)
+            foreach(var persona in personas.Where(x=>x.FechaInicioAplicacion<=p.FechaFin && (x.FechaSalidaPrevista==null || x.FechaSalidaPrevista>=p.FechaInicio)))
             {
-                IdForecastEscenario = escenario.IdForecastEscenario,
-                EstadoEscenario = escenario.EstadoEscenario,
-                FechaCalculo = ahora,
-                MontoProyectadoTotal = montoProyectadoTotal,
-                CantidadPeriodos = periodos.Count,
-                CantidadParticipantes = participantes.Count,
-                CantidadDetalles = detalles.Count
-            };
-        }
-        catch
-        {
-            await transaccion.RollbackAsync(CancellationToken.None);
-            contexto.ChangeTracker.Clear();
-            throw;
-        }
-    }
-
-    private async Task<ForecastEscenario> CargarEscenarioAsync(
-        long idForecastEscenario,
-        CancellationToken cancellationToken)
-    {
-        var escenario = await contexto.ForecastEscenarios
-            .FirstOrDefaultAsync(item => item.IdForecastEscenario == idForecastEscenario
-                && item.EstadoRegistro == EstadosRegistro.Activo,
-                cancellationToken)
-            ?? throw new KeyNotFoundException(
-                "El escenario solicitado no existe o no esta activo.");
-
-        if (escenario.EstadoEscenario != EstadosEscenarioForecast.Borrador)
-        {
-            throw new InvalidOperationException(
-                "El forecast solo puede generarse desde un escenario Borrador.");
-        }
-
-        return escenario;
-    }
-
-    private async Task<List<ForecastPeriodo>> CargarPeriodosAsync(
-        long idForecastEscenario,
-        CancellationToken cancellationToken)
-    {
-        var periodos = await contexto.ForecastPeriodos
-            .AsNoTracking()
-            .Where(item => item.IdForecastEscenario == idForecastEscenario
-                && item.EstadoRegistro == EstadosRegistro.Activo)
-            .OrderBy(item => item.NumeroOrden)
-            .ThenBy(item => item.IdForecastPeriodo)
-            .ToListAsync(cancellationToken);
-
-        if (periodos.Count == 0)
-        {
-            throw new ValidationException(
-                "El escenario requiere al menos un periodo activo para generar el forecast.");
-        }
-
-        return periodos;
-    }
-
-    private async Task<List<ForecastParticipante>> CargarParticipantesAsync(
-        long idForecastEscenario,
-        CancellationToken cancellationToken)
-    {
-        var participantes = await contexto.ForecastParticipantes
-            .AsNoTracking()
-            .Where(item => item.IdForecastEscenario == idForecastEscenario
-                && item.EstadoRegistro == EstadosRegistro.Activo
-                && item.EstaIncluido)
-            .OrderBy(item => item.IdForecastParticipante)
-            .ToListAsync(cancellationToken);
-
-        if (participantes.Count == 0)
-        {
-            throw new ValidationException(
-                "El escenario requiere al menos un participante incluido para generar el forecast.");
-        }
-
-        return participantes;
-    }
-
-    private async Task<List<FuenteHistoricaConsulta>> CargarFuentesHistoricasAsync(
-        long idForecastEscenario,
-        CancellationToken cancellationToken)
-    {
-        var fuentes = await contexto.ForecastFuentesHistoricas
-            .AsNoTracking()
-            .Where(item => item.IdForecastEscenario == idForecastEscenario)
-            .OrderBy(item => item.NumeroOrden)
-            .Select(item => new FuenteHistoricaConsulta
-            {
-                IdPlanilla = item.IdPlanilla,
-                PlanillaActiva = item.Planilla!.EstadoRegistro == EstadosRegistro.Activo,
-                PeriodoActivo = item.Planilla.PeriodoPlanilla!.EstadoRegistro == EstadosRegistro.Activo,
-                EstadoPlanilla = item.Planilla.EstadoPlanilla!.Nombre,
-                EstadoPeriodo = item.Planilla.PeriodoPlanilla.EstadoPlanilla!.Nombre
-            })
-            .ToListAsync(cancellationToken);
-
-        if (fuentes.Count == 0)
-        {
-            throw new ValidationException(
-                "El escenario requiere al menos una planilla historica aprobada o cerrada.");
-        }
-
-        if (fuentes.Any(fuente => !fuente.PlanillaActiva
-                || !fuente.PeriodoActivo
-                || !EsEstadoHistoricoPermitido(fuente.EstadoPlanilla)
-                || !EsEstadoHistoricoPermitido(fuente.EstadoPeriodo)))
-        {
-            throw new ValidationException(
-                "Las fuentes historicas deben permanecer activas y aprobadas o cerradas.");
-        }
-
-        return fuentes;
-    }
-
-    private async Task<List<ParametroForecastCalculo>> CargarParametrosAsync(
-        long idForecastEscenario,
-        CancellationToken cancellationToken)
-    {
-        var parametros = await contexto.ForecastParametros
-            .AsNoTracking()
-            .Where(item => item.IdForecastEscenario == idForecastEscenario
-                && item.EstadoRegistro == EstadosRegistro.Activo
-                && (item.Codigo == CodigosParametroForecast.AjusteSalarial
-                    || item.Codigo == CodigosParametroForecast.HorasExtraEstimadas
-                    || item.Codigo == CodigosParametroForecast.BonosEstimados
-                    || item.Codigo == CodigosParametroForecast.DeduccionesRecurrentes))
-            .Select(item => new ParametroForecastConsulta
-            {
-                Codigo = item.Codigo,
-                TipoParametro = item.TipoParametro,
-                ValorDecimal = item.ValorDecimal
-            })
-            .ToListAsync(cancellationToken);
-
-        return parametros.Select(parametro => new ParametroForecastCalculo(
-                parametro.Codigo,
-                parametro.TipoParametro,
-                parametro.ValorDecimal ?? throw new ValidationException(
-                    $"El parametro {parametro.Codigo} activo no tiene un valor decimal.")))
-            .ToList();
-    }
-
-    private async Task<Dictionary<(long IdPeriodo, long IdParticipante), List<AsignacionProyectoForecastCalculo>>>
-        CargarYValidarAsignacionesAsync(
-            long idForecastEscenario,
-            IReadOnlyCollection<ForecastPeriodo> periodos,
-            IReadOnlyCollection<ForecastParticipante> participantes,
-            CancellationToken cancellationToken)
-    {
-        var asignaciones = await contexto.ForecastAsignacionesProyecto
-            .AsNoTracking()
-            .Where(item => item.IdForecastEscenario == idForecastEscenario
-                && item.EstadoRegistro == EstadosRegistro.Activo)
-            .Select(item => new AsignacionForecastConsulta
-            {
-                IdForecastPeriodo = item.IdForecastPeriodo,
-                IdForecastParticipante = item.IdForecastParticipante,
-                IdProyecto = item.IdProyecto,
-                Porcentaje = item.Porcentaje
-            })
-            .ToListAsync(cancellationToken);
-
-        var idsPeriodos = periodos.Select(item => item.IdForecastPeriodo).ToHashSet();
-        var idsParticipantes = participantes.Select(item => item.IdForecastParticipante).ToHashSet();
-        var asignacionesEsperadas = asignaciones
-            .Where(item => idsPeriodos.Contains(item.IdForecastPeriodo)
-                && idsParticipantes.Contains(item.IdForecastParticipante))
-            .ToList();
-        var proyectosElegibles = await CargarProyectosElegiblesAsync(
-            asignacionesEsperadas.Select(item => item.IdProyecto).ToHashSet(),
-            cancellationToken);
-
-        var resultado = new Dictionary<(long IdPeriodo, long IdParticipante), List<AsignacionProyectoForecastCalculo>>();
-        foreach (var participante in participantes)
-        {
-            foreach (var periodo in periodos)
-            {
-                var celda = asignacionesEsperadas
-                    .Where(item => item.IdForecastPeriodo == periodo.IdForecastPeriodo
-                        && item.IdForecastParticipante == participante.IdForecastParticipante)
-                    .OrderBy(item => item.IdProyecto)
-                    .ToList();
-                if (celda.Count == 0
-                    || celda.Select(item => item.IdProyecto).Distinct().Count() != celda.Count
-                    || celda.Sum(item => item.Porcentaje) != 100.0000m
-                    || celda.Any(item => !proyectosElegibles.TryGetValue(item.IdProyecto, out var proyecto)
-                        || !SeSuperpone(proyecto, periodo)))
+                var asignaciones=await db.ForecastAsignacionesProyecto.Where(a=>a.IdForecastEscenario==e.IdForecastEscenario && a.IdForecastPeriodo==p.IdForecastPeriodo
+                    && a.IdForecastParticipante==persona.IdForecastParticipante && a.EstadoRegistro=="Activo").OrderBy(a=>a.IdProyectoNormalizado).ToArrayAsync(ct);
+                foreach(var a in asignaciones)
                 {
-                    throw new ValidationException(
-                        "Cada participante incluido debe tener una distribucion completa y vigente por periodo.");
-                }
-
-                resultado.Add(
-                    (periodo.IdForecastPeriodo, participante.IdForecastParticipante),
-                    celda.Select(item => new AsignacionProyectoForecastCalculo(
-                        item.IdProyecto,
-                        item.Porcentaje)).ToList());
-            }
-        }
-
-        return resultado;
-    }
-
-    private async Task<Dictionary<long, ProyectoForecastConsulta>> CargarProyectosElegiblesAsync(
-        IReadOnlySet<long> idsProyectos,
-        CancellationToken cancellationToken)
-    {
-        if (idsProyectos.Count == 0)
-        {
-            return [];
-        }
-
-        return await contexto.Proyectos
-            .AsNoTracking()
-            .Where(item => idsProyectos.Contains(item.IdProyecto)
-                && item.EstadoRegistro == EstadosRegistro.Activo
-                && item.EstadoProyecto != null
-                && item.EstadoProyecto.EstadoRegistro == EstadosRegistro.Activo
-                && (item.EstadoProyecto.Nombre == EstadosProyecto.Planificado
-                    || item.EstadoProyecto.Nombre == EstadosProyecto.EnEjecucion
-                    || item.EstadoProyecto.Nombre == EstadosProyecto.Pausado))
-            .Select(item => new ProyectoForecastConsulta
-            {
-                IdProyecto = item.IdProyecto,
-                FechaInicio = item.FechaInicio,
-                FechaFin = item.FechaFinReal ?? item.FechaFinEstimada
-            })
-            .ToDictionaryAsync(item => item.IdProyecto, cancellationToken);
-    }
-
-    private async Task<Dictionary<long, ComponentesHistoricosForecast>> CargarHistoricosAsync(
-        IReadOnlyCollection<FuenteHistoricaConsulta> fuentes,
-        IReadOnlyCollection<ForecastParticipante> participantes,
-        CancellationToken cancellationToken)
-    {
-        var idsColaboradores = participantes
-            .Where(item => item.IdColaborador.HasValue)
-            .Select(item => item.IdColaborador!.Value)
-            .ToHashSet();
-        if (idsColaboradores.Count == 0)
-        {
-            return [];
-        }
-
-        var idsPlanillas = fuentes.Select(item => item.IdPlanilla).ToHashSet();
-        var detalles = await contexto.DetallesPlanilla
-            .AsNoTracking()
-            .Where(item => idsPlanillas.Contains(item.IdPlanilla)
-                && idsColaboradores.Contains(item.IdColaborador))
-            .Select(item => new DetallePlanillaHistoricoConsulta
-            {
-                IdColaborador = item.IdColaborador,
-                SalarioProporcional = item.SalarioProporcional,
-                TotalHorasExtra = item.TotalHorasExtra,
-                TotalBonos = item.TotalBonos,
-                TotalBeneficiosConfigurables = item.TotalBeneficiosConfigurables,
-                TotalAusencias = item.TotalAusencias,
-                TotalDeducciones = item.TotalDeducciones
-            })
-            .ToListAsync(cancellationToken);
-
-        return detalles
-            .GroupBy(item => item.IdColaborador)
-            .ToDictionary(
-                grupo => grupo.Key,
-                grupo => new ComponentesHistoricosForecast(
-                    grupo.Sum(item => item.SalarioProporcional) / fuentes.Count,
-                    grupo.Sum(item => item.TotalHorasExtra) / fuentes.Count,
-                    grupo.Sum(item => item.TotalBonos) / fuentes.Count,
-                    grupo.Sum(item => item.TotalBeneficiosConfigurables) / fuentes.Count,
-                    grupo.Sum(item => item.TotalAusencias) / fuentes.Count,
-                    grupo.Sum(item => item.TotalDeducciones) / fuentes.Count));
-    }
-
-    private static List<ForecastDetalle> CrearDetalles(
-        ForecastEscenario escenario,
-        IReadOnlyCollection<ForecastPeriodo> periodos,
-        IReadOnlyCollection<ForecastParticipante> participantes,
-        IReadOnlyCollection<ParametroForecastCalculo> parametros,
-        IReadOnlyDictionary<(long IdPeriodo, long IdParticipante), List<AsignacionProyectoForecastCalculo>> asignaciones,
-        IReadOnlyDictionary<long, ComponentesHistoricosForecast> historicos,
-        out decimal montoProyectadoTotal)
-    {
-        var detalles = new List<ForecastDetalle>();
-        var total = 0m;
-        foreach (var participante in participantes.OrderBy(item => item.IdForecastParticipante))
-        {
-            var historico = participante.IdColaborador.HasValue
-                && historicos.TryGetValue(participante.IdColaborador.Value, out var historialParticipante)
-                ? historialParticipante
-                : ComponentesHistoricosVacios;
-            foreach (var periodo in periodos.OrderBy(item => item.NumeroOrden))
-            {
-                var resultado = CalculadoraForecast.Calcular(new DatosCalculoForecast(
-                    periodo.TipoPeriodo,
-                    periodo.FechaInicio,
-                    periodo.FechaFin,
-                    participante.SalarioBaseMensual,
-                    participante.FechaInicioAplicacion,
-                    participante.FechaSalidaPrevista,
-                    historico,
-                    parametros));
-                var detallesProyecto = CalculadoraForecast.DistribuirPorProyecto(
-                    resultado.Conceptos,
-                    asignaciones[(periodo.IdForecastPeriodo, participante.IdForecastParticipante)]);
-
-                foreach (var detalle in detallesProyecto)
-                {
-                    detalles.Add(new ForecastDetalle
+                    if(a.EsSinAsignar && a.IdProyecto is null){a.CodigoProyectoSnapshot=null;a.NombreProyectoSnapshot="Sin asignar";}
+                    else
                     {
-                        IdForecastEscenario = escenario.IdForecastEscenario,
-                        IdForecastPeriodo = periodo.IdForecastPeriodo,
-                        IdForecastParticipante = participante.IdForecastParticipante,
-                        IdProyecto = detalle.IdProyecto,
-                        Concepto = detalle.Concepto,
-                        MontoBase = detalle.MontoBase,
-                        MontoAjuste = detalle.MontoAjuste,
-                        MontoProyectado = detalle.MontoProyectado,
-                        MontoReal = null,
-                        Diferencia = null,
-                        Observaciones = null,
-                        EstadoRegistro = EstadosRegistro.Activo
-                    });
+                        var proyecto=await db.Proyectos.AsNoTracking().SingleOrDefaultAsync(x=>x.IdProyecto==a.IdProyecto && x.EstadoRegistro=="Activo",ct)
+                            ??throw new ConfiguracionConceptoException("DESTINO_FORECAST_NO_DEMOSTRABLE");
+                        a.CodigoProyectoSnapshot=proyecto.CodigoProyecto;a.NombreProyectoSnapshot=proyecto.NombreProyecto;
+                    }
                 }
-
-                total += resultado.MontoProyectadoTotal;
+                var destinos=asignaciones.Select(a=>new DestinoCostoForecast(a.IdForecastAsignacionProyecto,a.IdProyecto,a.EsSinAsignar,a.Porcentaje)).ToArray();
+                _=ProyeccionFinanciera.Distribuir(0,destinos);
+                var clave=(persona.IdForecastParticipante,p.FechaInicio.Year,p.FechaInicio.Month);
+                var final=p.TipoPeriodo==TiposPeriodoPlanilla.Quincenal && p.FechaInicio.Day==16;
+                anteriores.TryGetValue(clave,out var previo);
+                if(final && previo.Acumulado is null)throw new ConfiguracionConceptoException("ACUMULADO_FORECAST_NO_DEMOSTRABLE");
+                var resultado=await ForecastMotorPreparacion.PrepararAsync(db,p,persona,observaciones,solicitud.Aplicabilidades,actor,final?previo.Acumulado:null,ct);
+                var detalles=await ForecastSnapshotEscritura.PersistirAsync(db,p,persona,resultado,destinos,observaciones,final?previo.Detalles:[],ct);
+                total+=resultado.Costo.CostoLaboralTotal!.Value;cantidad+=detalles.Count;
+                if(p.TipoPeriodo==TiposPeriodoPlanilla.Quincenal && p.FechaInicio.Day==1)
+                {
+                    var h=resultado.Costo.Renta!;var g=h.CuotasSociales!;
+                    var soporte=FormattableString.Invariant($"Forecast {e.IdForecastEscenario}, período {p.IdForecastPeriodo}, participante {persona.IdForecastParticipante}");
+                    var cuotas=new AcumuladoMensualCuotas(p.FechaInicio,p.FechaFin,g.Conciliacion!.Lineas.Where(l=>l.Fuente.TipoFuente!="Normativa").ToArray(),g.Aplicaciones,soporte,[persona.IdForecastParticipante]);
+                    var renta=new AcumuladoMensualRenta(p.FechaInicio,p.FechaFin,[persona.IdForecastParticipante],h.Conciliacion!.Lineas.Where(l=>l.Concepto.TipoBase!="RENTA_SALARIAL").ToArray(),h.Aplicaciones,soporte,cuotas);
+                    anteriores.Add(clave,(renta,detalles));
+                }
             }
+            if(cantidad==0)throw new ConfiguracionConceptoException("POBLACION_FORECAST_VACIA");
+            e.VersionMotor=ProyeccionFinanciera.VersionMotor;e.MontoProyectadoTotal=total;e.MontoRealTotal=null;e.DiferenciaTotal=null;
+            e.EstadoEscenario=EstadosEscenarioForecast.Calculado;e.FechaCalculo=DateTime.UtcNow;e.FechaModificacion=e.FechaCalculo;e.ModificadoPor=actor;
+            db.BitacoraAuditoria.Add(new(){IdUsuario=actor,FechaHora=e.FechaCalculo.Value,Accion="GENERAR_FORECAST",Entidad=nameof(ForecastEscenario),
+                IdRegistro=e.IdForecastEscenario.ToString(CultureInfo.InvariantCulture),ValoresNuevos=JsonSerializer.Serialize(new{e.VersionMotor,e.MontoProyectadoTotal,Detalles=cantidad,e.PeriodosHistoricosConsiderados}),Observacion="Forecast proyectado; FIN-02 contenido; actor: "+actor});
+            await db.SaveChangesAsync(ct);
+            await ForecastSnapshotEscritura.ConciliarAsync(db,e.IdForecastEscenario,total,ct);
+            await tx.CommitAsync(ct);
+            return new(){IdForecastEscenario=e.IdForecastEscenario,EstadoEscenario=e.EstadoEscenario,FechaCalculo=e.FechaCalculo.Value,MontoProyectadoTotal=total,
+                CantidadPeriodos=periodos.Length,CantidadParticipantes=personas.Length,CantidadDetalles=cantidad};
         }
-
-        montoProyectadoTotal = CalculadoraForecast.Redondear(total);
-        return detalles;
-    }
-
-    private static bool EsEstadoHistoricoPermitido(string? estado) =>
-        estado == EstadosPlanilla.Aprobada || estado == EstadosPlanilla.Cerrada;
-
-    private static bool SeSuperpone(
-        ProyectoForecastConsulta proyecto,
-        ForecastPeriodo periodo) =>
-        (!proyecto.FechaInicio.HasValue
-            || proyecto.FechaInicio.Value.Date <= periodo.FechaFin.Date)
-        && (!proyecto.FechaFin.HasValue
-            || proyecto.FechaFin.Value.Date >= periodo.FechaInicio.Date);
-
-    private static void ValidarIdentificador(long identificador, string nombreParametro)
-    {
-        if (identificador <= 0)
-        {
-            throw new ArgumentOutOfRangeException(
-                nombreParametro,
-                "El identificador solicitado no es valido.");
-        }
-    }
-
-    private static readonly ComponentesHistoricosForecast ComponentesHistoricosVacios = new(
-        0m,
-        0m,
-        0m,
-        0m,
-        0m,
-        0m);
-
-    private sealed class FuenteHistoricaConsulta
-    {
-        public long IdPlanilla { get; set; }
-        public bool PlanillaActiva { get; set; }
-        public bool PeriodoActivo { get; set; }
-        public string? EstadoPlanilla { get; set; }
-        public string? EstadoPeriodo { get; set; }
-    }
-
-    private sealed class ParametroForecastConsulta
-    {
-        public string Codigo { get; set; } = string.Empty;
-        public string TipoParametro { get; set; } = string.Empty;
-        public decimal? ValorDecimal { get; set; }
-    }
-
-    private sealed class AsignacionForecastConsulta
-    {
-        public long IdForecastPeriodo { get; set; }
-        public long IdForecastParticipante { get; set; }
-        public long IdProyecto { get; set; }
-        public decimal Porcentaje { get; set; }
-    }
-
-    private sealed class ProyectoForecastConsulta
-    {
-        public long IdProyecto { get; set; }
-        public DateTime? FechaInicio { get; set; }
-        public DateTime? FechaFin { get; set; }
-    }
-
-    private sealed class DetallePlanillaHistoricoConsulta
-    {
-        public long IdColaborador { get; set; }
-        public decimal SalarioProporcional { get; set; }
-        public decimal TotalHorasExtra { get; set; }
-        public decimal TotalBonos { get; set; }
-        public decimal TotalBeneficiosConfigurables { get; set; }
-        public decimal TotalAusencias { get; set; }
-        public decimal TotalDeducciones { get; set; }
+        catch{await tx.RollbackAsync(CancellationToken.None);db.ChangeTracker.Clear();throw;}
     }
 }

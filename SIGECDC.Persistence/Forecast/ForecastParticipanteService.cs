@@ -1,5 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.Data;
+using System.Globalization;
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using SIGECDC.Application.Forecast;
 using SIGECDC.Domain.Forecast;
@@ -19,7 +21,7 @@ public sealed class ForecastParticipanteService(ApplicationDbContext contexto)
         string idUsuarioActual,
         CancellationToken cancellationToken = default)
     {
-        await ForecastAutorizacion.ValidarRecursosHumanosAsync(
+        await ForecastAutorizacion.ValidarAdministracionFinancieraAsync(
             contexto,
             idUsuarioActual,
             cancellationToken);
@@ -49,7 +51,7 @@ public sealed class ForecastParticipanteService(ApplicationDbContext contexto)
         string idUsuarioActual,
         CancellationToken cancellationToken = default)
     {
-        var idActor = await ForecastAutorizacion.ValidarRecursosHumanosAsync(
+        var idActor = await ForecastAutorizacion.ValidarAdministracionFinancieraAsync(
             contexto,
             idUsuarioActual,
             cancellationToken);
@@ -62,6 +64,7 @@ public sealed class ForecastParticipanteService(ApplicationDbContext contexto)
 
         try
         {
+            await BloqueoEscenarioForecast.ObtenerAsync(contexto,idForecastEscenario,cancellationToken);
             var escenario = await contexto.ForecastEscenarios
                 .Include(item => item.Participantes)
                 .FirstOrDefaultAsync(item => item.IdForecastEscenario == idForecastEscenario
@@ -98,9 +101,29 @@ public sealed class ForecastParticipanteService(ApplicationDbContext contexto)
                     "La lista de colaboradores cambió. Recargue la composición antes de guardarla.");
             }
 
+            var anterior = escenario.Participantes
+                .Where(item => item.IdColaborador.HasValue)
+                .OrderBy(item => item.IdColaborador)
+                .Select(item => new { item.IdColaborador, item.EstaIncluido })
+                .ToArray();
             AplicarComposicion(escenario, configuracion.Participantes, solicitudes);
             escenario.FechaModificacion = DateTime.Now;
             escenario.ModificadoPor = idActor;
+
+            contexto.BitacoraAuditoria.Add(new()
+            {
+                IdUsuario = idActor,
+                FechaHora = DateTime.UtcNow,
+                Accion = "ACTUALIZAR_COMPOSICION_FORECAST",
+                Entidad = nameof(ForecastEscenario),
+                IdRegistro = idForecastEscenario.ToString(CultureInfo.InvariantCulture),
+                ValoresAnteriores = JsonSerializer.Serialize(anterior),
+                ValoresNuevos = JsonSerializer.Serialize(escenario.Participantes
+                    .Where(item => item.IdColaborador.HasValue)
+                    .OrderBy(item => item.IdColaborador)
+                    .Select(item => new { item.IdColaborador, item.EstaIncluido })),
+                Observacion = "Composición explícita del escenario; actor: " + idActor
+            });
 
             await contexto.SaveChangesAsync(cancellationToken);
             await transaccion.CommitAsync(cancellationToken);

@@ -17,13 +17,15 @@ public sealed class ForecastEscenarioService(ApplicationDbContext contexto)
             string idUsuarioActual,
             CancellationToken cancellationToken = default)
     {
-        await ForecastAutorizacion.ValidarRecursosHumanosAsync(
+        await ForecastAutorizacion.ValidarAdministracionFinancieraAsync(
             contexto,
             idUsuarioActual,
             cancellationToken);
 
         return await contexto.Planillas
             .AsNoTracking()
+            .Where(p=>p.EjecucionVigente!=null && p.EjecucionVigente.SnapshotCompleto && p.EjecucionVigente.EstadoEjecucion=="Autorizada"
+                && p.EjecucionVigente.EstadoReproducibilidad=="REPRODUCIBLE" && p.EjecucionVigente.IdPlanilla==p.IdPlanilla)
             .Where(planilla => planilla.EstadoRegistro == EstadosRegistro.Activo
                 && planilla.PeriodoPlanilla != null
                 && planilla.PeriodoPlanilla.EstadoRegistro == EstadosRegistro.Activo
@@ -51,7 +53,7 @@ public sealed class ForecastEscenarioService(ApplicationDbContext contexto)
         string idUsuarioActual,
         CancellationToken cancellationToken = default)
     {
-        var idActor = await ForecastAutorizacion.ValidarRecursosHumanosAsync(
+        var idActor = await ForecastAutorizacion.ValidarAdministracionFinancieraAsync(
             contexto,
             idUsuarioActual,
             cancellationToken);
@@ -63,6 +65,21 @@ public sealed class ForecastEscenarioService(ApplicationDbContext contexto)
 
         try
         {
+            if(datos.IdPlanillasHistoricas.Count==0)
+            {
+                var tipos=datos.Periodos.Select(p=>p.TipoPeriodo).Distinct().ToArray();
+                if(tipos.Length!=1)throw new ConfiguracionConceptoException("PERIODOS_FORECAST_NO_COMPARABLES");
+                var tipo=tipos[0];var inicio=datos.Periodos[0].FechaInicio;
+                var automaticas=await contexto.Planillas.AsNoTracking()
+                    .Where(p=>p.EstadoRegistro==EstadosRegistro.Activo && p.PeriodoPlanilla!.EstadoRegistro==EstadosRegistro.Activo
+                        && p.PeriodoPlanilla.TipoPeriodo==tipo && p.PeriodoPlanilla.FechaFin<inicio
+                        && (p.EstadoPlanilla!.Nombre==EstadosPlanilla.Aprobada || p.EstadoPlanilla.Nombre==EstadosPlanilla.Cerrada)
+                        && (p.PeriodoPlanilla.EstadoPlanilla!.Nombre==EstadosPlanilla.Aprobada || p.PeriodoPlanilla.EstadoPlanilla.Nombre==EstadosPlanilla.Cerrada)
+                        && p.EjecucionVigente!=null && p.EjecucionVigente.SnapshotCompleto && p.EjecucionVigente.EstadoEjecucion=="Autorizada"
+                        && p.EjecucionVigente.EstadoReproducibilidad=="REPRODUCIBLE" && p.EjecucionVigente.IdPlanilla==p.IdPlanilla)
+                    .OrderByDescending(p=>p.PeriodoPlanilla!.FechaFin).ThenByDescending(p=>p.IdPlanilla).Take(3).Select(p=>p.IdPlanilla).ToArrayAsync(cancellationToken);
+                datos=datos with{IdPlanillasHistoricas=automaticas};
+            }
             var idsFuentesElegibles = await contexto.Planillas
                 .AsNoTracking()
                 .Where(planilla => datos.IdPlanillasHistoricas.Contains(planilla.IdPlanilla)
@@ -93,6 +110,7 @@ public sealed class ForecastEscenarioService(ApplicationDbContext contexto)
                 FechaInicioProyeccion = datos.Periodos[0].FechaInicio,
                 FechaFinProyeccion = datos.Periodos[^1].FechaFin,
                 PeriodosHistoricosConsiderados = datos.IdPlanillasHistoricas.Count,
+                TieneHistoricoLimitado = datos.IdPlanillasHistoricas.Count<3,
                 EstadoEscenario = EstadosEscenarioForecast.Borrador,
                 MontoProyectadoTotal = 0m,
                 MontoRealTotal = null,
@@ -142,7 +160,7 @@ public sealed class ForecastEscenarioService(ApplicationDbContext contexto)
         string idUsuarioActual,
         CancellationToken cancellationToken = default)
     {
-        await ForecastAutorizacion.ValidarRecursosHumanosAsync(
+        await ForecastAutorizacion.ValidarAdministracionFinancieraAsync(
             contexto,
             idUsuarioActual,
             cancellationToken);
@@ -154,6 +172,7 @@ public sealed class ForecastEscenarioService(ApplicationDbContext contexto)
             .ThenByDescending(escenario => escenario.IdForecastEscenario)
             .Select(escenario => new EscenarioForecastResumen
             {
+                VersionMotor = escenario.VersionMotor,
                 IdForecastEscenario = escenario.IdForecastEscenario,
                 Nombre = escenario.Nombre,
                 FechaInicioProyeccion = escenario.FechaInicioProyeccion,
@@ -177,7 +196,7 @@ public sealed class ForecastEscenarioService(ApplicationDbContext contexto)
         string idUsuarioActual,
         CancellationToken cancellationToken = default)
     {
-        await ForecastAutorizacion.ValidarRecursosHumanosAsync(
+        await ForecastAutorizacion.ValidarAdministracionFinancieraAsync(
             contexto,
             idUsuarioActual,
             cancellationToken);
@@ -191,6 +210,7 @@ public sealed class ForecastEscenarioService(ApplicationDbContext contexto)
                 IdForecastEscenario = escenario.IdForecastEscenario,
                 Nombre = escenario.Nombre,
                 Descripcion = escenario.Descripcion,
+                VersionMotor = escenario.VersionMotor,
                 FechaInicioProyeccion = escenario.FechaInicioProyeccion,
                 FechaFinProyeccion = escenario.FechaFinProyeccion,
                 PeriodosHistoricosConsiderados = escenario.PeriodosHistoricosConsiderados,
@@ -253,7 +273,7 @@ public sealed class ForecastEscenarioService(ApplicationDbContext contexto)
         string idUsuarioActual,
         CancellationToken cancellationToken = default)
     {
-        var idActor = await ForecastAutorizacion.ValidarRecursosHumanosAsync(
+        var idActor = await ForecastAutorizacion.ValidarAdministracionFinancieraAsync(
             contexto,
             idUsuarioActual,
             cancellationToken);
@@ -271,12 +291,7 @@ public sealed class ForecastEscenarioService(ApplicationDbContext contexto)
 
         try
         {
-            var escenario = await contexto.ForecastEscenarios
-                .FirstOrDefaultAsync(item => item.IdForecastEscenario == idForecastEscenario
-                    && item.EstadoRegistro == EstadosRegistro.Activo,
-                    cancellationToken)
-                ?? throw new KeyNotFoundException(
-                    "El escenario solicitado no existe o no está activo.");
+            var escenario = await BloqueoEscenarioForecast.ObtenerAsync(contexto,idForecastEscenario,cancellationToken);
 
             if (escenario.EstadoEscenario is EstadosEscenarioForecast.Guardado
                 or EstadosEscenarioForecast.Comparado)
@@ -313,28 +328,22 @@ public sealed class ForecastEscenarioService(ApplicationDbContext contexto)
                     && item.EstadoRegistro == EstadosRegistro.Activo,
                     cancellationToken);
 
-            if (cantidadPeriodos == 0 || cantidadFuentes == 0 || cantidadDetalles == 0)
+            if (cantidadPeriodos == 0 || cantidadFuentes != escenario.PeriodosHistoricosConsiderados || cantidadDetalles == 0)
             {
                 throw new InvalidOperationException(
                     "El escenario no conserva toda la información necesaria para guardarse.");
             }
 
-            var totalBruto = await contexto.ForecastDetalles
-                .AsNoTracking()
-                .Where(item => item.IdForecastEscenario == idForecastEscenario
-                    && item.EstadoRegistro == EstadosRegistro.Activo
-                    && item.Concepto == ConceptosForecast.SalarioBruto)
-                .SumAsync(item => item.MontoProyectado, cancellationToken);
-
-            if (totalBruto != escenario.MontoProyectadoTotal)
-            {
-                throw new InvalidOperationException(
-                    "El total del escenario no coincide con sus resultados persistidos.");
-            }
+            if(escenario.VersionMotor!=ProyeccionFinanciera.VersionMotor)
+                throw new ConfiguracionConceptoException("FORECAST_LEGADO_NO_REPRODUCIBLE");
+            await ForecastSnapshotEscritura.ConciliarAsync(contexto,idForecastEscenario,escenario.MontoProyectadoTotal,cancellationToken);
 
             escenario.EstadoEscenario = EstadosEscenarioForecast.Guardado;
             escenario.FechaModificacion = DateTime.Now;
             escenario.ModificadoPor = idActor;
+
+            contexto.BitacoraAuditoria.Add(new(){IdUsuario=idActor,FechaHora=DateTime.UtcNow,Accion="GUARDAR_FORECAST",Entidad=nameof(ForecastEscenario),
+                IdRegistro=idForecastEscenario.ToString(System.Globalization.CultureInfo.InvariantCulture),Observacion="Actor: "+idActor+"; snapshot FIN-FOR-V1 conservado; FIN-02 contenido."});
 
             await contexto.SaveChangesAsync(cancellationToken);
             await transaccion.CommitAsync(cancellationToken);

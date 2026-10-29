@@ -8,7 +8,7 @@ using SIGECDC.Persistence.Identity;
 
 namespace SIGECDC.Persistence.Forecast;
 
-public sealed class ForecastComparacionEscenarioService(ApplicationDbContext contexto)
+public sealed partial class ForecastComparacionEscenarioService(ApplicationDbContext contexto)
     : IForecastComparacionEscenarioService
 {
     public async Task<IReadOnlyList<EscenarioComparacionForecastOpcion>>
@@ -36,6 +36,7 @@ public sealed class ForecastComparacionEscenarioService(ApplicationDbContext con
             {
                 IdForecastEscenario = item.IdForecastEscenario,
                 Nombre = item.Nombre,
+                VersionMotor = item.VersionMotor,
                 EstadoEscenario = item.EstadoEscenario,
                 FechaInicioProyeccion = item.FechaInicioProyeccion,
                 FechaFinProyeccion = item.FechaFinProyeccion,
@@ -118,6 +119,16 @@ public sealed class ForecastComparacionEscenarioService(ApplicationDbContext con
                     "El período seleccionado no pertenece a los escenarios comparados.");
             }
 
+            if (escenarios.Any(e => e.VersionMotor == ProyeccionFinanciera.VersionMotor))
+            {
+                if (escenarios.Any(e => e.VersionMotor != ProyeccionFinanciera.VersionMotor))
+                    throw new ValidationException("No se pueden mezclar escenarios financieros actuales con resultados legados.");
+                var snapshot = await CompararSnapshotsAsync(escenarioBase, escenarioAlternativo, solicitud, cancellationToken);
+                await transaccion.CommitAsync(cancellationToken);
+                return snapshot;
+            }
+
+            await ForecastResultadoConsultaInterna.ExigirLecturaLegadaAsync(contexto,ids,cancellationToken);
             var detalles = await ForecastResultadoConsultaInterna.Crear(contexto, ids)
                 .ToListAsync(cancellationToken);
             if (detalles.All(item => item.IdForecastEscenario != escenarioBase.IdForecastEscenario)

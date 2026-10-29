@@ -6,7 +6,7 @@ using SIGECDC.Persistence.Identity;
 
 namespace SIGECDC.Web.Components.Account;
 
-internal sealed class UsuarioActivoSignInManager(
+public sealed class UsuarioActivoSignInManager(
     UserManager<ApplicationUser> userManager,
     IHttpContextAccessor contextAccessor,
     IUserClaimsPrincipalFactory<ApplicationUser> claimsFactory,

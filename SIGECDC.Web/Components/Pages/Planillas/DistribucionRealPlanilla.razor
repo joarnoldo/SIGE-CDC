@@ -1,0 +1,61 @@
+@page "/rrhh/reportes-planilla/distribucion-real/{IdDetalle:long}"
+@rendermode InteractiveServer
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Administrador,Recursos Humanos")]
+@using System.Security.Claims
+@using SIGECDC.Application.Forecast
+@using SIGECDC.Domain.Planillas
+@inject IForecastComparacionSnapshotService Servicio
+@inject AuthenticationStateProvider Autenticacion
+
+<PageTitle>Distribución real de Planilla | SIGE-CDC</PageTitle>
+<section class="section-shell"><div class="container stack">
+    <h1>Distribución del costo laboral real</h1>
+    <p>Registre la atribución respaldada por la empresa. La suma debe ser 100 %. Puede indicar Sin asignar.</p>
+    @if(error is not null){<div role="alert" class="alert alert--danger">@error</div>}
+    @if(consulta is not null)
+    {
+        <h2>@consulta.Colaborador</h2><p>Ejecución @consulta.IdEjecucion · V@(consulta.Version) · @consulta.Estado · Costo laboral total CRC @consulta.CostoLaboralTotal.ToString("N2")</p>
+        @if(consulta.Consumida){<p class="alert alert--info">Esta distribución ya es evidencia de una comparación. No admite modificaciones.</p>}
+        <fieldset disabled="@(ocupado || consulta.Consumida)">
+            @foreach(var fila in filas)
+            {
+                <div class="row mb-2" @key="fila"><div class="col">
+                    <label>Destino<select class="form-select" @bind="fila.IdProyecto"><option value="0">Sin asignar</option>
+                    @foreach(var proyecto in consulta.Proyectos){<option value="@proyecto.Id">@proyecto.Codigo · @proyecto.Nombre</option>}
+                    </select></label></div><div class="col"><label>Porcentaje<input class="form-control" type="number" min="0.0001" max="100" step="0.0001" @bind="fila.Porcentaje" /></label></div>
+                    <div class="col"><button class="btn btn--secondary" @onclick="()=>filas.Remove(fila)">Quitar</button></div>
+                </div>
+            }
+            <button class="btn btn--secondary" @onclick="()=>filas.Add(new())">Agregar destino</button>
+            <label>Referencia de soporte<input class="form-control" maxlength="500" @bind="soporte" /></label>
+            <button class="btn btn--primary" @onclick="Guardar">Autorizar distribución completa</button>
+        </fieldset>
+    }
+    <a href="/rrhh/reportes-planilla">Volver al reporte</a>
+</div></section>
+@code {
+    [Parameter] public long IdDetalle {get;set;}
+    private sealed class Fila {public long IdProyecto {get;set;} public decimal Porcentaje {get;set;}}
+    private List<Fila> filas=[];
+    private DistribucionRealConsulta? consulta;
+    private string soporte="";
+    private string? error;
+    private bool ocupado;
+    private async Task<string> Actor()=>(await Autenticacion.GetAuthenticationStateAsync()).User.FindFirstValue(ClaimTypes.NameIdentifier)??"";
+    protected override async Task OnParametersSetAsync()=>await Ejecutar(false);
+    private Task Guardar()=>Ejecutar(true);
+    private async Task Ejecutar(bool guardar)
+    {
+        if(ocupado)return;ocupado=true;error=null;
+        try
+        {
+            var actor=await Actor();
+            if(guardar)await Servicio.RegistrarDistribucionAsync(new(IdDetalle,filas.Select(f=>new DestinoDistribucionReal(f.IdProyecto==0?null:f.IdProyecto,f.IdProyecto==0,f.Porcentaje)).ToArray(),soporte),actor);
+            consulta=await Servicio.ConsultarDistribucionAsync(IdDetalle,actor);filas=consulta.Destinos.Select(d=>new Fila{IdProyecto=d.IdProyecto??0,Porcentaje=d.Porcentaje}).ToList();
+        }
+        catch(ConfiguracionConceptoException e){error=e.Message;}
+        catch(UnauthorizedAccessException){consulta=null;error="Consulta no disponible para esta cuenta.";}
+        catch(InvalidOperationException){error="La distribución no está disponible o cambió durante la operación. Vuelva a consultar.";}
+        finally{ocupado=false;}
+    }
+}

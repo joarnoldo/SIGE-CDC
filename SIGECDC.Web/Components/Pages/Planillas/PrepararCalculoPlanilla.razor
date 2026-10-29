@@ -1,0 +1,153 @@
+@inherits ComponenteRecorridoPlanilla
+@inject IConsultaRecorridoPlanilla Consulta
+@inject IResolucionTemporalFinancieraService Temporal
+
+<article class="form-section stack">
+    <h2>Preparar cálculo vigente</h2>
+    <MensajeRecorrido Texto="@Mensaje" Error="@EsError" />
+    <label for="relacion-calculo">Referencia que acredita las relaciones asalariadas ordinarias del período</label>
+    <input id="relacion-calculo" maxlength="500" @bind="relacion" />
+    <span class="help-text">Referencia a contratos o expediente revisado, no su contenido ni datos privados. No acredita relaciones especiales.</span>
+    <button class="btn btn--secondary" disabled="@(Ocupado || Bloqueado || string.IsNullOrWhiteSpace(relacion))" @onclick="PrepararAsync">Revisar condiciones y preparar evidencia</button>
+    @foreach (var bloqueo in bloqueos)
+    {
+        <p class="alert alert--danger" role="alert">@bloqueo</p>
+    }
+    @if (preparada && catalogos is not null)
+    {
+        <p>Complete las acreditaciones aplicables. Esta pantalla no permite editar tasas normativas.</p>
+        @foreach (var grupo in cuotas.GroupBy(c => c.IdColaborador))
+        {
+            <fieldset class="form-section stack"><legend>Cuotas: @Nombre(grupo.Key)</legend>
+                @foreach (var fila in grupo)
+                {
+                    <div class="form-grid" @key="fila">
+                        <strong>@NombreCuota(fila.Componente)</strong>
+                        <label>Regla aplicable
+                            <select @bind="fila.Regla"><option value="Desconocida">Seleccione según respaldo</option>
+                                <option value="RemuneracionContributiva">Remuneración contributiva</option>
+                                @if (CatalogoCuotasSociales.Componentes.Single(c => c.Codigo == fila.Componente).CodigoMinimo is not null)
+                                {
+                                    <option value="MinimoMensualOrdinario">Mínimo mensual ordinario</option>
+                                    <option value="ExcepcionSinMinimo">Excepción acreditada al mínimo</option>
+                                }
+                            </select>
+                        </label>
+                        <label>Ámbito normativo<select @bind="fila.Clave"><option value="">Seleccione</option><option value="ORDINARIO">Ordinario acreditado</option></select></label>
+                        <label>Referencia del respaldo<input maxlength="500" @bind="fila.Soporte" /></label>
+                        <label>Referencia de la regla aplicable<input maxlength="500" @bind="fila.ReferenciaRegla" /></label>
+                    </div>
+                }
+            </fieldset>
+        }
+        @foreach (var fila in riesgos)
+        {
+            <fieldset class="form-section stack"><legend>Riesgos del Trabajo: @Nombre(fila.Contrato.IdColaborador)</legend>
+                <p>Contrato @fila.Contrato.Tipo · @fila.Contrato.Vigencia.Inicio.ToString("dd/MM/yyyy") · Póliza @fila.Poliza · Actividad @fila.Actividad</p>
+                <a href="@($"rrhh/periodos-planilla/contratos/{fila.Contrato.Id}/condiciones")">Revisar condición y asociación RT del contrato</a>
+                <label>Modalidad<select @bind="fila.Modalidad"><option value="Desconocida">Seleccione</option>
+                    <option value="RemuneracionSalarialOrdinaria">Remuneración salarial ordinaria acreditada</option></select></label>
+                <label>Referencia de acreditación de la modalidad<input maxlength="500" @bind="fila.Soporte" /></label>
+            </fieldset>
+        }
+        <fieldset class="form-section stack"><legend>Otros costos patronales aplicables</legend>
+            <p>Solo hechos empresariales con concepto gobernado y respaldo. No son deducciones del trabajador.</p>
+            @foreach (var fila in otros)
+            {
+                <div class="form-grid" @key="fila">
+                    <label>Colaborador<select @bind="fila.Colaborador"><option value="0">Seleccione</option>@foreach (var p in poblacion!.Poblacion) { <option value="@p.IdColaborador">@Nombre(p.IdColaborador)</option> }</select></label>
+                    <label>Concepto<select @bind="fila.Concepto"><option value="0">Seleccione</option>@foreach (var c in catalogos.Conceptos.Where(c => c.Clasificacion == "CargaPatronal" && c.TipoBase is "MONTO_AUTORIZADO" or "SALARIO_DEVENGADO")) { <option value="@c.IdVersion">@c.Nombre · @c.UnidadPermitida</option> }</select></label>
+                    <label>Fecha<input type="date" @bind="fila.Fecha" /></label>
+                    <label>Referencia única del hecho<input maxlength="300" @bind="fila.Clave" /></label>
+                    <label>Valor (CRC o porcentaje según concepto)<input type="number" step="0.0001" @bind="fila.Valor" /></label>
+                    <label>Soporte<input maxlength="500" @bind="fila.Soporte" /></label>
+                    <label><input type="checkbox" @bind="fila.Autorizar" /> Autorizar explícitamente este costo</label>
+                    <label>Referencia de autorización<input maxlength="500" @bind="fila.Autorizacion" /></label>
+                    <label><input type="checkbox" @bind="fila.BaseSalarial" /> Para porcentaje, confirmo la base salarial del tramo que contiene esta fecha</label>
+                    <button class="btn btn--secondary" @onclick="() => otros.Remove(fila)">Quitar de esta solicitud</button>
+                </div>
+            }
+            <button class="btn btn--secondary" @onclick="() => otros.Add(new() { Fecha = Periodo.Periodo.FechaInicio })">Añadir costo aplicable</button>
+            <label><input type="checkbox" @bind="costosRevisados" /> Revisé los otros costos aplicables; la lista anterior está completa (puede estar vacía si no existen).</label>
+        </fieldset>
+        @if (Periodo.Periodo.TipoPeriodo == "Quincenal" && Periodo.Periodo.FechaInicio.Day > 15)
+        {
+            <label>Versión vigente del primer corte del mismo mes
+                <select @bind="previa"><option value="">Seleccione la versión previa</option>@foreach (var e in Periodo.EjecucionesPrevias) { <option value="@e.Id">@e.Nombre</option> }</select>
+            </label>
+        }
+        <label><input type="checkbox" @bind="evidenciaConfirmada" /> Acredito las reglas y modalidades indicadas para todo el período mostrado, con las referencias correspondientes.</label>
+        <button class="btn btn--primary" disabled="@(Ocupado || Bloqueado || !evidenciaConfirmada || !costosRevisados)" @onclick="CalcularAsync">Calcular nueva versión</button>
+        <p>Si alguna acreditación solo cubre parte del período, no la confirme aquí: resuelva la evidencia segmentada antes de calcular.</p>
+    }
+</article>
+
+@code {
+    [Parameter, EditorRequired] public PeriodoRecorrido Periodo { get; set; } = default!;
+    [Parameter] public EventCallback<SolicitudSnapshotPlanilla> Calcular { get; set; }
+    [Parameter] public bool Bloqueado { get; set; }
+    private string relacion = "";
+    private string relacionRevisada = "";
+    private CatalogosRecorridoPlanilla? catalogos;
+    private ResultadoTemporalSalarial? poblacion;
+    private List<string> bloqueos = [];
+    private List<CuotaCaptura> cuotas = [];
+    private List<RiesgoCaptura> riesgos = [];
+    private List<CostoCaptura> otros = [];
+    private bool preparada, evidenciaConfirmada, costosRevisados;
+    private long? previa;
+    private string Nombre(long id) => Periodo.Contratos.FirstOrDefault(c => c.IdColaborador == id)?.Colaborador ?? "Colaborador sin contrato demostrable";
+    private static string NombreCuota(string codigo) => codigo.Replace('_', ' ').Replace("TRABAJADOR", "trabajador").Replace("PATRONO", "patrono");
+    private Task PrepararAsync() => AccionAsync(async () =>
+    {
+        preparada = false; evidenciaConfirmada = false; costosRevisados = false; bloqueos.Clear();
+        catalogos = await Consulta.CatalogosAsync(await ActorAsync());
+        poblacion = await Temporal.ResolverPeriodoTemporalAsync(new(Periodo.Periodo.FechaInicio, Periodo.Periodo.FechaFin,
+            Periodo.Periodo.TipoPeriodo), await ActorAsync(), relacion.Trim());
+        bloqueos = poblacion.Poblacion.SelectMany(p => p.Bloqueos.Select(b => Nombre(p.IdColaborador) + ": " + MensajesRecorridoPlanilla.Traducir(b.Codigo))).Distinct().ToList();
+        if (!poblacion.EsResoluble)
+        {
+            if (bloqueos.Count == 0) bloqueos.Add(MensajesRecorridoPlanilla.Traducir("POBLACION_FALTANTE"));
+            return;
+        }
+        cuotas = poblacion.Poblacion.SelectMany(p => CatalogoCuotasSociales.Componentes.Select(c => new CuotaCaptura { IdColaborador = p.IdColaborador, Componente = c.Codigo })).ToList();
+        var contratos = poblacion.Poblacion.SelectMany(p => p.Segmentos).Select(s => s.IdContrato).Distinct().ToArray();
+        riesgos = Periodo.Contratos.Where(c => contratos.Contains(c.Id)).Select(c =>
+        {
+            var rt = catalogos.Riesgos.SingleOrDefault(r => r.Id == c.IdRiesgo);
+            return new RiesgoCaptura { Contrato = c, Poliza = rt?.Poliza ?? "", Actividad = rt?.Actividad ?? "" };
+        }).ToList();
+        relacionRevisada = relacion.Trim(); preparada = true;
+    });
+    private Task CalcularAsync() => AccionAsync(async () =>
+    {
+        if (!preparada || !evidenciaConfirmada || !costosRevisados || relacion.Trim() != relacionRevisada)
+            throw new ConfiguracionConceptoException("APLICABILIDAD_NO_DEMOSTRADA");
+        var actor = await ActorAsync(); var vigencia = new VigenciaFinanciera(Periodo.Periodo.FechaInicio, Periodo.Periodo.FechaFin);
+        if (cuotas.Any(c => c.Regla == ReglaBaseCuota.Desconocida || string.IsNullOrWhiteSpace(c.Clave) || string.IsNullOrWhiteSpace(c.Soporte) || string.IsNullOrWhiteSpace(c.ReferenciaRegla)))
+            throw new ConfiguracionConceptoException("APLICABILIDAD_CUOTA_FALTANTE");
+        if (riesgos.Any(r => r.Modalidad == ModalidadBaseRiesgo.Desconocida || string.IsNullOrWhiteSpace(r.Poliza) || string.IsNullOrWhiteSpace(r.Soporte)))
+            throw new ConfiguracionConceptoException("RT_APLICABILIDAD_FALTANTE");
+        var hechos = otros.Select(o =>
+        {
+            var c = catalogos!.Conceptos.SingleOrDefault(c => c.IdVersion == o.Concepto && c.Clasificacion == "CargaPatronal")
+                ?? throw new ConfiguracionConceptoException("CONCEPTO_VERSION_FALTANTE");
+            ReferenciaSegmentoTemporal? referencia = null;
+            if (c.UnidadPermitida == "Porcentaje")
+            {
+                if (!o.BaseSalarial) throw new ConfiguracionConceptoException("BASE_PORCENTUAL_NO_DEMOSTRADA");
+                var s = poblacion!.Poblacion.SingleOrDefault(p => p.IdColaborador == o.Colaborador)?.Segmentos
+                    .SingleOrDefault(s => s.Inicio <= o.Fecha && s.Fin >= o.Fecha) ?? throw new ConfiguracionConceptoException("SEGMENTO_INCOMPATIBLE");
+                referencia = ReferenciaSegmentoTemporal.De(s);
+            }
+            return new HechoCostoPatronal(o.Clave.Trim(), o.Colaborador, c.IdVersion, c.Codigo, o.Fecha, c.UnidadPermitida,
+                o.Valor, o.Soporte.Trim(), actor, o.Autorizar ? actor : null, o.Autorizar ? o.Autorizacion.Trim() : null, referencia);
+        }).ToArray();
+        await Calcular.InvokeAsync(new(Periodo.Periodo.IdPeriodoPlanilla, relacionRevisada,
+            cuotas.Select(c => new AplicabilidadCuota(c.IdColaborador, c.Componente, c.Clave, vigencia, c.Regla, c.Soporte.Trim(), c.ReferenciaRegla.Trim(), actor)).ToArray(),
+            riesgos.Select(r => new AplicabilidadRiesgoTrabajo(r.Contrato.Id, r.Poliza, r.Actividad, vigencia, r.Modalidad, r.Soporte.Trim(), actor)).ToArray(), hechos, previa));
+    });
+    private sealed class CuotaCaptura { public long IdColaborador; public string Componente = "", Clave = "", Soporte = "", ReferenciaRegla = ""; public ReglaBaseCuota Regla; }
+    private sealed class RiesgoCaptura { public ContratoRecorrido Contrato = default!; public string Poliza = "", Actividad = "", Soporte = ""; public ModalidadBaseRiesgo Modalidad; }
+    private sealed class CostoCaptura { public long Colaborador, Concepto; public DateTime Fecha; public decimal? Valor; public string Clave = "", Soporte = "", Autorizacion = ""; public bool Autorizar, BaseSalarial; }
+}

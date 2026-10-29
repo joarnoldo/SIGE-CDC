@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using SIGECDC.Application.Activos;
+using SIGECDC.Application.Identity;
 using SIGECDC.Application.Auditoria;
 using SIGECDC.Application.Forecast;
 using SIGECDC.Application.Operaciones;
@@ -31,6 +32,8 @@ public static class ConfiguracionPersistencia
             opciones.UseMySQL(cadenaConexion));
 
         servicios.AddScoped<IConsultaContactoService, ConsultaContactoService>();
+        servicios.AddScoped<IAdministracionCuentasService, AdministracionCuentasService>();
+        servicios.AddScoped<IBootstrapAdministradorService, AdministracionCuentasService>();
         servicios.AddScoped<IFaqService, FaqService>();
         servicios.AddScoped<INoticiaService, NoticiaService>();
         servicios.AddScoped<IGaleriaService, GaleriaService>();
@@ -42,6 +45,17 @@ public static class ConfiguracionPersistencia
         servicios.AddScoped<IPuestoService, PuestoService>();
         servicios.AddScoped<IContratoDocumentoService, ContratoDocumentoService>();
         servicios.AddScoped<IParametroPlanillaService, ParametroPlanillaService>();
+        servicios.AddScoped<IGobiernoFinancieroService, GobiernoFinancieroService>();
+        servicios.AddScoped<IResolucionTemporalFinancieraService, GobiernoFinancieroService>();
+        servicios.AddScoped<ICondicionLaboralService, GobiernoFinancieroService>();
+        servicios.AddScoped<INucleoConceptosService, GobiernoFinancieroService>();
+        servicios.AddScoped<IIncidenciasCalculadasService, GobiernoFinancieroService>();
+        servicios.AddScoped<ICuotasSocialesService, GobiernoFinancieroService>();
+        servicios.AddScoped<IRentaSalarialService, GobiernoFinancieroService>();
+        servicios.AddScoped<ICostosPatronalesService, GobiernoFinancieroService>();
+        servicios.AddScoped<ISnapshotPlanillaService, GobiernoFinancieroService>();
+        servicios.AddScoped<IConsultaRecorridoPlanilla, GobiernoFinancieroService>();
+        servicios.AddScoped<RecorridoPlanilla>();
         servicios.AddScoped<IIncidenciaPlanillaService, IncidenciaPlanillaService>();
         servicios.AddScoped<IPlanillaService, PlanillaService>();
         servicios.AddScoped<IColillaPagoService, ColillaPagoService>();
@@ -57,9 +71,11 @@ public static class ConfiguracionPersistencia
 		servicios.AddScoped<IForecastMovimientoPersonalService, ForecastMovimientoPersonalService>();
 		servicios.AddScoped<IForecastAsignacionProyectoService, ForecastAsignacionProyectoService>();
 		servicios.AddScoped<IForecastCalculoService, ForecastCalculoService>();
+        servicios.AddScoped<IForecastEvidenciaService, ForecastEvidenciaService>();
 		servicios.AddScoped<IForecastResultadoService, ForecastResultadoService>();
 		servicios.AddScoped<IForecastComparacionEscenarioService, ForecastComparacionEscenarioService>();
 		servicios.AddScoped<IForecastComparacionRealService, ForecastComparacionRealService>();
+        servicios.AddScoped<IForecastComparacionSnapshotService, ForecastComparacionSnapshotService>();
 		servicios.AddScoped<IForecastDesviacionService, ForecastDesviacionService>();
 		servicios.AddScoped<IMantenimientoService, MantenimientoService>();
 

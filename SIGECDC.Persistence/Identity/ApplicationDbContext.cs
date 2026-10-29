@@ -9,10 +9,12 @@ using SIGECDC.Domain.Planillas;
 using SIGECDC.Domain.RecursosHumanos;
 using SIGECDC.Domain.SitioPublico;
 using SIGECDC.Persistence.Forecast;
+using SIGECDC.Persistence.Planillas;
+using SIGECDC.Persistence.RecursosHumanos;
 
 namespace SIGECDC.Persistence.Identity;
 
-public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
+public partial class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
     : IdentityDbContext<ApplicationUser, IdentityRole, string>(options)
 {
     public DbSet<ConsultaContacto> ConsultasContacto => Set<ConsultaContacto>();
@@ -25,6 +27,11 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<Puesto> Puestos => Set<Puesto>();
     public DbSet<Colaborador> Colaboradores => Set<Colaborador>();
     public DbSet<Contrato> Contratos => Set<Contrato>();
+    public DbSet<CondicionLaboralVersion> CondicionesLaboralesVersion => Set<CondicionLaboralVersion>();
+    public DbSet<IncidenciaPlanillaConfirmacion> ConfirmacionesIncidencias => Set<IncidenciaPlanillaConfirmacion>();
+    public DbSet<JornadaLaboral> JornadasLaborales => Set<JornadaLaboral>();
+    public DbSet<OcupacionSalarioMinimo> OcupacionesSalarioMinimo => Set<OcupacionSalarioMinimo>();
+    public DbSet<SalarioMinimoVersion> SalariosMinimosVersion => Set<SalarioMinimoVersion>();
     public DbSet<TipoDocumento> TiposDocumento => Set<TipoDocumento>();
     public DbSet<DocumentoArchivo> DocumentosArchivo => Set<DocumentoArchivo>();
     public DbSet<ParametroPlanilla> ParametrosPlanilla => Set<ParametroPlanilla>();
@@ -37,9 +44,26 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<DetallePlanilla> DetallesPlanilla => Set<DetallePlanilla>();
     public DbSet<ColillaPago> ColillasPago => Set<ColillaPago>();
     public DbSet<IncidenciaPlanilla> IncidenciasPlanilla => Set<IncidenciaPlanilla>();
+    public DbSet<ConceptoPlanilla> ConceptosPlanilla => Set<ConceptoPlanilla>();
+    public DbSet<ConceptoPlanillaVersion> ConceptosPlanillaVersion => Set<ConceptoPlanillaVersion>();
+    public DbSet<VersionNormativa> VersionesNormativas => Set<VersionNormativa>();
+    public DbSet<ParametroNormativo> ParametrosNormativos => Set<ParametroNormativo>();
+    public DbSet<ValorParametroNormativo> ValoresParametrosNormativos => Set<ValorParametroNormativo>();
+    public DbSet<TramoImpuestoSalario> TramosImpuestoSalario => Set<TramoImpuestoSalario>();
+    public DbSet<CreditoFiscalNormativo> CreditosFiscalesNormativos => Set<CreditoFiscalNormativo>();
+    public DbSet<CreditoFiscalColaborador> CreditosFiscalesColaborador => Set<CreditoFiscalColaborador>();
+    public DbSet<ConfiguracionRiesgoTrabajo> ConfiguracionesRiesgoTrabajo => Set<ConfiguracionRiesgoTrabajo>();
+    public DbSet<EjecucionPlanilla> EjecucionesPlanilla => Set<EjecucionPlanilla>();
+    public DbSet<SegmentoCalculoPlanilla> SegmentosCalculoPlanilla => Set<SegmentoCalculoPlanilla>();
+    public DbSet<ConceptoDetallePlanilla> ConceptosDetallePlanilla => Set<ConceptoDetallePlanilla>();
+    public DbSet<AplicacionNormativaDetallePlanilla> AplicacionesNormativasDetallePlanilla => Set<AplicacionNormativaDetallePlanilla>();
+    public DbSet<DetallePlanillaDistribucionProyecto> DistribucionesProyectoDetallePlanilla => Set<DetallePlanillaDistribucionProyecto>();
     public DbSet<BitacoraAuditoria> BitacoraAuditoria => Set<BitacoraAuditoria>();
 
     public DbSet<ForecastEscenario> ForecastEscenarios => Set<ForecastEscenario>();
+    public DbSet<ForecastComparacionReal> ForecastComparacionesReales => Set<ForecastComparacionReal>();
+    public DbSet<ForecastComparacionResultado> ForecastComparacionResultados => Set<ForecastComparacionResultado>();
+    public DbSet<ForecastComparacionResultadoFuente> ForecastComparacionFuentes => Set<ForecastComparacionResultadoFuente>();
 
     public DbSet<ForecastPeriodo> ForecastPeriodos => Set<ForecastPeriodo>();
 
@@ -52,6 +76,10 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<ForecastAsignacionProyecto> ForecastAsignacionesProyecto => Set<ForecastAsignacionProyecto>();
 
     public DbSet<ForecastDetalle> ForecastDetalles => Set<ForecastDetalle>();
+
+    public DbSet<ForecastObservacionHistorica> ForecastObservacionesHistoricas => Set<ForecastObservacionHistorica>();
+    public DbSet<ForecastSegmentoProyectado> ForecastSegmentosProyectados => Set<ForecastSegmentoProyectado>();
+    public DbSet<ForecastAplicacionFinanciera> ForecastAplicacionesFinancieras => Set<ForecastAplicacionFinanciera>();
 
     public DbSet<EstadoActivo> EstadosActivo => Set<EstadoActivo>();
 
@@ -90,6 +118,31 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         builder.ApplyConfiguration(new ForecastParticipanteConfiguracion());
         builder.ApplyConfiguration(new ForecastAsignacionProyectoConfiguracion());
         builder.ApplyConfiguration(new ForecastDetalleConfiguracion());
+        builder.ApplyConfiguration(new ForecastObservacionHistoricaConfiguracion());
+        builder.ApplyConfiguration(new ForecastSegmentoProyectadoConfiguracion());
+        builder.ApplyConfiguration(new ForecastAplicacionFinancieraConfiguracion());
+        builder.ApplyConfiguration(new ConceptoPlanillaConfiguracion());
+        builder.ApplyConfiguration(new ConceptoPlanillaVersionConfiguracion());
+        builder.ApplyConfiguration(new VersionNormativaConfiguracion());
+        builder.ApplyConfiguration(new ParametroNormativoConfiguracion());
+        builder.ApplyConfiguration(new ValorParametroNormativoConfiguracion());
+        builder.ApplyConfiguration(new TramoImpuestoSalarioConfiguracion());
+        builder.ApplyConfiguration(new CreditoFiscalNormativoConfiguracion());
+        builder.ApplyConfiguration(new CreditoFiscalColaboradorConfiguracion());
+        builder.ApplyConfiguration(new ConfiguracionRiesgoTrabajoConfiguracion());
+        builder.ApplyConfiguration(new JornadaLaboralConfiguracion());
+        builder.ApplyConfiguration(new CondicionLaboralVersionConfiguracion());
+        builder.ApplyConfiguration(new IncidenciaPlanillaConfirmacionConfiguracion());
+        builder.ApplyConfiguration(new OcupacionSalarioMinimoConfiguracion());
+        builder.ApplyConfiguration(new SalarioMinimoVersionConfiguracion());
+        builder.ApplyConfiguration(new EjecucionPlanillaConfiguracion());
+        builder.ApplyConfiguration(new SegmentoCalculoPlanillaConfiguracion());
+        builder.ApplyConfiguration(new ConceptoDetallePlanillaConfiguracion());
+        builder.ApplyConfiguration(new AplicacionNormativaDetalleConfiguracion());
+        builder.ApplyConfiguration(new DetallePlanillaDistribucionProyectoConfiguracion());
+        builder.ApplyConfiguration(new ForecastComparacionRealConfiguracion());
+        builder.ApplyConfiguration(new ForecastComparacionResultadoConfiguracion());
+        builder.ApplyConfiguration(new ForecastComparacionResultadoFuenteConfiguracion());
 
 		builder.Entity<ApplicationUser>(entidad =>
 		{
@@ -547,11 +600,20 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             entidad.HasIndex(puesto => puesto.IdDepartamento)
                 .HasDatabaseName("IX_Puesto_IdDepartamento");
 
+            entidad.HasIndex(puesto => puesto.IdOcupacionSalarioMinimo)
+                .HasDatabaseName("IX_Puesto_IdOcupacionSalarioMinimo");
+
             entidad.HasOne(puesto => puesto.Departamento)
                 .WithMany()
                 .HasForeignKey(puesto => puesto.IdDepartamento)
                 .OnDelete(DeleteBehavior.SetNull)
                 .HasConstraintName("FK_Puesto_Departamento");
+
+            entidad.HasOne(puesto => puesto.OcupacionSalarioMinimo)
+                .WithMany()
+                .HasForeignKey(puesto => puesto.IdOcupacionSalarioMinimo)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_Puesto_OcupacionSalarioMinimo");
         });
 
         builder.Entity<Colaborador>(entidad =>
@@ -757,11 +819,38 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             entidad.HasIndex(contrato => contrato.EstadoContrato)
                 .HasDatabaseName("IX_Contrato_EstadoContrato");
 
+            entidad.HasIndex(contrato => contrato.IdJornadaLaboral)
+                .HasDatabaseName("IX_Contrato_IdJornadaLaboral");
+
+            entidad.HasIndex(contrato => contrato.IdConfiguracionRiesgoTrabajo)
+                .HasDatabaseName("IX_Contrato_IdConfiguracionRiesgoTrabajo");
+
+            entidad.HasIndex(contrato => new
+                {
+                    contrato.IdColaborador,
+                    contrato.FechaInicio,
+                    contrato.FechaFin,
+                    contrato.EstadoRegistro
+                })
+                .HasDatabaseName("IX_Contrato_ResolucionTemporal");
+
             entidad.HasOne(contrato => contrato.Colaborador)
                 .WithMany()
                 .HasForeignKey(contrato => contrato.IdColaborador)
                 .OnDelete(DeleteBehavior.Restrict)
                 .HasConstraintName("FK_Contrato_Colaborador");
+
+            entidad.HasOne(contrato => contrato.JornadaLaboral)
+                .WithMany()
+                .HasForeignKey(contrato => contrato.IdJornadaLaboral)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_Contrato_JornadaLaboral");
+
+            entidad.HasOne(contrato => contrato.ConfiguracionRiesgoTrabajo)
+                .WithMany()
+                .HasForeignKey(contrato => contrato.IdConfiguracionRiesgoTrabajo)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_Contrato_RiesgoTrabajo");
 
             entidad.HasOne<ApplicationUser>()
                 .WithMany()
@@ -870,7 +959,14 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
 
         builder.Entity<ParametroPlanilla>(entidad =>
         {
-            entidad.ToTable("ParametroPlanilla");
+            entidad.ToTable("ParametroPlanilla", tabla =>
+            {
+                tabla.HasCheckConstraint("CK_ParametroPlanilla_Vigencia",
+                    "`FechaVigenciaFin` IS NULL OR `FechaVigenciaInicio` IS NULL OR `FechaVigenciaFin` >= `FechaVigenciaInicio`");
+                tabla.HasCheckConstraint("CK_ParametroPlanilla_NoNormativo", "`EsNormativo` = 0");
+                tabla.HasCheckConstraint("CK_ParametroPlanilla_Valor",
+                    "(`TipoParametro` = 'Texto' AND `ValorTexto` IS NOT NULL AND `ValorDecimal` IS NULL) OR (`TipoParametro` <> 'Texto' AND `ValorDecimal` IS NOT NULL AND `ValorTexto` IS NULL)");
+            });
 
             entidad.HasKey(parametro => parametro.IdParametroPlanilla);
 
@@ -913,8 +1009,12 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                 .HasColumnType("date");
 
             entidad.Property(parametro => parametro.FechaCreacion)
+                .HasColumnType("datetime")
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .IsRequired();
+
+            entidad.Property(parametro => parametro.FechaModificacion)
+                .HasColumnType("datetime");
 
             entidad.Property(parametro => parametro.CreadoPor)
                 .HasMaxLength(255);
@@ -927,9 +1027,17 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                 .HasDefaultValue("Activo")
                 .IsRequired();
 
-            entidad.HasIndex(parametro => parametro.Codigo)
+            entidad.Property(parametro => parametro.EsNormativo)
+                .HasColumnType("tinyint(1)")
+                .HasDefaultValue(false)
+                .IsRequired();
+
+            entidad.HasIndex(parametro => new { parametro.Codigo, parametro.FechaVigenciaInicio })
                 .IsUnique()
-                .HasDatabaseName("UX_ParametroPlanilla_Codigo");
+                .HasDatabaseName("UX_ParametroPlanilla_Codigo_VigenciaInicio");
+
+            entidad.HasIndex(parametro => parametro.IdConceptoPlanilla)
+                .HasDatabaseName("IX_ParametroPlanilla_IdConceptoPlanilla");
 
             entidad.HasIndex(parametro => parametro.EstadoRegistro)
                 .HasDatabaseName("IX_ParametroPlanilla_EstadoRegistro");
@@ -945,6 +1053,12 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                 .HasForeignKey(parametro => parametro.ModificadoPor)
                 .OnDelete(DeleteBehavior.SetNull)
                 .HasConstraintName("FK_ParametroPlanilla_ModificadoPor");
+
+            entidad.HasOne(parametro => parametro.ConceptoPlanilla)
+                .WithMany()
+                .HasForeignKey(parametro => parametro.IdConceptoPlanilla)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_ParametroPlanilla_ConceptoPlanilla");
         });
 
         builder.Entity<ParametroPlanillaColaborador>(entidad =>
@@ -1127,6 +1241,15 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             entidad.HasIndex(tipo => tipo.Nombre)
                 .IsUnique()
                 .HasDatabaseName("UX_TipoIncidenciaPlanilla_Nombre");
+
+            entidad.HasIndex(tipo => tipo.IdConceptoPlanilla)
+                .HasDatabaseName("IX_TipoIncidencia_IdConceptoPlanilla");
+
+            entidad.HasOne(tipo => tipo.ConceptoPlanilla)
+                .WithMany()
+                .HasForeignKey(tipo => tipo.IdConceptoPlanilla)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_TipoIncidencia_ConceptoPlanilla");
         });
 
         builder.Entity<PeriodoPlanilla>(entidad =>
@@ -1163,8 +1286,12 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                 .HasMaxLength(500);
 
             entidad.Property(periodo => periodo.FechaCreacion)
+                .HasColumnType("datetime")
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .IsRequired();
+
+            entidad.Property(periodo => periodo.FechaModificacion)
+                .HasColumnType("datetime");
 
             entidad.Property(periodo => periodo.CreadoPor)
                 .HasMaxLength(255);
@@ -1219,7 +1346,10 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             entidad.Property(planilla => planilla.IdPlanilla)
                 .ValueGeneratedOnAdd();
 
-            entidad.Property(planilla => planilla.FechaCalculo);
+            entidad.Property(planilla => planilla.FechaCalculo).HasColumnType("datetime");
+            entidad.Property(planilla => planilla.FechaAprobacion).HasColumnType("datetime");
+            entidad.Property(planilla => planilla.FechaCierre).HasColumnType("datetime");
+            entidad.Property(planilla => planilla.FechaModificacion).HasColumnType("datetime");
 
             entidad.Property(planilla => planilla.SalarioBrutoTotal)
                 .HasPrecision(18, 2)
@@ -1251,6 +1381,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                 .HasMaxLength(500);
 
             entidad.Property(planilla => planilla.FechaCreacion)
+                .HasColumnType("datetime")
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .IsRequired();
 
@@ -1271,6 +1402,10 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
 
             entidad.HasIndex(planilla => planilla.IdEstadoPlanilla)
                 .HasDatabaseName("IX_Planilla_IdEstadoPlanilla");
+
+            entidad.HasIndex(planilla => planilla.IdEjecucionPlanillaVigente)
+                .IsUnique()
+                .HasDatabaseName("UX_Planilla_EjecucionVigente");
 
             entidad.HasOne(planilla => planilla.PeriodoPlanilla)
                 .WithOne(periodo => periodo.Planilla)
@@ -1307,11 +1442,18 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                 .HasForeignKey(planilla => planilla.ModificadoPor)
                 .OnDelete(DeleteBehavior.SetNull)
                 .HasConstraintName("FK_Planilla_ModificadoPor");
+
+            entidad.HasOne(planilla => planilla.EjecucionVigente)
+                .WithMany()
+                .HasForeignKey(planilla => planilla.IdEjecucionPlanillaVigente)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_Planilla_EjecucionVigente");
         });
 
         builder.Entity<DetallePlanilla>(entidad =>
         {
-            entidad.ToTable("DetallePlanilla");
+            entidad.ToTable("DetallePlanilla", tabla =>
+                tabla.HasCheckConstraint("CK_DetallePlanilla_SnapshotCompleto", "`SnapshotCompleto` IN (0,1)"));
 
             entidad.HasKey(detalle => detalle.IdDetallePlanilla);
 
@@ -1332,16 +1474,41 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             entidad.Property(detalle => detalle.SalarioNeto).HasPrecision(18, 2).IsRequired();
             entidad.Property(detalle => detalle.CostoPatronalEstimado).HasPrecision(18, 2).IsRequired();
 
+            entidad.Property(detalle => detalle.CodigoColaborador).HasMaxLength(20);
+            entidad.Property(detalle => detalle.NombreCompleto).HasMaxLength(320);
+            entidad.Property(detalle => detalle.NombrePuesto).HasMaxLength(150);
+            entidad.Property(detalle => detalle.NombreDepartamento).HasMaxLength(150);
+            entidad.Property(detalle => detalle.TipoContrato).HasMaxLength(100);
+            entidad.Property(detalle => detalle.PeriodicidadPago).HasMaxLength(20);
+            entidad.Property(detalle => detalle.CodigoJornada).HasMaxLength(50);
+            entidad.Property(detalle => detalle.HorasOrdinariasDia).HasPrecision(8, 4);
+            entidad.Property(detalle => detalle.SalarioContractual).HasPrecision(18, 2);
+            entidad.Property(detalle => detalle.FuenteDimensionesSnapshot).HasMaxLength(60);
+            entidad.Property(detalle => detalle.SnapshotCompleto)
+                .HasColumnType("tinyint(1)").HasDefaultValue(false).IsRequired();
+            entidad.Property(detalle => detalle.IngresosNoSalariales).HasPrecision(18, 2).HasDefaultValue(0m).IsRequired();
+            entidad.Property(detalle => detalle.CuotasObreras).HasPrecision(18, 2).HasDefaultValue(0m).IsRequired();
+            entidad.Property(detalle => detalle.ImpuestoSalario).HasPrecision(18, 2).HasDefaultValue(0m).IsRequired();
+            entidad.Property(detalle => detalle.OtrasDeducciones).HasPrecision(18, 2).HasDefaultValue(0m).IsRequired();
+            entidad.Property(detalle => detalle.CargasPatronales).HasPrecision(18, 2).HasDefaultValue(0m).IsRequired();
+            entidad.Property(detalle => detalle.RiesgosTrabajo).HasPrecision(18, 2).HasDefaultValue(0m).IsRequired();
+            entidad.Property(detalle => detalle.OtrosCostosPatronales).HasPrecision(18, 2).HasDefaultValue(0m).IsRequired();
+            entidad.Property(detalle => detalle.CostoLaboralTotal).HasPrecision(18, 2).HasDefaultValue(0m).IsRequired();
+
             entidad.Property(detalle => detalle.Observaciones)
                 .HasMaxLength(500);
 
             entidad.Property(detalle => detalle.FechaCreacion)
+                .HasColumnType("datetime")
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .IsRequired();
 
-            entidad.HasIndex(detalle => new { detalle.IdPlanilla, detalle.IdColaborador })
+            entidad.HasIndex(detalle => new { detalle.IdEjecucionPlanilla, detalle.IdColaborador })
                 .IsUnique()
-                .HasDatabaseName("UX_DetallePlanilla_Planilla_Colaborador");
+                .HasDatabaseName("UX_DetallePlanilla_Ejecucion_Colaborador");
+
+            entidad.HasIndex(detalle => detalle.IdPlanilla)
+                .HasDatabaseName("IX_DetallePlanilla_IdPlanilla");
 
             entidad.HasIndex(detalle => detalle.IdColaborador)
                 .HasDatabaseName("IX_DetallePlanilla_IdColaborador");
@@ -1357,6 +1524,12 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                 .HasForeignKey(detalle => detalle.IdColaborador)
                 .OnDelete(DeleteBehavior.Restrict)
                 .HasConstraintName("FK_DetallePlanilla_Colaborador");
+
+            entidad.HasOne(detalle => detalle.EjecucionPlanilla)
+                .WithMany(ejecucion => ejecucion.Detalles)
+                .HasForeignKey(detalle => detalle.IdEjecucionPlanilla)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_DetallePlanilla_EjecucionPlanilla");
         });
 
         builder.Entity<ColillaPago>(entidad =>
@@ -1376,6 +1549,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                 .HasMaxLength(500);
 
             entidad.Property(colilla => colilla.FechaGeneracion)
+                .HasColumnType("datetime")
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .IsRequired();
 
@@ -1424,6 +1598,9 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             entidad.Property(incidencia => incidencia.Cantidad)
                 .HasPrecision(18, 2);
 
+            entidad.Property(incidencia => incidencia.Unidad)
+                .HasMaxLength(30);
+
             entidad.Property(incidencia => incidencia.Monto)
                 .HasPrecision(18, 2)
                 .HasDefaultValue(0.00m)
@@ -1456,6 +1633,9 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             entidad.HasIndex(incidencia => incidencia.FechaIncidencia)
                 .HasDatabaseName("IX_IncidenciaPlanilla_FechaIncidencia");
 
+            entidad.HasIndex(incidencia => incidencia.IdConceptoPlanillaVersion)
+                .HasDatabaseName("IX_IncidenciaPlanilla_ConceptoVersion");
+
             entidad.HasOne(incidencia => incidencia.PeriodoPlanilla)
                 .WithMany()
                 .HasForeignKey(incidencia => incidencia.IdPeriodoPlanilla)
@@ -1479,6 +1659,12 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                 .HasForeignKey(incidencia => incidencia.RegistradoPor)
                 .OnDelete(DeleteBehavior.SetNull)
                 .HasConstraintName("FK_IncidenciaPlanilla_RegistradoPor");
+
+            entidad.HasOne(incidencia => incidencia.ConceptoPlanillaVersion)
+                .WithMany()
+                .HasForeignKey(incidencia => incidencia.IdConceptoPlanillaVersion)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_IncidenciaPlanilla_ConceptoVersion");
         });
 
         builder.Entity<BitacoraAuditoria>(entidad =>

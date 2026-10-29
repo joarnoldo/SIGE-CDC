@@ -9,7 +9,9 @@ public sealed class ForecastAsignacionProyecto
     public long IdForecastEscenario { get; set; }
     public long IdForecastPeriodo { get; set; }
     public long IdForecastParticipante { get; set; }
-    public long IdProyecto { get; set; }
+    public long? IdProyecto { get; set; }
+    public bool EsSinAsignar { get; set; }
+    public long IdProyectoNormalizado { get; private set; }
     public decimal Porcentaje { get; set; }
     public string EstadoRegistro { get; set; } = EstadosRegistro.Activo;
 
@@ -18,4 +20,6 @@ public sealed class ForecastAsignacionProyecto
     public Proyecto? Proyecto { get; set; }
 
     public ICollection<ForecastDetalle> Detalles { get; set; } = [];
+    public string? CodigoProyectoSnapshot { get; set; }
+    public string? NombreProyectoSnapshot { get; set; }
 }

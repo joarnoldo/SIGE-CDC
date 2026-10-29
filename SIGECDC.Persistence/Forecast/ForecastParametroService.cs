@@ -16,7 +16,7 @@ public sealed class ForecastParametroService(ApplicationDbContext contexto)
         string idUsuarioActual,
         CancellationToken cancellationToken = default)
     {
-        await ForecastAutorizacion.ValidarRecursosHumanosAsync(
+        await ForecastAutorizacion.ValidarAdministracionFinancieraAsync(
             contexto,
             idUsuarioActual,
             cancellationToken);
@@ -88,7 +88,7 @@ public sealed class ForecastParametroService(ApplicationDbContext contexto)
         string idUsuarioActual,
         CancellationToken cancellationToken = default)
     {
-        var idActor = await ForecastAutorizacion.ValidarRecursosHumanosAsync(
+        var idActor = await ForecastAutorizacion.ValidarAdministracionFinancieraAsync(
             contexto,
             idUsuarioActual,
             cancellationToken);
@@ -101,6 +101,7 @@ public sealed class ForecastParametroService(ApplicationDbContext contexto)
 
         try
         {
+            await BloqueoEscenarioForecast.ObtenerAsync(contexto,idForecastEscenario,cancellationToken);
             var escenario = await contexto.ForecastEscenarios
                 .Include(item => item.Parametros)
                 .FirstOrDefaultAsync(item => item.IdForecastEscenario == idForecastEscenario

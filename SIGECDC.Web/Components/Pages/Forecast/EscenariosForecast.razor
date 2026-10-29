@@ -1,6 +1,6 @@
 @page "/rrhh/forecast"
 @rendermode InteractiveServer
-@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Recursos Humanos")]
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Administrador,Recursos Humanos")]
 @using SIGECDC.Application.Forecast
 @using SIGECDC.Domain.Forecast
 @inject IForecastEscenarioService ForecastEscenarioService
@@ -33,7 +33,7 @@
                 <h2>Escenarios disponibles</h2>
             </div>
             <div class="page-actions">
-                <a class="btn btn--secondary" href="rrhh/forecast/comparar">Comparar escenarios</a>
+                @if (esRrhh) { <a class="btn btn--secondary" href="rrhh/forecast/comparar">Comparar escenarios</a> }
                 <a class="btn btn--primary" href="rrhh/forecast/nuevo">Nuevo escenario</a>
             </div>
         </div>
@@ -113,7 +113,7 @@
                                     <td>
                                         <div class="table-actions">
                                             <a href="@($"rrhh/forecast/{escenario.IdForecastEscenario}")">Detalle</a>
-                                            @if (EsComparable(escenario))
+                                            @if (esRrhh && EsComparable(escenario))
                                             {
                                                 <a href="@($"rrhh/forecast/comparar?base={escenario.IdForecastEscenario}")">Comparar</a>
                                             }
@@ -132,6 +132,7 @@
 @code {
     private IReadOnlyList<EscenarioForecastResumen> escenarios = [];
     private bool cargando = true;
+    private bool esRrhh;
     private string? mensajeError;
 
     private int CantidadBorradores => escenarios.Count(escenario => string.Equals(
@@ -141,6 +142,7 @@
 
     private static bool EsComparable(EscenarioForecastResumen escenario) =>
         escenario.FechaCalculo.HasValue
+        && escenario.VersionMotor == ProyeccionFinanciera.VersionMotor
         && escenario.EstadoEscenario is EstadosEscenarioForecast.Guardado
             or EstadosEscenarioForecast.Comparado;
 
@@ -148,6 +150,7 @@
     {
         try
         {
+            esRrhh = (await Autenticacion.GetAuthenticationStateAsync()).User.IsInRole("Recursos Humanos");
             escenarios = await ForecastEscenarioService.ObtenerEscenariosAsync(
                 await ObtenerIdUsuarioActualAsync());
         }

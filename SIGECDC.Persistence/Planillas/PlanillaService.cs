@@ -140,10 +140,14 @@ public sealed class PlanillaService(ApplicationDbContext contexto) : IPlanillaSe
                 DeduccionesTotal = registro.Planilla != null ? registro.Planilla.DeduccionesTotal : 0m,
                 SalarioNetoTotal = registro.Planilla != null ? registro.Planilla.SalarioNetoTotal : 0m,
                 CantidadColillas = registro.Planilla != null
-                    ? registro.Planilla.Detalles.Count(detalle => detalle.ColillaPago != null)
+                    ? registro.Planilla.Detalles.Count(detalle => detalle.ColillaPago != null
+                        && (!registro.Planilla.Ejecuciones.Any(e => e.SnapshotCompleto)
+                            || registro.Planilla.IdEjecucionPlanillaVigente != null && detalle.IdEjecucionPlanilla == registro.Planilla.IdEjecucionPlanillaVigente))
                     : 0,
                 CantidadColillasPendientes = registro.Planilla != null
-                    ? registro.Planilla.Detalles.Count(detalle => detalle.ColillaPago == null)
+                    ? registro.Planilla.Detalles.Count(detalle => detalle.ColillaPago == null
+                        && (!registro.Planilla.Ejecuciones.Any(e => e.SnapshotCompleto)
+                            || registro.Planilla.IdEjecucionPlanillaVigente != null && detalle.IdEjecucionPlanilla == registro.Planilla.IdEjecucionPlanillaVigente))
                     : 0
             })
             .FirstOrDefaultAsync(cancellationToken);
@@ -155,17 +159,20 @@ public sealed class PlanillaService(ApplicationDbContext contexto) : IPlanillaSe
 
         var detalles = await contexto.DetallesPlanilla
             .AsNoTracking()
-            .Where(detalle => detalle.IdPlanilla == idPlanilla)
-            .OrderBy(detalle => detalle.Colaborador!.PrimerApellido)
-            .ThenBy(detalle => detalle.Colaborador!.Nombre)
+            .Where(detalle => detalle.IdPlanilla == idPlanilla
+                && (!detalle.Planilla!.Ejecuciones.Any(e => e.SnapshotCompleto)
+                    || detalle.Planilla.IdEjecucionPlanillaVigente != null && detalle.IdEjecucionPlanilla == detalle.Planilla.IdEjecucionPlanillaVigente))
+            .OrderBy(detalle => detalle.SnapshotCompleto ? detalle.NombreCompleto : detalle.Colaborador!.PrimerApellido)
+            .ThenBy(detalle => detalle.IdColaborador)
             .Select(detalle => new
             {
                 detalle.IdColaborador,
-                CodigoColaborador = detalle.Colaborador != null ? detalle.Colaborador.CodigoColaborador : string.Empty,
+                NombreSnapshot = detalle.SnapshotCompleto ? detalle.NombreCompleto : null,
+                CodigoColaborador = detalle.SnapshotCompleto ? detalle.CodigoColaborador! : detalle.Colaborador != null ? detalle.Colaborador.CodigoColaborador : string.Empty,
                 Nombre = detalle.Colaborador != null ? detalle.Colaborador.Nombre : string.Empty,
                 PrimerApellido = detalle.Colaborador != null ? detalle.Colaborador.PrimerApellido : string.Empty,
                 SegundoApellido = detalle.Colaborador != null ? detalle.Colaborador.SegundoApellido : null,
-                Departamento = detalle.Colaborador != null && detalle.Colaborador.Departamento != null
+                Departamento = detalle.SnapshotCompleto ? detalle.NombreDepartamento ?? string.Empty : detalle.Colaborador != null && detalle.Colaborador.Departamento != null
                     ? detalle.Colaborador.Departamento.Nombre
                     : string.Empty,
                 detalle.SalarioBase,
@@ -184,7 +191,7 @@ public sealed class PlanillaService(ApplicationDbContext contexto) : IPlanillaSe
         {
             IdColaborador = detalle.IdColaborador,
             CodigoColaborador = detalle.CodigoColaborador,
-            NombreColaborador = ConstruirNombreCompleto(
+            NombreColaborador = detalle.NombreSnapshot ?? ConstruirNombreCompleto(
                 detalle.Nombre,
                 detalle.PrimerApellido,
                 detalle.SegundoApellido),
@@ -208,22 +215,29 @@ public sealed class PlanillaService(ApplicationDbContext contexto) : IPlanillaSe
         string? idUsuarioActual = null,
         CancellationToken cancellationToken = default)
     {
+        await new GobiernoFinancieroService(contexto).AutorizarOperacionPlanillaAsync(idUsuarioActual ?? "", cancellationToken);
         await using var transaccion = await contexto.Database.BeginTransactionAsync(
             IsolationLevel.Serializable,
             cancellationToken);
 
         try
         {
-            var periodo = await contexto.PeriodosPlanilla
-                .Include(registro => registro.EstadoPlanilla)
-                .FirstOrDefaultAsync(registro => registro.IdPeriodoPlanilla == idPeriodoPlanilla
-                    && registro.EstadoRegistro == EstadoActivo, cancellationToken)
-                ?? throw new InvalidOperationException("No se encontró el período de planilla solicitado.");
+            var periodo = await BloqueoPeriodoPlanilla.ObtenerAsync(
+                contexto,
+                idPeriodoPlanilla,
+                cancellationToken);
+            if (periodo is null || periodo.EstadoRegistro != EstadoActivo)
+            {
+                throw new InvalidOperationException("No se encontró el período de planilla solicitado.");
+            }
 
             if (!string.Equals(periodo.EstadoPlanilla?.Nombre, EstadosPlanilla.Borrador, StringComparison.OrdinalIgnoreCase))
             {
                 throw new InvalidOperationException("Solo se puede calcular un período en estado Borrador.");
             }
+
+            if (await contexto.EjecucionesPlanilla.AnyAsync(e => e.Planilla!.IdPeriodoPlanilla == idPeriodoPlanilla, cancellationToken))
+                throw new InvalidOperationException("CALCULO_REQUIERE_SNAPSHOT_J: la ruta legada no modifica evidencia versionada.");
 
             var planillaExistente = await contexto.Planillas
                 .Include(planilla => planilla.EstadoPlanilla)
@@ -377,6 +391,7 @@ public sealed class PlanillaService(ApplicationDbContext contexto) : IPlanillaSe
             planilla.DeduccionesTotal = planilla.Detalles.Sum(detalle => detalle.TotalDeducciones);
             planilla.SalarioNetoTotal = planilla.Detalles.Sum(detalle => detalle.SalarioNeto);
 
+            await ValidarPeriodoBorradorActualAsync(idPeriodoPlanilla, cancellationToken);
             periodo.IdEstadoPlanilla = estadoCalculada.IdEstadoPlanilla;
             periodo.FechaModificacion = ahora;
             periodo.ModificadoPor = LimpiarIdUsuario(idUsuarioActual);
@@ -424,219 +439,25 @@ public sealed class PlanillaService(ApplicationDbContext contexto) : IPlanillaSe
         }
     }
 
-    public Task AprobarPlanillaAsync(
-        long idPeriodoPlanilla,
-        string idUsuarioActual,
-        CancellationToken cancellationToken = default)
+    public Task ReabrirPlanillaAsync(long idPeriodoPlanilla, string idUsuarioActual, CancellationToken cancellationToken = default)
+        => Task.FromException(new InvalidOperationException("REAPERTURA_REQUIERE_MOTIVO_Y_EJECUCION: utilice ReabrirSnapshotAsync."));
+
+    public async Task AprobarPlanillaAsync(long idPeriodoPlanilla, string idUsuarioActual, CancellationToken cancellationToken = default)
     {
-        return CambiarEstadoPlanillaAsync(
-            idPeriodoPlanilla,
-            idUsuarioActual,
-            EstadosPlanilla.Aprobada,
-            cancellationToken);
+        var id = await EjecucionVigenteObligatoriaAsync(idPeriodoPlanilla, cancellationToken);
+        await new GobiernoFinancieroService(contexto).AprobarSnapshotAsync(idPeriodoPlanilla, id, idUsuarioActual, cancellationToken);
     }
 
-    public async Task ReabrirPlanillaAsync(
-        long idPeriodoPlanilla,
-        string idUsuarioActual,
-        CancellationToken cancellationToken = default)
+    public async Task CerrarPlanillaAsync(long idPeriodoPlanilla, string idUsuarioActual, CancellationToken cancellationToken = default)
     {
-        var idUsuario = LimpiarIdUsuarioObligatorio(idUsuarioActual);
-
-        await using var transaccion = await contexto.Database.BeginTransactionAsync(
-            IsolationLevel.Serializable,
-            cancellationToken);
-
-        try
-        {
-            var periodo = await contexto.PeriodosPlanilla
-                .Include(registro => registro.EstadoPlanilla)
-                .Include(registro => registro.Planilla)!
-                    .ThenInclude(planilla => planilla!.EstadoPlanilla)
-                .Include(registro => registro.Planilla)!
-                    .ThenInclude(planilla => planilla!.Detalles)
-                .FirstOrDefaultAsync(registro =>
-                    registro.IdPeriodoPlanilla == idPeriodoPlanilla
-                    && registro.EstadoRegistro == EstadoActivo,
-                    cancellationToken)
-                ?? throw new InvalidOperationException(
-                    "No se encontró el período de planilla solicitado.");
-
-            var planilla = periodo.Planilla
-                ?? throw new InvalidOperationException(
-                    "El período no tiene una planilla calculada.");
-
-            FlujoEstadosPlanilla.ValidarReapertura(
-                periodo.EstadoPlanilla?.Nombre,
-                planilla.EstadoPlanilla?.Nombre);
-
-            var estadoBorrador = await ObtenerEstadoAsync(
-                EstadosPlanilla.Borrador,
-                cancellationToken);
-            var ahora = DateTime.Now;
-            var valoresAnteriores = JsonSerializer.Serialize(new
-            {
-                Estado = EstadosPlanilla.Calculada,
-                planilla.FechaCalculo,
-                Colaboradores = planilla.Detalles.Count,
-                planilla.SalarioBrutoTotal,
-                planilla.DeduccionesTotal,
-                planilla.SalarioNetoTotal
-            });
-
-            contexto.DetallesPlanilla.RemoveRange(planilla.Detalles);
-
-            periodo.IdEstadoPlanilla = estadoBorrador.IdEstadoPlanilla;
-            periodo.EstadoPlanilla = estadoBorrador;
-            periodo.FechaModificacion = ahora;
-            periodo.ModificadoPor = idUsuario;
-
-            planilla.IdEstadoPlanilla = estadoBorrador.IdEstadoPlanilla;
-            planilla.EstadoPlanilla = estadoBorrador;
-            planilla.FechaCalculo = null;
-            planilla.SalarioBrutoTotal = 0m;
-            planilla.DeduccionesTotal = 0m;
-            planilla.SalarioNetoTotal = 0m;
-            planilla.CostoPatronalEstimadoTotal = 0m;
-            planilla.AprobadoPor = null;
-            planilla.FechaAprobacion = null;
-            planilla.CerradoPor = null;
-            planilla.FechaCierre = null;
-            planilla.FechaModificacion = ahora;
-            planilla.ModificadoPor = idUsuario;
-
-            contexto.BitacoraAuditoria.Add(new BitacoraAuditoria
-            {
-                IdUsuario = idUsuario,
-                FechaHora = ahora,
-                Accion = "REABRIR_PLANILLA",
-                Entidad = "Planilla",
-                IdRegistro = planilla.IdPlanilla.ToString(),
-                ValoresAnteriores = valoresAnteriores,
-                ValoresNuevos = JsonSerializer.Serialize(new
-                {
-                    Estado = EstadosPlanilla.Borrador,
-                    RequiereCalculo = true
-                }),
-                Observacion = "Planilla reabierta para ajustes; el cálculo anterior fue invalidado."
-            });
-
-            await contexto.SaveChangesAsync(cancellationToken);
-            await transaccion.CommitAsync(cancellationToken);
-        }
-        catch
-        {
-            await transaccion.RollbackAsync(CancellationToken.None);
-            contexto.ChangeTracker.Clear();
-            throw;
-        }
+        var id = await EjecucionVigenteObligatoriaAsync(idPeriodoPlanilla, cancellationToken);
+        await new GobiernoFinancieroService(contexto).CerrarSnapshotAsync(idPeriodoPlanilla, id, idUsuarioActual, cancellationToken);
     }
 
-    public Task CerrarPlanillaAsync(
-        long idPeriodoPlanilla,
-        string idUsuarioActual,
-        CancellationToken cancellationToken = default)
-    {
-        return CambiarEstadoPlanillaAsync(
-            idPeriodoPlanilla,
-            idUsuarioActual,
-            EstadosPlanilla.Cerrada,
-            cancellationToken);
-    }
-
-    private async Task CambiarEstadoPlanillaAsync(
-        long idPeriodoPlanilla,
-        string idUsuarioActual,
-        string estadoDestino,
-        CancellationToken cancellationToken)
-    {
-        var idUsuario = LimpiarIdUsuarioObligatorio(idUsuarioActual);
-
-        await using var transaccion = await contexto.Database.BeginTransactionAsync(
-            IsolationLevel.Serializable,
-            cancellationToken);
-
-        try
-        {
-            var periodo = await contexto.PeriodosPlanilla
-                .Include(registro => registro.EstadoPlanilla)
-                .Include(registro => registro.Planilla)!
-                    .ThenInclude(planilla => planilla!.EstadoPlanilla)
-                .FirstOrDefaultAsync(registro => registro.IdPeriodoPlanilla == idPeriodoPlanilla
-                    && registro.EstadoRegistro == EstadoActivo, cancellationToken)
-                ?? throw new InvalidOperationException("No se encontró el período de planilla solicitado.");
-
-            var planilla = periodo.Planilla
-                ?? throw new InvalidOperationException("El período no tiene una planilla calculada.");
-
-            if (string.Equals(estadoDestino, EstadosPlanilla.Aprobada, StringComparison.OrdinalIgnoreCase))
-            {
-                FlujoEstadosPlanilla.ValidarAprobacion(
-                    periodo.EstadoPlanilla?.Nombre,
-                    planilla.EstadoPlanilla?.Nombre);
-            }
-            else
-            {
-                FlujoEstadosPlanilla.ValidarCierre(
-                    periodo.EstadoPlanilla?.Nombre,
-                    planilla.EstadoPlanilla?.Nombre);
-            }
-
-            var estadoAnterior = planilla.EstadoPlanilla!.Nombre;
-            var nuevoEstado = await ObtenerEstadoAsync(estadoDestino, cancellationToken);
-            var ahora = DateTime.Now;
-
-            periodo.IdEstadoPlanilla = nuevoEstado.IdEstadoPlanilla;
-            periodo.FechaModificacion = ahora;
-            periodo.ModificadoPor = idUsuario;
-
-            planilla.IdEstadoPlanilla = nuevoEstado.IdEstadoPlanilla;
-            planilla.FechaModificacion = ahora;
-            planilla.ModificadoPor = idUsuario;
-
-            var accion = "CERRAR_PLANILLA";
-            var observacion = "Planilla y período actualizados a estado Cerrada.";
-
-            if (string.Equals(estadoDestino, EstadosPlanilla.Aprobada, StringComparison.OrdinalIgnoreCase))
-            {
-                planilla.AprobadoPor = idUsuario;
-                planilla.FechaAprobacion = ahora;
-                accion = "APROBAR_PLANILLA";
-                observacion = "Planilla aprobada y bloqueada para cambios posteriores.";
-            }
-            else
-            {
-                planilla.CerradoPor = idUsuario;
-                planilla.FechaCierre = ahora;
-            }
-
-            contexto.BitacoraAuditoria.Add(new BitacoraAuditoria
-            {
-                IdUsuario = idUsuario,
-                FechaHora = ahora,
-                Accion = accion,
-                Entidad = "Planilla",
-                IdRegistro = planilla.IdPlanilla.ToString(),
-                ValoresAnteriores = JsonSerializer.Serialize(new { Estado = estadoAnterior }),
-                ValoresNuevos = JsonSerializer.Serialize(new
-                {
-                    Estado = estadoDestino,
-                    planilla.FechaAprobacion,
-                    planilla.FechaCierre
-                }),
-                Observacion = observacion
-            });
-
-            await contexto.SaveChangesAsync(cancellationToken);
-            await transaccion.CommitAsync(cancellationToken);
-        }
-        catch
-        {
-            await transaccion.RollbackAsync(CancellationToken.None);
-            contexto.ChangeTracker.Clear();
-            throw;
-        }
-    }
+    private async Task<long> EjecucionVigenteObligatoriaAsync(long idPeriodo, CancellationToken ct)
+        => await contexto.Planillas.AsNoTracking().Where(p => p.IdPeriodoPlanilla == idPeriodo)
+            .Select(p => p.IdEjecucionPlanillaVigente).SingleOrDefaultAsync(ct)
+            ?? throw new InvalidOperationException("LEGADO_NO_REPRODUCIBLE: no puede aprobarse ni cerrarse sin snapshot J completo.");
 
     private async Task<EstadoPlanilla> ObtenerEstadoAsync(
         string nombre,
@@ -646,6 +467,28 @@ public sealed class PlanillaService(ApplicationDbContext contexto) : IPlanillaSe
             .SingleOrDefaultAsync(estado => estado.Nombre == nombre
                 && estado.EstadoRegistro == EstadoActivo, cancellationToken)
             ?? throw new InvalidOperationException($"No está configurado el estado de planilla {nombre}.");
+    }
+
+    private async Task ValidarPeriodoBorradorActualAsync(
+        long idPeriodoPlanilla,
+        CancellationToken cancellationToken)
+    {
+        var estadoActual = await contexto.PeriodosPlanilla
+            .AsNoTracking()
+            .Where(periodo => periodo.IdPeriodoPlanilla == idPeriodoPlanilla
+                && periodo.EstadoRegistro == EstadoActivo)
+            .Select(periodo => periodo.EstadoPlanilla != null
+                ? periodo.EstadoPlanilla.Nombre
+                : string.Empty)
+            .SingleOrDefaultAsync(cancellationToken);
+
+        if (!string.Equals(
+                estadoActual,
+                EstadosPlanilla.Borrador,
+                StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException("Solo se puede calcular un período en estado Borrador.");
+        }
     }
 
     private async Task<List<ColaboradorCalculo>> ObtenerColaboradoresActivosAsync(

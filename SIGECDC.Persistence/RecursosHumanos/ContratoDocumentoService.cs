@@ -133,7 +133,20 @@ public sealed class ContratoDocumentoService(
             contexto.DocumentosArchivo.Add(documentoContrato);
         }
 
-        await contexto.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await contexto.SaveChangesAsync(cancellationToken);
+        }
+        catch
+        {
+            contexto.ChangeTracker.Clear();
+            if (documentoContrato is not null)
+            {
+                await EliminarArchivoCompensatorioAsync(documentoContrato.RutaRelativa);
+            }
+
+            throw;
+        }
 
         return contrato.IdContrato;
     }
@@ -180,7 +193,16 @@ public sealed class ContratoDocumentoService(
         var documento = await PrepararDocumentoAsync(solicitud, idUsuarioActual, cancellationToken);
 
         contexto.DocumentosArchivo.Add(documento);
-        await contexto.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await contexto.SaveChangesAsync(cancellationToken);
+        }
+        catch
+        {
+            contexto.ChangeTracker.Clear();
+            await EliminarArchivoCompensatorioAsync(documento.RutaRelativa);
+            throw;
+        }
 
         return documento.IdDocumentoArchivo;
     }
@@ -237,12 +259,21 @@ public sealed class ContratoDocumentoService(
         solicitud.IdColaborador = documentoAnterior.IdEntidadRelacionada;
         solicitud.IdTipoDocumento = documentoAnterior.IdTipoDocumento;
 
+        var documentoNuevo = await PrepararDocumentoAsync(solicitud, idUsuarioActual, cancellationToken);
         documentoAnterior.EstadoRegistro = EstadoRegistroInactivo;
+        contexto.DocumentosArchivo.Add(documentoNuevo);
 
-        var idNuevoDocumento = await AdjuntarDocumentoAsync(solicitud, idUsuarioActual, cancellationToken);
-        await contexto.SaveChangesAsync(cancellationToken);
-
-        return idNuevoDocumento;
+        try
+        {
+            await contexto.SaveChangesAsync(cancellationToken);
+            return documentoNuevo.IdDocumentoArchivo;
+        }
+        catch
+        {
+            contexto.ChangeTracker.Clear();
+            await EliminarArchivoCompensatorioAsync(documentoNuevo.RutaRelativa);
+            throw;
+        }
     }
 
     public async Task<DocumentoArchivoDetalle?> ObtenerDocumentoPorIdAsync(long idDocumentoArchivo, CancellationToken cancellationToken = default)
@@ -446,6 +477,18 @@ public sealed class ContratoDocumentoService(
     private static string ObtenerCarpetaColaborador(long idColaborador)
     {
         return $"colaboradores/{idColaborador}";
+    }
+
+    private async Task EliminarArchivoCompensatorioAsync(string rutaRelativa)
+    {
+        try
+        {
+            await almacenamientoArchivos.EliminarAsync(rutaRelativa, CancellationToken.None);
+        }
+        catch
+        {
+            // La compensación no debe ocultar el error original de persistencia.
+        }
     }
 
     private static string ConstruirNombreCompleto(string nombre, string primerApellido, string? segundoApellido)

@@ -57,7 +57,7 @@
                 <div class="form-grid">
                     <div class="field-group">
                         <label for="escenario-base">Escenario base</label>
-                        <select id="escenario-base" class="form-control" @bind="idEscenarioBase" disabled="@comparando">
+                        <select id="escenario-base" class="form-control" @bind="idEscenarioBase" @bind:after="RestablecerComparacion" disabled="@comparando">
                             <option value="0">Seleccione un escenario</option>
                             @foreach (var opcion in opciones)
                             {
@@ -67,7 +67,7 @@
                     </div>
                     <div class="field-group">
                         <label for="escenario-alternativo">Escenario alternativo</label>
-                        <select id="escenario-alternativo" class="form-control" @bind="idEscenarioAlternativo" disabled="@comparando">
+                        <select id="escenario-alternativo" class="form-control" @bind="idEscenarioAlternativo" @bind:after="RestablecerComparacion" disabled="@comparando">
                             <option value="0">Seleccione un escenario</option>
                             @foreach (var opcion in opciones)
                             {
@@ -107,7 +107,23 @@
             </article>
         }
 
-        @if (comparacion is not null)
+        @if (comparacion?.Snapshot is {} snapshot)
+        {
+            <h2>@comparacion.EscenarioBase.Nombre ↔ @comparacion.EscenarioAlternativo.Nombre</h2>
+            <p>Resultados financieros guardados. La consulta no recalcula ni cambia el estado de los escenarios.</p>
+            <h3>Totales del alcance seleccionado</h3>
+            <TablaImportesComparadosForecast Importes="snapshot.Totales" />
+            @foreach (var fila in snapshot.Filas)
+            {
+                <article class="card stack">
+                    <h3>@(fila.EtiquetaBase ?? "Ausente en base") ↔ @(fila.EtiquetaAlternativa ?? "Ausente en alternativo")</h3>
+                    <p>Base: @fila.DetalleBase · Alternativo: @fila.DetalleAlternativo</p>
+                    <TablaImportesComparadosForecast Importes="fila.Importes" />
+                    <details><summary>Conceptos conservados por versión</summary><TablaImportesComparadosForecast Importes="fila.Conceptos" /></details>
+                </article>
+            }
+        }
+        else if (comparacion is not null)
         {
             <section class="kpi-grid">
                 <article class="stat-card">
@@ -260,11 +276,15 @@
         mensajeError = null;
         try
         {
-            opciones = await ForecastComparacionService.ObtenerEscenariosElegiblesAsync(
-                await ObtenerIdUsuarioActualAsync());
+            opciones = (await ForecastComparacionService.ObtenerEscenariosElegiblesAsync(
+                await ObtenerIdUsuarioActualAsync())).Where(e => e.VersionMotor == SIGECDC.Domain.Forecast.ProyeccionFinanciera.VersionMotor).ToArray();
             if (IdEscenarioBaseQuery.HasValue
                 && opciones.Any(item => item.IdForecastEscenario == IdEscenarioBaseQuery.Value))
             {
+                if (idEscenarioBase != IdEscenarioBaseQuery.Value)
+                {
+                    RestablecerComparacion();
+                }
                 idEscenarioBase = IdEscenarioBaseQuery.Value;
             }
         }
@@ -278,6 +298,13 @@
         {
             cargando = false;
         }
+    }
+
+    private void RestablecerComparacion()
+    {
+        numeroOrdenPeriodo = 0;
+        comparacion = null;
+        mensajeError = null;
     }
 
     private async Task CompararAsync()
@@ -300,8 +327,13 @@
                     NumeroOrdenPeriodo = numeroOrdenPeriodo == 0 ? null : numeroOrdenPeriodo
                 },
                 await ObtenerIdUsuarioActualAsync());
-            opciones = await ForecastComparacionService.ObtenerEscenariosElegiblesAsync(
-                await ObtenerIdUsuarioActualAsync());
+            opciones = (await ForecastComparacionService.ObtenerEscenariosElegiblesAsync(
+                await ObtenerIdUsuarioActualAsync())).Where(e => e.VersionMotor == SIGECDC.Domain.Forecast.ProyeccionFinanciera.VersionMotor).ToArray();
+        }
+        catch (SIGECDC.Domain.Planillas.ConfiguracionConceptoException ex)
+        {
+            comparacion = null;
+            mensajeError = SIGECDC.Web.Configuracion.MensajesRecorridoForecast.Para(ex);
         }
         catch (Exception ex) when (ex is ValidationException
             or InvalidOperationException

@@ -1,76 +1,47 @@
-@using SIGECDC.Application.Planillas
-
-<section class="form-section">
-    <p class="eyebrow">Datos de incidencia</p>
-    <div class="form-grid">
-        <div class="field">
-            <label for="periodo">Período</label>
-            <InputSelect id="periodo" @bind-Value="Solicitud.IdPeriodoPlanilla">
-                <option value="0">Seleccione un período</option>
-                @foreach (var periodo in Periodos)
-                {
-                    <option value="@periodo.Id" disabled="@periodo.EstaBloqueado">
-                        @periodo.Codigo - @periodo.Nombre@(periodo.EstaBloqueado ? " · Bloqueado" : string.Empty)
-                    </option>
-                }
-            </InputSelect>
-            <ValidationMessage For="() => Solicitud.IdPeriodoPlanilla" />
-        </div>
-        <div class="field">
-            <label for="colaborador">Colaborador</label>
-            <InputSelect id="colaborador" @bind-Value="Solicitud.IdColaborador">
-                <option value="0">Seleccione un colaborador</option>
-                @foreach (var colaborador in Colaboradores)
-                {
-                    <option value="@colaborador.Id">@colaborador.Codigo - @colaborador.NombreCompleto</option>
-                }
-            </InputSelect>
-            <ValidationMessage For="() => Solicitud.IdColaborador" />
-        </div>
-        <div class="field">
-            <label for="tipoIncidencia">Tipo de incidencia</label>
-            <InputSelect id="tipoIncidencia" @bind-Value="Solicitud.IdTipoIncidenciaPlanilla">
-                <option value="0">Seleccione un tipo</option>
-                @foreach (var tipo in TiposIncidencia)
-                {
-                    <option value="@tipo.Id">@tipo.Nombre (@tipo.Naturaleza)</option>
-                }
-            </InputSelect>
-            <ValidationMessage For="() => Solicitud.IdTipoIncidenciaPlanilla" />
-        </div>
-        <div class="field">
-            <label for="fechaIncidencia">Fecha</label>
-            <InputDate id="fechaIncidencia" @bind-Value="Solicitud.FechaIncidencia" />
-            <ValidationMessage For="() => Solicitud.FechaIncidencia" />
-        </div>
-        <div class="field">
-            <label for="cantidad">Cantidad</label>
-            <InputNumberInmediato id="cantidad" @bind-Value="Solicitud.Cantidad" />
-            <ValidationMessage For="() => Solicitud.Cantidad" />
-        </div>
-        <div class="field">
-            <label for="monto">Monto</label>
-            <InputNumberInmediato id="monto" @bind-Value="Solicitud.Monto" />
-            <ValidationMessage For="() => Solicitud.Monto" />
-        </div>
-        <div class="field field--span-2">
-            <label for="descripcion">Descripción</label>
-            <InputTextArea id="descripcion" @bind-Value="Solicitud.Descripcion" />
-            <ValidationMessage For="() => Solicitud.Descripcion" />
-        </div>
-    </div>
-</section>
-
+<div class="form-grid">
+    <label>Período<select @bind="Solicitud.IdPeriodo"><option value="0">Seleccione un período</option>
+        @foreach (var p in Catalogos.Periodos.Where(p => p.EstadoPlanilla == "Borrador")) { <option value="@p.IdPeriodoPlanilla">@p.CodigoPeriodo · @p.Nombre</option> }
+    </select></label>
+    <label>Colaborador<select @bind="Solicitud.IdColaborador"><option value="0">Seleccione</option>
+        @foreach (var c in Catalogos.Colaboradores) { <option value="@c.Id">@c.Nombre</option> }
+    </select></label>
+    <label>Fecha del hecho<input type="date" @bind="Solicitud.Fecha" /></label>
+    <label>Concepto gobernado<select @bind="Solicitud.IdConceptoVersion" @bind:after="CambiarConcepto"><option value="0">Seleccione</option>
+        @foreach (var c in Disponibles) { <option value="@c.IdVersion">@c.Nombre · @c.Vigencia.Inicio.ToString("dd/MM/yyyy") – @(c.Vigencia.Fin?.ToString("dd/MM/yyyy") ?? "sin fin")</option> }
+    </select></label>
+    @if (Concepto is { } concepto)
+    {
+        @if (concepto.Codigo == "AUSENCIA_SIN_GOCE")
+        {
+            <label>Unidad<select @bind="Solicitud.Unidad"><option value="">Seleccione</option><option>Día</option><option>Hora</option></select></label>
+        }
+        else { <p>Unidad del concepto: @concepto.UnidadPermitida</p> }
+        @if (concepto.Codigo is "HORA_EXTRA_ORDINARIA" or "AUSENCIA_SIN_GOCE")
+        {
+            <label>Cantidad<InputNumber @bind-Value="Solicitud.Cantidad" /></label>
+            <p>Sin monto manual. Registre cada fecha por separado; para ausencia diaria, como máximo un día por hecho.</p>
+        }
+        else if (concepto.PermiteMontoManual && concepto.TipoBase == "MONTO_AUTORIZADO")
+        {
+            <label>Monto del hecho respaldado (CRC)<InputNumber @bind-Value="Solicitud.Monto" /></label>
+            <p>El concepto permite un monto documentado; si usa un parámetro interno, vincúlelo al confirmar.</p>
+        }
+        else { <p>El valor se obtiene del parámetro interno que deberá seleccionar al confirmar; no ingrese el resultado calculado.</p> }
+    }
+    <label>Referencia o descripción del hecho<InputTextArea @bind-Value="Solicitud.ReferenciaHecho" maxlength="300" /></label>
+    <label>Referencia de la relación ordinaria acreditada<InputText @bind-Value="Solicitud.RelacionOrdinaria" maxlength="500" /></label>
+</div>
+<p>Si falta un concepto, revise su clasificación y vigencia gobernadas. El legado genérico no es una opción financiera válida.</p>
 @code {
-    [Parameter, EditorRequired]
-    public SolicitudIncidenciaPlanilla Solicitud { get; set; } = default!;
-
-    [Parameter]
-    public IReadOnlyList<PeriodoPlanillaOpcion> Periodos { get; set; } = [];
-
-    [Parameter]
-    public IReadOnlyList<ColaboradorIncidenciaOpcion> Colaboradores { get; set; } = [];
-
-    [Parameter]
-    public IReadOnlyList<TipoIncidenciaPlanillaOpcion> TiposIncidencia { get; set; } = [];
+    [Parameter, EditorRequired] public CapturaIncidenciaInterfaz Solicitud { get; set; } = default!;
+    [Parameter, EditorRequired] public CatalogosRecorridoPlanilla Catalogos { get; set; } = default!;
+    private ConceptoMonetarioVersion? Concepto => Catalogos.Conceptos.SingleOrDefault(c => c.IdVersion == Solicitud.IdConceptoVersion);
+    private IEnumerable<ConceptoMonetarioVersion> Disponibles => Catalogos.Conceptos.Where(c =>
+        Catalogos.Tipos.Count(t => t.IdConcepto == c.IdConcepto) == 1 &&
+        (c.Codigo is "HORA_EXTRA_ORDINARIA" or "AUSENCIA_SIN_GOCE" || RecorridoPlanilla.EsParametroInternoAdmitido(c)));
+    private void CambiarConcepto()
+    {
+        Solicitud.Unidad = Concepto?.Codigo == "AUSENCIA_SIN_GOCE" ? "" : Concepto?.UnidadPermitida ?? "";
+        Solicitud.Cantidad = null; Solicitud.Monto = null;
+    }
 }

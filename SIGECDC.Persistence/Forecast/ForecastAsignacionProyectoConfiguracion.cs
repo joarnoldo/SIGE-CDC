@@ -11,26 +11,40 @@ public sealed class ForecastAsignacionProyectoConfiguracion
     public void Configure(EntityTypeBuilder<ForecastAsignacionProyecto> entidad)
     {
         entidad.ToTable("ForecastAsignacionProyecto", tabla =>
+        {
             tabla.HasCheckConstraint(
                 "CK_ForecastAsignacionProyecto_Porcentaje",
-                "`Porcentaje` > 0.0000 AND `Porcentaje` <= 100.0000"));
+                "`Porcentaje` > 0.0000 AND `Porcentaje` <= 100.0000");
+            tabla.HasCheckConstraint(
+                "CK_ForecastAsignacionProyecto_Destino",
+                "(`EsSinAsignar` = 1 AND `IdProyecto` IS NULL) OR (`EsSinAsignar` = 0 AND `IdProyecto` IS NOT NULL)");
+        });
 
         entidad.HasKey(item => item.IdForecastAsignacionProyecto);
+        entidad.Property(x => x.CodigoProyectoSnapshot).HasMaxLength(50);
+        entidad.Property(x => x.NombreProyectoSnapshot).HasMaxLength(200);
         entidad.Property(item => item.IdForecastAsignacionProyecto).ValueGeneratedOnAdd();
         entidad.Property(item => item.Porcentaje).HasPrecision(7, 4).IsRequired();
+        entidad.Property(item => item.EsSinAsignar)
+            .HasColumnType("tinyint(1)")
+            .HasDefaultValue(false)
+            .IsRequired();
+        entidad.Property(item => item.IdProyectoNormalizado)
+            .HasComputedColumnSql("COALESCE(`IdProyecto`, 0)", stored: true);
         entidad.Property(item => item.EstadoRegistro)
             .HasColumnType("enum('Activo','Inactivo')")
             .HasDefaultValue(EstadosRegistro.Activo)
             .IsRequired();
 
-        entidad.HasAlternateKey(item => new
+        entidad.HasIndex(item => new
             {
                 item.IdForecastEscenario,
                 item.IdForecastPeriodo,
                 item.IdForecastParticipante,
-                item.IdProyecto
+                item.IdProyectoNormalizado
             })
-            .HasName("UX_FcstAsign_Esc_Per_Part_Proy");
+            .IsUnique()
+            .HasDatabaseName("UX_FcstAsign_Esc_Per_Part_ProyNorm");
         entidad.HasIndex(item => new { item.IdForecastEscenario, item.IdForecastParticipante })
             .HasDatabaseName("IX_FcstAsign_Esc_Part");
         entidad.HasIndex(item => new { item.IdForecastEscenario, item.IdForecastPeriodo })

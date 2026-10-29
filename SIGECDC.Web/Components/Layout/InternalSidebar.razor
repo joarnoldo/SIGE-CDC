@@ -1,3 +1,5 @@
+@inject SIGECDC.Web.Configuracion.DisponibilidadFuncionesFinancieras DisponibilidadFinanciera
+
 <aside id="menu-interno" class="app-sidebar" aria-label="Navegación interna">
     <div class="sidebar-heading">
         <a class="sidebar-brand" href="/" data-enhance-nav="false">
@@ -33,20 +35,33 @@
                         </nav>
                     </details>
 
-                    <details class="sidebar-section" open="@EsSeccionActiva("rrhh/periodos-planilla", "rrhh/reportes-planilla", "rrhh/parametros-planilla", "rrhh/incidencias-planilla", "rrhh/forecast")">
-                        <summary>Planillas</summary>
-                        <nav class="sidebar-nav" aria-label="Planillas">
-                            <AuthorizeView Roles="Recursos Humanos" Context="periodosContext">
-                                <Authorized>
-                                    <NavLink href="rrhh/periodos-planilla" ActiveClass="is-active">Períodos de planilla</NavLink>
-                                    <NavLink href="rrhh/reportes-planilla" ActiveClass="is-active">Reportes de planilla</NavLink>
+                    @if (DisponibilidadFinanciera.PlanillaDemostrativaHabilitada
+                        || DisponibilidadFinanciera.ForecastExperimentalHabilitado)
+                    {
+                        <details class="sidebar-section" open="@EsSeccionActiva("rrhh/periodos-planilla", "rrhh/reportes-planilla", "rrhh/parametros-planilla", "rrhh/incidencias-planilla", "rrhh/forecast")">
+                            <summary>Planillas</summary>
+                            <nav class="sidebar-nav" aria-label="Planillas">
+                                <AuthorizeView Roles="Recursos Humanos" Context="periodosContext">
+                                    <Authorized>
+                                        @if (DisponibilidadFinanciera.PlanillaDemostrativaHabilitada)
+                                        {
+                                            <NavLink href="rrhh/periodos-planilla" ActiveClass="is-active">Períodos de planilla</NavLink>
+                                        }
+                                    </Authorized>
+                                </AuthorizeView>
+                                @if (DisponibilidadFinanciera.ForecastExperimentalHabilitado)
+                                {
                                     <NavLink href="rrhh/forecast" ActiveClass="is-active">Forecast</NavLink>
-                                </Authorized>
-                            </AuthorizeView>
-                            <NavLink href="rrhh/parametros-planilla" ActiveClass="is-active">Parámetros de planilla</NavLink>
-                            <NavLink href="rrhh/incidencias-planilla" ActiveClass="is-active">Incidencias</NavLink>
-                        </nav>
-                    </details>
+                                }
+                                @if (DisponibilidadFinanciera.PlanillaDemostrativaHabilitada)
+                                {
+                                    <NavLink href="rrhh/reportes-planilla" ActiveClass="is-active">Reportes de planilla</NavLink>
+                                    <NavLink href="rrhh/parametros-planilla" ActiveClass="is-active">Parámetros de planilla</NavLink>
+                                    <NavLink href="rrhh/incidencias-planilla" ActiveClass="is-active">Incidencias</NavLink>
+                                }
+                            </nav>
+                        </details>
+                    }
                 </Authorized>
             </AuthorizeView>
 
@@ -89,9 +104,10 @@
 
             <AuthorizeView Roles="Administrador" Context="historialContext">
                 <Authorized>
-                    <details class="sidebar-section" open="@EsSeccionActiva("admin/historial")">
+                    <details class="sidebar-section" open="@EsSeccionActiva("admin/historial", "admin/usuarios")">
                         <summary>Administración</summary>
                         <nav class="sidebar-nav" aria-label="Administración">
+                            <NavLink href="admin/usuarios" ActiveClass="is-active">Usuarios</NavLink>
                             <NavLink href="admin/historial" ActiveClass="is-active">Historial del sistema</NavLink>
                         </nav>
                     </details>
@@ -100,12 +116,15 @@
 
             <AuthorizeView Roles="Empleado" Context="empleadoContext">
                 <Authorized>
-                    <details class="sidebar-section" open="@EsSeccionActiva("empleado/colillas")">
-                        <summary>Mi acceso</summary>
-                        <nav class="sidebar-nav" aria-label="Mi acceso">
-                            <NavLink href="empleado/colillas" ActiveClass="is-active">Mis colillas</NavLink>
-                        </nav>
-                    </details>
+                    @if (DisponibilidadFinanciera.PlanillaDemostrativaHabilitada)
+                    {
+                        <details class="sidebar-section" open="@EsSeccionActiva("empleado/colillas")">
+                            <summary>Mi acceso</summary>
+                            <nav class="sidebar-nav" aria-label="Mi acceso">
+                                <NavLink href="empleado/colillas" ActiveClass="is-active">Mis colillas</NavLink>
+                            </nav>
+                        </details>
+                    }
                 </Authorized>
             </AuthorizeView>
 

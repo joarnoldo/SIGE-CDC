@@ -124,27 +124,8 @@
                             </a>
                         </div>
 
-                        <div class="table-responsive">
-                            <table class="data-table">
-                                <thead>
-                                    <tr>
-                                        <th>Concepto</th>
-                                        <th>Monto</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr><td>Salario base</td><td>@TextoMoneda(detalle.SalarioBase)</td></tr>
-                                    <tr><td>Salario proporcional</td><td>@TextoMoneda(detalle.SalarioProporcional)</td></tr>
-                                    <tr><td>Horas extra</td><td>@TextoMoneda(detalle.TotalHorasExtra)</td></tr>
-                                    <tr><td>Bonos</td><td>@TextoMoneda(detalle.TotalBonos)</td></tr>
-                                    <tr><td>Beneficios configurables</td><td>@TextoMoneda(detalle.TotalBeneficiosConfigurables)</td></tr>
-                                    <tr><td>Ausencias</td><td>@TextoMoneda(detalle.TotalAusencias)</td></tr>
-                                    <tr><td><strong>Salario bruto</strong></td><td><strong>@TextoMoneda(detalle.SalarioBruto)</strong></td></tr>
-                                    <tr><td><strong>Deducciones</strong></td><td><strong>@TextoMoneda(detalle.TotalDeducciones)</strong></td></tr>
-                                    <tr><td><strong>Salario neto</strong></td><td><strong>@TextoMoneda(detalle.SalarioNeto)</strong></td></tr>
-                                </tbody>
-                            </table>
-                        </div>
+                        <p><strong>@detalle.Rotulo · Ejecución @detalle.IdEjecucionPlanilla · V@(detalle.NumeroVersion)</strong></p>
+                        <SIGECDC.Web.Components.Pages.Planillas.DetallePagoSnapshot Detalle="detalle" />
                     </article>
                 }
             }

@@ -6,6 +6,8 @@ public class Puesto
 
     public int? IdDepartamento { get; set; }
 
+    public long? IdOcupacionSalarioMinimo { get; set; }
+
     public string Nombre { get; set; } = string.Empty;
 
     public string? Descripcion { get; set; }
@@ -13,4 +15,6 @@ public class Puesto
     public string EstadoRegistro { get; set; } = "Activo";
 
     public Departamento? Departamento { get; set; }
+
+    public OcupacionSalarioMinimo? OcupacionSalarioMinimo { get; set; }
 }

@@ -1,7 +1,22 @@
 namespace SIGECDC.Application.Planillas;
 
-public sealed class DetalleReportePlanilla
+public class DetalleReportePlanilla
 {
+    public long IdDetallePlanilla { get; set; }
+    public long IdColillaPago { get; set; }
+    public string Puesto { get; set; } = string.Empty;
+    public decimal SalarioBase { get; set; }
+    public decimal IngresosNoSalariales { get; set; }
+    public decimal BrutoPagadero { get; set; }
+    public decimal CuotasObreras { get; set; }
+    public decimal ImpuestoSalario { get; set; }
+    public decimal OtrasDeducciones { get; set; }
+    public decimal CargasPatronales { get; set; }
+    public decimal RiesgosTrabajo { get; set; }
+    public decimal OtrosCostosPatronales { get; set; }
+    public decimal CostoLaboralTotal { get; set; }
+    public IReadOnlyList<SegmentoPublicacionPlanilla> Segmentos { get; set; } = [];
+    public IReadOnlyList<LineaPublicacionPlanilla> Lineas { get; set; } = [];
     public string CodigoColaborador { get; set; } = string.Empty;
 
     public string NombreColaborador { get; set; } = string.Empty;

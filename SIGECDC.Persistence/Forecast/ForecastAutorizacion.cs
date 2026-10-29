@@ -8,9 +8,16 @@ internal static class ForecastAutorizacion
 {
     private const string RolRecursosHumanos = "Recursos Humanos";
 
-    public static async Task<string> ValidarRecursosHumanosAsync(
+    public static Task<string> ValidarRecursosHumanosAsync(ApplicationDbContext contexto,string idUsuarioActual,CancellationToken cancellationToken)
+        => ValidarAsync(contexto,idUsuarioActual,false,cancellationToken);
+
+    public static Task<string> ValidarAdministracionFinancieraAsync(ApplicationDbContext contexto,string idUsuarioActual,CancellationToken cancellationToken)
+        => ValidarAsync(contexto,idUsuarioActual,true,cancellationToken);
+
+    private static async Task<string> ValidarAsync(
         ApplicationDbContext contexto,
         string idUsuarioActual,
+        bool admiteAdministrador,
         CancellationToken cancellationToken)
     {
         var idActor = string.IsNullOrWhiteSpace(idUsuarioActual)
@@ -29,7 +36,7 @@ internal static class ForecastAutorizacion
                 && usuario.EstadoRegistro == EstadosRegistro.Activo
                 && contexto.UserRoles.Any(usuarioRol => usuarioRol.UserId == usuario.Id
                     && contexto.Roles.Any(rol => rol.Id == usuarioRol.RoleId
-                        && rol.Name == RolRecursosHumanos)),
+                        && (rol.Name == RolRecursosHumanos || admiteAdministrador && rol.Name == "Administrador"))),
                 cancellationToken);
 
         if (!autorizado)

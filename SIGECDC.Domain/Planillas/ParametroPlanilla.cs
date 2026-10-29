@@ -20,6 +20,10 @@ public sealed class ParametroPlanilla
 
     public bool EsEditable { get; set; } = true;
 
+    public long? IdConceptoPlanilla { get; set; }
+
+    public bool EsNormativo { get; set; }
+
     public DateTime? FechaVigenciaInicio { get; set; }
 
     public DateTime? FechaVigenciaFin { get; set; }
@@ -37,4 +41,6 @@ public sealed class ParametroPlanilla
     public ICollection<ParametroPlanillaColaborador> AsignacionesColaborador { get; set; } = [];
 
     public ICollection<ParametroPlanillaPeriodo> AsignacionesPeriodo { get; set; } = [];
+
+    public ConceptoPlanilla? ConceptoPlanilla { get; set; }
 }

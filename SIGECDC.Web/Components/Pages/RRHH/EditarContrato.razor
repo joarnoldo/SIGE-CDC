@@ -5,6 +5,7 @@
 @inject IContratoDocumentoService ContratoDocumentoService
 @inject AuthenticationStateProvider Autenticacion
 @inject ILogger<EditarContrato> Logger
+@inject SIGECDC.Web.Configuracion.DisponibilidadFuncionesFinancieras DisponibilidadFinanciera
 
 <PageTitle>Editar contrato | SIGE-CDC</PageTitle>
 
@@ -44,6 +45,11 @@
             }
             else
             {
+                @if (DisponibilidadFinanciera.PlanillaDemostrativaHabilitada)
+                {
+                    <a class="btn btn--secondary" href="@($"rrhh/periodos-planilla/contratos/{IdContrato}/condiciones")">Siguiente: confirmar condición laboral para Planilla</a>
+                    <p>Editar este contrato no confirma automáticamente una nueva condición salarial ni modifica snapshots históricos.</p>
+                }
                 <EditForm Model="contrato" OnValidSubmit="GuardarAsync" OnInvalidSubmit="LimpiarMensaje" class="form-section stack">
                     <DataAnnotationsValidator />
                     <ValidationSummary />

@@ -224,6 +224,9 @@
 
         try
         {
+            if (solicitud.FechaInicio is not { } inicio || solicitud.FechaFin is not { } fin)
+                throw new ArgumentException("Indique las fechas de inicio y fin del período.");
+            new SIGECDC.Domain.Planillas.PeriodoSalarial(inicio, fin, solicitud.TipoPeriodo).Validar();
             var idPeriodo = await PlanillaService.CrearPeriodoAsync(
                 solicitud,
                 await ObtenerIdUsuarioActualAsync());
@@ -231,9 +234,9 @@
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "No se pudo crear el período de planilla.");
+            Logger.LogWarning("Creación de período rechazada: {Tipo}", ex.GetType().Name);
             mensajeEsError = true;
-            mensajeEstado = MensajeSeguro(ex, "No se pudo crear el período de planilla.");
+            mensajeEstado = MensajesRecorridoPlanilla.Para(ex);
         }
         finally
         {
@@ -280,8 +283,4 @@
         return estadoAutenticacion.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
     }
 
-    private static string MensajeSeguro(Exception ex, string mensajeGenerico)
-    {
-        return ex is ArgumentException or InvalidOperationException ? ex.Message : mensajeGenerico;
-    }
 }

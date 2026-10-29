@@ -22,7 +22,9 @@ public sealed class GeneradorForecastExcel : IGeneradorForecastExcel
         "Participantes",
         "Salario bruto",
         "Deducciones",
-        "Salario neto"
+        "Salario neto",
+        "Carga patronal",
+        "Costo laboral total"
     ];
 
     private static readonly string[] EncabezadosConceptos =
@@ -35,7 +37,10 @@ public sealed class GeneradorForecastExcel : IGeneradorForecastExcel
         "Concepto",
         "Base",
         "Ajuste",
-        "Proyectado"
+        "Proyectado",
+        "Observaciones mínimas por participante/período",
+        "Observaciones máximas por participante/período",
+        "Histórico limitado"
     ];
 
     public ArchivoDescarga Generar(ConsultaResultadosForecast consulta)
@@ -49,6 +54,7 @@ public sealed class GeneradorForecastExcel : IGeneradorForecastExcel
 
         CrearHojaResultados(libro, consulta);
         CrearHojaConceptos(libro, consulta);
+        if(consulta.VersionMotor is not null)CrearHojaSegmentos(libro,consulta);
 
         var memoria = new MemoryStream();
         libro.SaveAs(memoria);
@@ -82,6 +88,8 @@ public sealed class GeneradorForecastExcel : IGeneradorForecastExcel
             EscribirMonto(hoja.Cell(filaActual, 7), fila.SalarioBrutoProyectado);
             EscribirMonto(hoja.Cell(filaActual, 8), fila.DeduccionesProyectadas);
             EscribirMonto(hoja.Cell(filaActual, 9), fila.SalarioNetoProyectado);
+            EscribirMonto(hoja.Cell(filaActual, 10), fila.CargasPatronalesProyectadas);
+            EscribirMonto(hoja.Cell(filaActual, 11), fila.CostoLaboralTotalProyectado);
 
             if ((filaActual - filaEncabezado) % 2 == 0)
             {
@@ -94,9 +102,11 @@ public sealed class GeneradorForecastExcel : IGeneradorForecastExcel
 
         hoja.Cell(filaActual, 1).SetValue("Totales de la consulta");
         hoja.Range(filaActual, 1, filaActual, 6).Merge();
-        EscribirMonto(hoja.Cell(filaActual, 7), consulta.MontoProyectadoTotalConsulta);
+        EscribirMonto(hoja.Cell(filaActual, 7), consulta.VersionMotor is null?consulta.MontoProyectadoTotalConsulta:consulta.BrutoSalarialTotalConsulta);
         EscribirMonto(hoja.Cell(filaActual, 8), consulta.DeduccionesTotalConsulta);
         EscribirMonto(hoja.Cell(filaActual, 9), consulta.SalarioNetoTotalConsulta);
+        EscribirMonto(hoja.Cell(filaActual, 10), consulta.CargasPatronalesTotalConsulta);
+        EscribirMonto(hoja.Cell(filaActual, 11), consulta.VersionMotor is null?0:consulta.MontoProyectadoTotalConsulta);
         hoja.Range(filaActual, 1, filaActual, EncabezadosResultados.Length).Style
             .Font.SetBold()
             .Fill.SetBackgroundColor(XLColor.FromHtml(ColorResumen));
@@ -111,7 +121,7 @@ public sealed class GeneradorForecastExcel : IGeneradorForecastExcel
         hoja.Column(4).Width = 34;
         hoja.Column(5).Width = 23;
         hoja.Column(6).Width = 15;
-        hoja.Columns(7, 9).Width = 18;
+        hoja.Columns(7, 11).Width = 18;
         hoja.Range(filaEncabezado + 1, 1, filaActual - 1, 5).Style.Alignment.WrapText = true;
         hoja.PageSetup.PageOrientation = XLPageOrientation.Landscape;
         hoja.PageSetup.FitToPages(1, 0);
@@ -153,6 +163,12 @@ public sealed class GeneradorForecastExcel : IGeneradorForecastExcel
                 EscribirMonto(hoja.Cell(filaActual, 7), concepto.MontoBase);
                 EscribirMonto(hoja.Cell(filaActual, 8), concepto.MontoAjuste);
                 EscribirMonto(hoja.Cell(filaActual, 9), concepto.MontoProyectado);
+                if(concepto.ObservacionesMinimas.HasValue)
+                {
+                    hoja.Cell(filaActual,10).SetValue(concepto.ObservacionesMinimas.Value);
+                    hoja.Cell(filaActual,11).SetValue(concepto.ObservacionesMaximas!.Value);
+                    hoja.Cell(filaActual,12).SetValue(concepto.HistoricoLimitado ? "Sí" : "No");
+                }
 
                 if ((filaActual - filaEncabezado) % 2 == 0)
                 {
@@ -172,6 +188,7 @@ public sealed class GeneradorForecastExcel : IGeneradorForecastExcel
         hoja.Column(5).Width = 25;
         hoja.Column(6).Width = 31;
         hoja.Columns(7, 9).Width = 18;
+        hoja.Columns(10,12).Width = 23;
         hoja.Range(filaEncabezado + 1, 1, filaActual - 1, 6).Style.Alignment.WrapText = true;
         hoja.PageSetup.PageOrientation = XLPageOrientation.Landscape;
         hoja.PageSetup.FitToPages(1, 0);
@@ -189,6 +206,7 @@ public sealed class GeneradorForecastExcel : IGeneradorForecastExcel
 
         hoja.Range(2, 1, 2, cantidadColumnas).Merge();
         hoja.Cell(2, 1).SetValue("Canales y Drenajes del Caribe S.R.L.");
+        if(consulta.VersionMotor is not null)hoja.Cell(2,1).SetValue("Canales y Drenajes del Caribe S.R.L. · "+consulta.VersionMotor+" · FIN-02 contenido; no autoriza pagos. "+consulta.AdvertenciaHistorico);
         hoja.Cell(2, 1).Style.Font.SetBold().Font.SetFontColor(XLColor.DarkSlateGray);
 
         EscribirEtiquetaValor(hoja, "A4", "B4", "Escenario", consulta.IdForecastEscenario);
@@ -213,7 +231,7 @@ public sealed class GeneradorForecastExcel : IGeneradorForecastExcel
             "Alcance",
             TextoAlcance(UtilidadesExportacionForecast.ObtenerPeriodoAplicado(consulta)));
 
-        EscribirTarjeta(hoja, "A7:B7", "A8:B8", "Salario bruto", consulta.MontoProyectadoTotalConsulta);
+        EscribirTarjeta(hoja, "A7:B7", "A8:B8", consulta.VersionMotor is null?"Salario bruto":"Costo laboral total", consulta.MontoProyectadoTotalConsulta);
         EscribirTarjeta(hoja, "D7:E7", "D8:E8", "Deducciones", consulta.DeduccionesTotalConsulta);
         EscribirTarjeta(hoja, "G7:H7", "G8:H8", "Salario neto", consulta.SalarioNetoTotalConsulta);
 
@@ -239,6 +257,22 @@ public sealed class GeneradorForecastExcel : IGeneradorForecastExcel
             .Alignment.SetHorizontal(XLAlignmentHorizontalValues.Left)
             .Alignment.SetVertical(XLAlignmentVerticalValues.Center);
         rango.Worksheet.Row(rango.FirstRow().RowNumber()).Height = 30;
+    }
+
+    private static void CrearHojaSegmentos(XLWorkbook libro,ConsultaResultadosForecast consulta)
+    {
+        var hoja=libro.Worksheets.Add("Condiciones proyectadas");
+        hoja.Cell(1,1).SetValue(consulta.VersionMotor+" · "+consulta.EstadoEscenario+" · FIN-02 contenido. No autoriza pagos.");
+        EscribirEncabezados(hoja,3,["Participante","Período","Desde","Hasta","Puesto","Departamento","Jornada","Salario mensual","Días base 30","Origen"]);
+        var fila=4;
+        foreach(var s in consulta.Segmentos)
+        {
+            hoja.Cell(fila,1).SetValue(s.IdParticipante);hoja.Cell(fila,2).SetValue(s.IdPeriodo);
+            hoja.Cell(fila,3).SetValue(s.Inicio);hoja.Cell(fila,4).SetValue(s.Fin);hoja.Range(fila,3,fila,4).Style.DateFormat.Format="dd/mm/yyyy";
+            EscribirTexto(hoja.Cell(fila,5),s.Puesto);EscribirTexto(hoja.Cell(fila,6),s.Departamento);EscribirTexto(hoja.Cell(fila,7),s.Jornada);
+            EscribirMonto(hoja.Cell(fila,8),s.SalarioMensual);hoja.Cell(fila,9).SetValue(s.DiasBase30);EscribirTexto(hoja.Cell(fila,10),s.Origen);fila++;
+        }
+        hoja.Columns(1,10).AdjustToContents();hoja.SheetView.FreezeRows(3);
     }
 
     private static void EscribirEncabezados(IXLWorksheet hoja, int fila, IReadOnlyList<string> encabezados)
@@ -291,7 +325,7 @@ public sealed class GeneradorForecastExcel : IGeneradorForecastExcel
         hoja.Range(rangoEtiqueta).Merge();
         hoja.Range(rangoMonto).Merge();
         hoja.Cell(rangoEtiqueta.Split(':')[0]).SetValue(etiqueta);
-        hoja.Cell(rangoMonto.Split(':')[0]).SetValue(monto);
+        EscribirMonto(hoja.Cell(rangoMonto.Split(':')[0]),monto);
 
         var tarjeta = hoja.Range(
             hoja.Range(rangoEtiqueta).FirstCell().Address,
@@ -314,6 +348,7 @@ public sealed class GeneradorForecastExcel : IGeneradorForecastExcel
     private static void EscribirMonto(IXLCell celda, decimal monto)
     {
         celda.SetValue(monto);
+        if(celda.GetValue<decimal>()!=monto)throw new InvalidOperationException("EXPORTACION_PRECISION_NO_REPRESENTABLE");
         celda.Style.NumberFormat.Format = FormatoMoneda;
     }
 

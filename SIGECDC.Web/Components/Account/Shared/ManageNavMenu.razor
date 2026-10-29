@@ -1,37 +1,16 @@
 ﻿@using Microsoft.AspNetCore.Identity
 @using SIGECDC.Persistence.Identity
 
-@inject SignInManager<ApplicationUser> SignInManager
 
 <ul class="nav nav-pills flex-column">
     <li class="nav-item">
         <NavLink class="nav-link" href="Account/Manage" Match="NavLinkMatch.All">Perfil</NavLink>
     </li>
     <li class="nav-item">
-        <NavLink class="nav-link" href="Account/Manage/Email">Correo electrónico</NavLink>
-    </li>
-    <li class="nav-item">
         <NavLink class="nav-link" href="Account/Manage/ChangePassword">Contraseña</NavLink>
     </li>
-    @if (hasExternalLogins)
-    {
-        <li class="nav-item">
-            <NavLink class="nav-link" href="Account/Manage/ExternalLogins">Accesos externos</NavLink>
-        </li>
-    }
     <li class="nav-item">
         <NavLink class="nav-link" href="Account/Manage/TwoFactorAuthentication">Autenticación de dos factores</NavLink>
     </li>
-    <li class="nav-item">
-        <NavLink class="nav-link" href="Account/Manage/PersonalData">Datos personales</NavLink>
-    </li>
 </ul>
 
-@code {
-    private bool hasExternalLogins;
-
-    protected override async Task OnInitializedAsync()
-    {
-        hasExternalLogins = (await SignInManager.GetExternalAuthenticationSchemesAsync()).Any();
-    }
-}

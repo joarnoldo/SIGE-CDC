@@ -116,6 +116,7 @@ public sealed class ForecastComparacionRealService(ApplicationDbContext contexto
                 "El escenario no conserva períodos activos para comparar.");
         }
 
+        await ForecastResultadoConsultaInterna.ExigirLecturaLegadaAsync(contexto,[idForecastEscenario],cancellationToken);
         var detallesForecast = await ForecastResultadoConsultaInterna
             .Crear(contexto, [idForecastEscenario])
             .ToListAsync(cancellationToken);

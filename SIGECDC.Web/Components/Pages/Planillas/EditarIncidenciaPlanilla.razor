@@ -1,222 +1,107 @@
 @page "/rrhh/incidencias-planilla/{IdIncidenciaPlanilla:long}"
 @rendermode InteractiveServer
-@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Administrador,Recursos Humanos")]
-@using SIGECDC.Application.Planillas
-@inject IIncidenciaPlanillaService IncidenciaPlanillaService
-@inject AuthenticationStateProvider Autenticacion
-@inject ILogger<EditarIncidenciaPlanilla> Logger
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Recursos Humanos")]
+@inherits ComponenteRecorridoPlanilla
+@inject IConsultaRecorridoPlanilla Consulta
+@inject RecorridoPlanilla Recorrido
+@inject IIncidenciasCalculadasService Incidencias
 
-<PageTitle>Editar incidencia de planilla | SIGE-CDC</PageTitle>
-
-<section class="page-banner">
-    <div class="container page-banner__inner stack--tight">
-        <p class="eyebrow">Recursos Humanos / Planillas</p>
-        <h1>Ficha de incidencia.</h1>
-        <p class="lead">Consulte y actualice una incidencia registrada para el período de planilla.</p>
-    </div>
-</section>
-
-<section class="section-shell">
-    <div class="container page-grid">
-        <section class="page-main">
-            @if (!string.IsNullOrWhiteSpace(mensajeEstado))
-            {
-                <div class="alert alert--@(mensajeEsError ? "danger" : "success")" role="alert">
-                    <strong>@(mensajeEsError ? "No se pudo completar la acción" : "Acción completada")</strong>
-                    <span>@mensajeEstado</span>
-                </div>
-            }
-
-            @if (cargando)
-            {
-                <div class="empty-state">
-                    <strong>Cargando incidencia</strong>
-                    <p class="text-muted">Estamos recuperando el registro solicitado.</p>
-                </div>
-            }
-            else if (incidencia is null)
-            {
-                <div class="empty-state">
-                    <strong>Incidencia no encontrada</strong>
-                    <p class="text-muted">El registro solicitado no existe en el sistema.</p>
-                    <a class="btn btn--secondary" href="rrhh/incidencias-planilla">Volver al listado</a>
-                </div>
-            }
-            else if (string.Equals(incidencia.EstadoRegistro, "Inactivo", StringComparison.OrdinalIgnoreCase))
-            {
-                <div class="empty-state">
-                    <strong>Incidencia inactiva</strong>
-                    <p class="text-muted">El registro está conservado para consulta, pero no permite cambios.</p>
-                    <a class="btn btn--secondary" href="rrhh/incidencias-planilla">Volver al listado</a>
-                </div>
-            }
-            else if (incidencia.EstaBloqueada)
-            {
-                <div class="empty-state">
-                    <strong>Período bloqueado</strong>
-                    <p class="text-muted">
-                        La incidencia se conserva para consulta, pero no puede modificarse porque la planilla está en estado @incidencia.EstadoPlanilla.
-                    </p>
-                    <a class="btn btn--secondary" href="rrhh/incidencias-planilla">Volver al listado</a>
-                </div>
-            }
-            else
-            {
-                <EditForm Model="solicitud" OnValidSubmit="GuardarAsync" OnInvalidSubmit="LimpiarMensaje" class="stack">
-                    <DataAnnotationsValidator />
-                    <ValidationSummary />
-
-                    <IncidenciaPlanillaFormularioCampos Solicitud="solicitud"
-                                                        Periodos="periodos"
-                                                        Colaboradores="colaboradores"
-                                                        TiposIncidencia="tiposIncidencia" />
-
-                    <div class="form-actions">
-                        <a class="btn btn--secondary" href="rrhh/incidencias-planilla">Volver</a>
-                        <div class="page-actions">
-                            <button class="btn btn--danger"
-                                    type="button"
-                                    disabled="@NoPuedeDesactivar"
-                                    @onclick="DesactivarAsync">
-                                Desactivar
-                            </button>
-                            <button class="btn btn--primary" type="submit" disabled="@guardando">
-                                @(guardando ? "Guardando..." : "Guardar cambios")
-                            </button>
-                        </div>
-                    </div>
-                </EditForm>
-            }
-        </section>
-
-        <aside class="page-aside">
-            <article class="card card--accent stack">
-                <p class="eyebrow">Resumen</p>
-                <h2>@(incidencia?.TipoIncidencia ?? "Incidencia")</h2>
-                <div class="metric-list">
-                    <div class="metric-row"><span>Período</span><strong>@(incidencia?.CodigoPeriodo ?? "-")</strong></div>
-                    <div class="metric-row"><span>Colaborador</span><strong>@(incidencia?.NombreColaborador ?? "-")</strong></div>
-                    <div class="metric-row"><span>Naturaleza</span><strong>@(incidencia?.Naturaleza ?? "-")</strong></div>
-                    <div class="metric-row"><span>Estado</span><strong>@(incidencia?.EstadoRegistro ?? "-")</strong></div>
-                </div>
-            </article>
-            <article class="card stack">
-                <h3>Desactivación</h3>
-                <p>La desactivación conserva el registro y lo excluye como incidencia vigente.</p>
-            </article>
-        </aside>
-    </div>
-</section>
-
-@code {
-    [Parameter]
-    public long IdIncidenciaPlanilla { get; set; }
-
-    private SolicitudIncidenciaPlanilla solicitud = new();
-    private IncidenciaPlanillaDetalle? incidencia;
-    private IReadOnlyList<PeriodoPlanillaOpcion> periodos = [];
-    private IReadOnlyList<ColaboradorIncidenciaOpcion> colaboradores = [];
-    private IReadOnlyList<TipoIncidenciaPlanillaOpcion> tiposIncidencia = [];
-    private bool cargando = true;
-    private bool guardando;
-    private bool desactivando;
-    private bool mensajeEsError;
-    private string? mensajeEstado;
-
-    private bool NoPuedeDesactivar => desactivando
-        || incidencia is null
-        || incidencia.EstaBloqueada
-        || string.Equals(incidencia.EstadoRegistro, "Inactivo", StringComparison.OrdinalIgnoreCase);
-
-    protected override async Task OnParametersSetAsync()
+<PageTitle>Confirmar incidencia | SIGE-CDC</PageTitle>
+<section class="section-shell"><div class="container stack">
+    <h1>Revisar y confirmar incidencia</h1>
+    <MensajeRecorrido Texto="@Mensaje" Error="@EsError" />
+    <a href="rrhh/incidencias-planilla">Volver a incidencias</a>
+    @if (hecho is not null)
     {
-        await CargarAsync();
+        <p>@hecho.Colaborador · @hecho.Concepto · @hecho.Captura.FechaHecho.ToString("dd/MM/yyyy") · @hecho.Captura.Cantidad @hecho.Captura.Unidad</p>
+        <p>Referencia del hecho: @hecho.Captura.ReferenciaHecho</p>
+        <p>Estado del período: @hecho.EstadoPeriodo · @(hecho.UltimaConfirmacion == 0 ? "Sin confirmar" : $"Última confirmación V{hecho.UltimaConfirmacion}")</p>
+        @if (concepto?.PermiteMontoManual == true && hecho.Captura.Unidad == "Monto") { <p>Monto capturado: @hecho.Captura.MontoManual.ToString("N2") CRC</p> }
+        @if (hecho.EstadoPeriodo == "Borrador" && hecho.Estado == "Activo" && concepto is not null)
+        {
+            <details class="form-section"><summary>Corregir el hecho capturado</summary>
+                <p>Conserva concepto, unidad, colaborador y período. No modifica resultados ni confirmaciones históricas. Después de guardar debe reconfirmar con respaldo nuevo antes de calcular.</p>
+                <div class="form-grid">
+                    <label>Fecha del hecho<input type="date" @bind="fechaCorreccion" /></label>
+                    @if (concepto.Codigo is "HORA_EXTRA_ORDINARIA" or "AUSENCIA_SIN_GOCE")
+                    { <label>Cantidad (@hecho.Captura.Unidad)<input type="number" step="0.01" @bind="cantidadCorreccion" /></label> }
+                    @if (concepto.PermiteMontoManual && concepto.TipoBase == "MONTO_AUTORIZADO")
+                    { <label>Monto documentado (CRC)<input type="number" step="0.01" @bind="montoCorreccion" /></label> }
+                    <label>Referencia del hecho corregido<input maxlength="300" @bind="referenciaCorreccion" /></label>
+                </div>
+                <button class="btn btn--secondary" disabled="@(Ocupado || fechaCorreccion is null || string.IsNullOrWhiteSpace(referenciaCorreccion))" @onclick="CorregirAsync">Guardar corrección y exigir reconfirmación</button>
+            </details>
+            <EditForm Model="solicitud" OnValidSubmit="ConfirmarAsync" class="form-section stack">
+                <DataAnnotationsValidator /><ValidationSummary />
+                <label>Respaldo de la confirmación<InputText @bind-Value="solicitud.Soporte" maxlength="500" /></label>
+                <label>Referencia de la relación ordinaria acreditada<InputText @bind-Value="solicitud.RelacionOrdinaria" maxlength="500" /></label>
+                @if (concepto.Codigo == "HORA_EXTRA_ORDINARIA")
+                {
+                    <label>Tipo de día<InputSelect @bind-Value="solicitud.TipoDia"><option value="">Seleccione</option>
+                        <option>Ordinario</option><option>Feriado</option><option>Descanso</option><option>Especial</option></InputSelect></label>
+                    <p>El motor vigente calcula HE ordinaria. Las otras clases sin regla aplicable bloquean el cálculo; no las clasifique como ordinarias para continuar.</p>
+                }
+                @if (concepto.Codigo is not ("HORA_EXTRA_ORDINARIA" or "AUSENCIA_SIN_GOCE"))
+                {
+                    <label>Parámetro interno<InputSelect @bind-Value="solicitud.IdParametro"><option value="">Sin parámetro (solo monto manual permitido)</option>
+                        @foreach (var p in parametros.Where(p => p.Version.IdConcepto == concepto.IdConcepto && p.Version.Activo && p.Version.Vigencia!.Contiene(hecho.Captura.FechaHecho))) { <option value="@p.Version.IdVersion">@p.Nombre · @p.Version.Tipo · desde @p.Version.Vigencia!.Inicio.ToString("dd/MM/yyyy")</option> }
+                    </InputSelect></label>
+                    @if (hecho.Captura.Unidad == "Porcentaje")
+                    {
+                        <label><InputCheckbox @bind-Value="solicitud.ConfirmarBaseSalario" /> Confirmo el salario devengado del tramo que contiene la fecha como base autorizada del parámetro.</label>
+                    }
+                }
+                <p>@(concepto.RequiereAutorizacion ? "Este concepto requiere autorización explícita." : "La confirmación requiere respaldo; la autorización se registra si corresponde.")</p>
+                <label><InputCheckbox @bind-Value="solicitud.Autorizar" /> Autorizo expresamente esta incidencia</label>
+                @if (solicitud.Autorizar) { <label>Referencia de autorización<InputText @bind-Value="solicitud.Autorizacion" maxlength="500" /></label> }
+                <button class="btn btn--primary" type="submit" disabled="@Ocupado">@(hecho.UltimaConfirmacion == 0 ? "Confirmar incidencia" : "Reconfirmar y conservar versión anterior")</button>
+                <button class="btn btn--secondary" type="button" disabled="@Ocupado" @onclick="ExaminarAsync">Comprobar bloqueos financieros</button>
+            </EditForm>
+        }
+        else
+        {
+            <p class="alert alert--warning">Esta incidencia no se puede confirmar: el período está bloqueado, está inactiva o pertenece al legado sin versión de concepto. No se reinterpretará como evidencia válida.</p>
+        }
+        @foreach (var b in bloqueos) { <p class="alert alert--warning">@b</p> }
+        <a class="btn btn--secondary" href="@($"rrhh/periodos-planilla/{hecho.Captura.IdPeriodo}")">Siguiente: revisar y calcular período</a>
     }
-
+</div></section>
+@code {
+    [Parameter] public long IdIncidenciaPlanilla { get; set; }
+    private IncidenciaRecorrido? hecho;
+    private ConceptoMonetarioVersion? concepto;
+    private IReadOnlyList<ParametroRecorrido> parametros = [];
+    private ConfirmacionIncidenciaInterfaz solicitud = new();
+    private List<string> bloqueos = [];
+    private DateTime? fechaCorreccion;
+    private decimal? cantidadCorreccion, montoCorreccion;
+    private string referenciaCorreccion = "";
+    protected override Task OnParametersSetAsync() => AccionAsync(CargarAsync);
     private async Task CargarAsync()
     {
-        cargando = true;
-
-        periodos = await IncidenciaPlanillaService.ObtenerPeriodosAsync();
-        colaboradores = await IncidenciaPlanillaService.ObtenerColaboradoresAsync();
-        tiposIncidencia = await IncidenciaPlanillaService.ObtenerTiposIncidenciaAsync();
-        incidencia = await IncidenciaPlanillaService.ObtenerIncidenciaPorIdAsync(IdIncidenciaPlanilla);
-
-        if (incidencia is not null)
-        {
-            solicitud = new SolicitudIncidenciaPlanilla
-            {
-                IdPeriodoPlanilla = incidencia.IdPeriodoPlanilla,
-                IdColaborador = incidencia.IdColaborador,
-                IdTipoIncidenciaPlanilla = incidencia.IdTipoIncidenciaPlanilla,
-                FechaIncidencia = incidencia.FechaIncidencia,
-                Cantidad = incidencia.Cantidad,
-                Monto = incidencia.Monto,
-                Descripcion = incidencia.Descripcion
-            };
-        }
-
-        cargando = false;
+        var actor = await ActorAsync();
+        hecho = (await Consulta.IncidenciasAsync(null, actor)).SingleOrDefault(h => h.Id == IdIncidenciaPlanilla);
+        var catalogos = await Consulta.CatalogosAsync(actor);
+        concepto = catalogos.Conceptos.SingleOrDefault(c => c.IdVersion == hecho?.Captura.IdConceptoVersion);
+        parametros = await Consulta.ParametrosAsync(actor);
+        solicitud.IdIncidencia = IdIncidenciaPlanilla; solicitud.VersionEsperada = hecho?.UltimaConfirmacion ?? 0;
+        fechaCorreccion = hecho?.Captura.FechaHecho; cantidadCorreccion = hecho?.Captura.Cantidad;
+        montoCorreccion = concepto?.PermiteMontoManual == true && concepto.TipoBase == "MONTO_AUTORIZADO" ? hecho?.Captura.MontoManual : null;
+        referenciaCorreccion = hecho?.Captura.ReferenciaHecho ?? "";
     }
-
-    private async Task GuardarAsync()
+    private Task CorregirAsync() => AccionAsync(async () =>
     {
-        guardando = true;
-        mensajeEstado = null;
-        mensajeEsError = false;
-
-        try
-        {
-            var idUsuarioActual = await ObtenerIdUsuarioActualAsync();
-            await IncidenciaPlanillaService.ActualizarIncidenciaAsync(IdIncidenciaPlanilla, solicitud, idUsuarioActual);
-            mensajeEstado = "La incidencia fue actualizada.";
-            await CargarAsync();
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "No se pudo actualizar la incidencia {IdIncidenciaPlanilla}.", IdIncidenciaPlanilla);
-            mensajeEsError = true;
-            mensajeEstado = ex.Message;
-        }
-        finally
-        {
-            guardando = false;
-        }
-    }
-
-    private async Task DesactivarAsync()
+        await Recorrido.CorregirHechoAsync(IdIncidenciaPlanilla, fechaCorreccion, cantidadCorreccion, montoCorreccion, referenciaCorreccion, await ActorAsync());
+        solicitud = new(); bloqueos.Clear(); await CargarAsync();
+    }, "Hecho corregido. Reconfirme con evidencia actual antes de calcular; las versiones anteriores se conservan.");
+    private Task ConfirmarAsync() => AccionAsync(async () =>
     {
-        desactivando = true;
-        mensajeEstado = null;
-        mensajeEsError = false;
-
-        try
-        {
-            await IncidenciaPlanillaService.DesactivarIncidenciaAsync(IdIncidenciaPlanilla);
-            mensajeEstado = "La incidencia fue marcada como Inactiva.";
-            await CargarAsync();
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "No se pudo desactivar la incidencia {IdIncidenciaPlanilla}.", IdIncidenciaPlanilla);
-            mensajeEsError = true;
-            mensajeEstado = ex.Message;
-        }
-        finally
-        {
-            desactivando = false;
-        }
-    }
-
-    private void LimpiarMensaje()
+        await Recorrido.ConfirmarAsync(solicitud, await ActorAsync()); await CargarAsync();
+    }, "Confirmación conservada con su versión. Revise los bloqueos antes de calcular.");
+    private Task ExaminarAsync() => AccionAsync(async () =>
     {
-        mensajeEstado = null;
-        mensajeEsError = false;
-    }
-
-    private async Task<string?> ObtenerIdUsuarioActualAsync()
-    {
-        var estadoAutenticacion = await Autenticacion.GetAuthenticationStateAsync();
-        return estadoAutenticacion.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-    }
+        var resultado = await Incidencias.ExaminarIncidenciasAsync(hecho!.Captura.IdPeriodo, hecho.Captura.IdColaborador,
+            solicitud.RelacionOrdinaria.Trim(), await ActorAsync());
+        bloqueos = resultado.Bloqueos.Select(b => MensajesRecorridoPlanilla.Traducir(b.Codigo)).Distinct().ToList();
+    });
 }

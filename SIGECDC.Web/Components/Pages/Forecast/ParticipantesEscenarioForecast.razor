@@ -1,6 +1,6 @@
 @page "/rrhh/forecast/{IdForecastEscenario:long}/participantes"
 @rendermode InteractiveServer
-@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Recursos Humanos")]
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Administrador,Recursos Humanos")]
 @using System.ComponentModel.DataAnnotations
 @using SIGECDC.Application.Forecast
 @inject IForecastParticipanteService ForecastParticipanteService
@@ -19,6 +19,7 @@
 
 <section class="section-shell">
     <div class="container stack">
+        <NavegacionEscenarioForecast IdEscenario="IdForecastEscenario" Nombre="@configuracion?.NombreEscenario" Estado="@configuracion?.EstadoEscenario" Etapa="Participantes" />
         @if (!string.IsNullOrWhiteSpace(mensajeError))
         {
             <div class="alert alert--danger" role="alert">
@@ -135,7 +136,7 @@
                                         </td>
                                         <td>
                                             <strong>@participante.Etiqueta</strong>
-                                            <p class="card__meta">@participante.CodigoParticipante · @(participante.EstaPersistido ? "Snapshot guardado" : "Pendiente de guardar")</p>
+                                            <p class="card__meta">@participante.CodigoParticipante · @(participante.EstaPersistido ? "Versión guardada" : "Pendiente de guardar")</p>
                                         </td>
                                         <td>@participante.Departamento</td>
                                         <td>@participante.Puesto</td>

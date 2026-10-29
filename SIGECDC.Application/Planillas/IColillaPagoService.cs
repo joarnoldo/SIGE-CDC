@@ -2,6 +2,8 @@ namespace SIGECDC.Application.Planillas;
 
 public interface IColillaPagoService
 {
+    Task<ColillaPagoDetalle?> ObtenerRevisionAsync(long idColillaPago, string actor,
+        CancellationToken cancellationToken = default);
     Task<int> GenerarPendientesAsync(
         long idPeriodoPlanilla,
         string idUsuarioActor,

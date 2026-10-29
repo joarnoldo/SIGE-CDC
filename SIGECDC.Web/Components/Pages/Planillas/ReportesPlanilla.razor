@@ -1,8 +1,9 @@
 @page "/rrhh/reportes-planilla"
 @rendermode InteractiveServer
-@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Recursos Humanos")]
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Administrador,Recursos Humanos")]
 @using SIGECDC.Application.Planillas
 @inject IReportePlanillaService ReporteService
+@inject AuthenticationStateProvider Autenticacion
 @inject ILogger<ReportesPlanilla> Logger
 
 <PageTitle>Reportes de planilla | SIGE-CDC</PageTitle>
@@ -46,7 +47,7 @@
                             @foreach (var periodo in periodos)
                             {
                                 <option value="@periodo.IdPeriodoPlanilla">
-                                    @periodo.CodigoPeriodo · @periodo.NombrePeriodo · @periodo.EstadoPlanilla
+                                    @periodo.NombrePeriodo · @periodo.FechaInicio.ToString("dd/MM/yyyy") – @periodo.FechaFin.ToString("dd/MM/yyyy") · @periodo.EstadoPlanilla
                                 </option>
                             }
                         </select>
@@ -89,7 +90,8 @@
             <article class="table-card">
                 <div class="table-toolbar">
                     <div>
-                        <p class="eyebrow">@reporte.CodigoPeriodo · @reporte.EstadoPlanilla</p>
+                        <p class="eyebrow">@reporte.CodigoPeriodo · @reporte.EstadoPlanilla · V@(reporte.NumeroVersion)</p>
+                        <p role="status"><strong>@reporte.Rotulo</strong></p>
                         <h2 class="card__title">@reporte.NombrePeriodo</h2>
                         <p class="card__meta">
                             @reporte.TipoPeriodo · @reporte.FechaInicio.ToString("dd/MM/yyyy") al @reporte.FechaFin.ToString("dd/MM/yyyy")
@@ -112,7 +114,7 @@
                     }
                 </div>
 
-                <section class="kpi-grid" aria-label="Totales oficiales de planilla">
+                <section class="kpi-grid" aria-label="Totales de la versión de planilla">
                     <article class="stat-card">
                         <span class="stat-label">Salario bruto</span>
                         <strong class="stat-value">@TextoMoneda(reporte.SalarioBrutoTotal)</strong>
@@ -126,7 +128,7 @@
                     <article class="stat-card">
                         <span class="stat-label">Salario neto</span>
                         <strong class="stat-value">@TextoMoneda(reporte.SalarioNetoTotal)</strong>
-                        <span class="stat-delta">Total a pagar</span>
+                        <span class="stat-delta">Importe de la versión guardada · @reporte.Rotulo</span>
                     </article>
                     <article class="stat-card">
                         <span class="stat-label">Colaboradores</span>
@@ -192,6 +194,17 @@
                         </table>
                     </div>
                 </article>
+                @foreach (var fila in reporte.Detalles)
+                {
+                    <details class="table-card">
+                        <summary>Revisar colilla · @fila.CodigoColaborador · @fila.NombreColaborador</summary>
+                        <p><strong>@reporte.Rotulo · Ejecución @reporte.IdEjecucionPlanilla · V@(reporte.NumeroVersion)</strong></p>
+                        <DetallePagoSnapshot Detalle="fila" MostrarCostos="true" />
+                        @if(reporte.EstadoPlanilla is "Aprobada" or "Cerrada")
+                        {<a class="btn btn--secondary" href="@($"rrhh/reportes-planilla/distribucion-real/{fila.IdDetallePlanilla}")">Distribución real por proyecto</a>}
+                        <a class="btn btn--secondary" href="@($"rrhh/reportes-planilla/colillas/{fila.IdColillaPago}/pdf")" data-enhance-nav="false">PDF individual</a>
+                    </details>
+                }
             }
         }
     </div>
@@ -207,14 +220,16 @@
     private string? mensajeEstado;
 
     private bool TieneFilas => reporte?.Detalles.Count > 0;
-    private string RutaPdf => $"rrhh/reportes-planilla/{reporte!.IdPeriodoPlanilla}/pdf";
-    private string RutaExcel => $"rrhh/reportes-planilla/{reporte!.IdPeriodoPlanilla}/excel";
+    private string RutaPdf => $"rrhh/reportes-planilla/{reporte!.IdPeriodoPlanilla}/pdf?ejecucion={reporte.IdEjecucionPlanilla}";
+    private string RutaExcel => $"rrhh/reportes-planilla/{reporte!.IdPeriodoPlanilla}/excel?ejecucion={reporte.IdEjecucionPlanilla}";
+    private async Task<string> ActorAsync() => (await Autenticacion.GetAuthenticationStateAsync()).User
+        .FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "";
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
-            periodos = await ReporteService.ObtenerPeriodosDisponiblesAsync();
+            periodos = await ReporteService.ObtenerPeriodosDisponiblesAsync(actor: await ActorAsync());
         }
         catch (Exception excepcion)
         {
@@ -254,7 +269,7 @@
 
         try
         {
-            reporte = await ReporteService.ObtenerReporteAsync(idPeriodoSeleccionado);
+            reporte = await ReporteService.ObtenerReporteAsync(idPeriodoSeleccionado, actor: await ActorAsync());
             if (reporte is null)
             {
                 mensajeEsError = true;

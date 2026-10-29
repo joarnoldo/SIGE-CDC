@@ -68,10 +68,10 @@ public sealed class SolicitudCrearEscenarioForecast : IValidatableObject
             }
         }
 
-        if (IdPlanillasHistoricas is null || IdPlanillasHistoricas.Count == 0)
+        if (IdPlanillasHistoricas is null)
         {
             yield return new ValidationResult(
-                "Seleccione al menos una planilla histórica.",
+                "La selección de fuentes no puede ser nula; una lista vacía solicita las últimas fuentes comparables.",
                 [nameof(IdPlanillasHistoricas)]);
         }
         else

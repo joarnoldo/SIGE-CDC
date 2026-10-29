@@ -58,6 +58,16 @@ public sealed class GeneradorReportePlanillaPdf : IGeneradorReportePlanillaPdf
 
         DibujarTotales(pagina, fuentes, reporte);
         pagina.Dispose();
+        foreach (var d in reporte.Detalles.Where(d => d.Lineas.Count > 0))
+        {
+            using var desglose = new DocumentoPublicacionPdf(documento, true, reporte.Rotulo,
+                $"Reporte · Ejecución {reporte.IdEjecucionPlanilla} · V{reporte.NumeroVersion}");
+            desglose.Texto($"{reporte.TipoPeriodo} · {reporte.FechaInicio:dd/MM/yyyy}–{reporte.FechaFin:dd/MM/yyyy}");
+            desglose.Detalle(d);
+            desglose.Texto("Carga patronal: " + DocumentoPublicacionPdf.Moneda(d.CargasPatronales));
+            desglose.Texto("RT: " + DocumentoPublicacionPdf.Moneda(d.RiesgosTrabajo) + " | Otros costos: " + DocumentoPublicacionPdf.Moneda(d.OtrosCostosPatronales));
+            desglose.Texto("Costo laboral total: " + DocumentoPublicacionPdf.Moneda(d.CostoLaboralTotal));
+        }
         DibujarPaginacion(documento, fuentes);
 
         var memoria = new MemoryStream();
@@ -99,6 +109,9 @@ public sealed class GeneradorReportePlanillaPdf : IGeneradorReportePlanillaPdf
             new XRect(margen, y, anchoContenido, 23),
             XStringFormats.TopLeft);
         y += 27;
+        graficos.DrawString($"{reporte.Rotulo} · Ejecución {reporte.IdEjecucionPlanilla} · V{reporte.NumeroVersion}",
+            fuentes.Subtitulo, XBrushes.Black, new XRect(margen, y, anchoContenido, 18), XStringFormats.TopLeft);
+        y += 22;
 
         graficos.DrawLine(
             new XPen(XColor.FromArgb(28, 96, 78), 1.4),
@@ -308,7 +321,7 @@ public sealed class GeneradorReportePlanillaPdf : IGeneradorReportePlanillaPdf
             anchoEtiqueta,
             alto);
         pagina.Graficos.DrawString(
-            "Totales oficiales",
+            reporte.EstadoPlanilla == "Calculada" ? "Totales de revisión" : "Totales oficiales",
             fuentes.NegritaFila,
             XBrushes.Black,
             new XRect(posicion + 3, pagina.Y + 6, anchoEtiqueta - 6, 12),

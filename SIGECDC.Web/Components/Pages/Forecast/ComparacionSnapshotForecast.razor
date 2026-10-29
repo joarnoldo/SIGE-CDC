@@ -1,0 +1,60 @@
+@using SIGECDC.Application.Forecast
+@using SIGECDC.Domain.Planillas
+@using System.Security.Claims
+@using System.Globalization
+@inject IForecastComparacionSnapshotService Servicio
+@inject AuthenticationStateProvider Autenticacion
+
+<PageTitle>Comparación Forecast vs Planilla | SIGE-CDC</PageTitle>
+<section class="section-shell"><div class="container stack">
+    <h1>Forecast contra planilla real</h1>
+    <p>Comparación de resultados históricos guardados. Los importes ausentes se muestran como no disponibles.</p>
+    @if(error is not null){<div class="alert alert--danger" role="alert">@error</div>}
+    @if(consulta is not null)
+    {
+        <NavegacionEscenarioForecast IdEscenario="IdForecastEscenario" Nombre="@consulta.Nombre" Estado="@consulta.Estado" Etapa="Comparación real y desviaciones" SnapshotVigente="true" />
+        <h2>@consulta.Nombre</h2><p>Estado: <strong>@consulta.Estado</strong></p>
+        <div class="page-actions">
+            @if(consulta.Estado=="Guardado"){<button class="btn btn--primary" disabled="@ocupado" @onclick="Comparar">Evaluar y guardar comparación</button>}
+            <a class="btn btn--secondary" href="@($"/rrhh/forecast/{IdForecastEscenario}/comparacion-real/pdf")">PDF</a>
+            <a class="btn btn--secondary" href="@($"/rrhh/forecast/{IdForecastEscenario}/comparacion-real/excel")">Excel</a>
+            <a class="btn btn--secondary" href="/rrhh/reportes-planilla">Distribución real en reporte de Planilla</a>
+        </div>
+        @foreach(var p in consulta.Periodos)
+        {
+            <article class="table-card"><h3>@p.TipoPeriodo · @p.Inicio.ToString("yyyy-MM-dd") — @p.Fin.ToString("yyyy-MM-dd")</h3>
+                <p>@(p.Disponibilidad == "SinRealComparable" ? "No existe una Planilla comparable. No se generan importes reales ficticios." : p.Disponibilidad) · @p.Motivo</p>
+                @if(p.IdEjecucionReal is not null){<p>Real EJ-@(p.IdEjecucionReal) · V@(p.VersionReal) · Estado observado: @p.EstadoReal</p>}
+                <div class="table-responsive"><table class="data-table"><thead><tr><th>Dimensión</th><th>Forecast histórico</th><th>Real histórico</th><th>Forecast CRC</th><th>Real CRC</th><th>Firmada CRC</th><th>Absoluta CRC</th><th>% con signo</th><th>Motivo</th></tr></thead><tbody>
+                @foreach(var f in p.Filas)
+                {
+                    <tr><td>@f.Granularidad</td><td>@f.CodigoForecast @f.NombreForecast</td><td>@f.CodigoReal @f.NombreReal</td><td>@N(f.MontoForecast)</td><td>@N(f.MontoReal)</td><td>@N(f.DiferenciaFirmada)</td><td>@N(f.DiferenciaAbsoluta)</td><td>@N(f.DiferenciaPorcentual,4)</td><td>@f.Motivo</td></tr>
+                    @if(f.Dimensiones.Count>0)
+                    {<tr><td colspan="9"><details><summary>Condiciones históricas de @f.NombreForecast / @f.NombreReal</summary>
+                        @foreach(var d in f.Dimensiones){<p>@d.Lado: @d.Inicio.ToString("yyyy-MM-dd") — @d.Fin.ToString("yyyy-MM-dd") · @d.Puesto · @d.Departamento · @d.Jornada · Salario CRC @N(d.SalarioMensual)</p>}
+                    </details></td></tr>}
+                }
+                </tbody></table></div>
+            </article>
+        }
+    }
+</div></section>
+@code {
+    [Parameter] public long IdForecastEscenario {get;set;}
+    private ConsultaComparacionPersistida? consulta;
+    private string? error;
+    private bool ocupado;
+    private static string N(decimal? n,int decimales=2)=>n?.ToString("N"+decimales,CultureInfo.GetCultureInfo("es-CR"))??"No disponible";
+    private async Task<string> Actor()=>(await Autenticacion.GetAuthenticationStateAsync()).User.FindFirstValue(ClaimTypes.NameIdentifier)??"";
+    protected override async Task OnParametersSetAsync()=>await Ejecutar(false);
+    private Task Comparar()=>Ejecutar(true);
+    private async Task Ejecutar(bool escribir)
+    {
+        if(ocupado)return;ocupado=true;error=null;
+        try{consulta=escribir?await Servicio.CompararAsync(IdForecastEscenario,await Actor()):await Servicio.LeerAsync(IdForecastEscenario,await Actor());}
+        catch(ConfiguracionConceptoException e){error=SIGECDC.Web.Configuracion.MensajesRecorridoForecast.Para(e);}
+        catch(UnauthorizedAccessException){consulta=null;error="Consulta no disponible para esta cuenta.";}
+        catch(InvalidOperationException){error="No se pudo obtener una comparación coherente. Revise el estado y la distribución real.";}
+        finally{ocupado=false;}
+    }
+}

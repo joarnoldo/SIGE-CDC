@@ -16,6 +16,10 @@ public sealed class IncidenciaPlanilla
 
     public decimal? Cantidad { get; set; }
 
+    public string? Unidad { get; set; }
+
+    public long? IdConceptoPlanillaVersion { get; set; }
+
     public decimal Monto { get; set; }
 
     public string? Descripcion { get; set; }
@@ -31,4 +35,6 @@ public sealed class IncidenciaPlanilla
     public Colaborador? Colaborador { get; set; }
 
     public TipoIncidenciaPlanilla? TipoIncidenciaPlanilla { get; set; }
+
+    public ConceptoPlanillaVersion? ConceptoPlanillaVersion { get; set; }
 }

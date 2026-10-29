@@ -1,16 +1,15 @@
 @page "/rrhh/forecast/{IdForecastEscenario:long}"
 @rendermode InteractiveServer
-@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Recursos Humanos")]
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Administrador,Recursos Humanos")]
 @using SIGECDC.Application.Forecast
 @using SIGECDC.Domain.Forecast
 @using SIGECDC.Domain.Planillas
 @using System.ComponentModel.DataAnnotations
 @inject IForecastEscenarioService ForecastEscenarioService
-@inject IForecastParametroService ForecastParametroService
+@inject IForecastEvidenciaService ForecastEvidenciaService
 @inject IForecastParticipanteService ForecastParticipanteService
 @inject IForecastMovimientoPersonalService ForecastMovimientoPersonalService
 @inject IForecastAsignacionProyectoService ForecastAsignacionProyectoService
-@inject IForecastCalculoService ForecastCalculoService
 @inject AuthenticationStateProvider Autenticacion
 @inject ILogger<DetalleEscenarioForecast> Logger
 
@@ -71,21 +70,16 @@
                 }
                 @if (PuedeCompararEscenario)
                 {
-                    <a class="btn btn--secondary" href="@($"rrhh/forecast/comparar?base={IdForecastEscenario}")">Comparar escenario</a>
+                    @if (esRrhh) { <a class="btn btn--secondary" href="@($"rrhh/forecast/comparar?base={IdForecastEscenario}")">Comparar escenario</a> }
                     <a class="btn btn--secondary" href="@($"rrhh/forecast/{IdForecastEscenario}/comparacion-real")">Comparar con planilla real</a>
                 }
                 @if (PuedeGenerarForecast)
                 {
-                    <button class="btn btn--primary"
-                            type="button"
-                            disabled="@generando"
-                            @onclick="GenerarForecastAsync">
-                        @(generando ? "Generando..." : "Generar forecast")
-                    </button>
+                    <a class="btn btn--primary" href="#evidencia-financiera">Acreditar y generar Forecast</a>
                 }
                 @if (configuracionParametros?.PuedeEditar == true)
                 {
-                    <a class="btn btn--primary" href="@($"rrhh/forecast/{IdForecastEscenario}/parametros")">Configurar parámetros</a>
+                    <a class="btn btn--primary" href="#evidencia-financiera">Configurar conceptos y evidencia</a>
                 }
                 @if (configuracionParticipantes?.PuedeEditar == true)
                 {
@@ -120,6 +114,11 @@
         }
         else
         {
+            <NavegacionEscenarioForecast IdEscenario="IdForecastEscenario" Nombre="@escenario.Nombre" Estado="@escenario.EstadoEscenario" SnapshotVigente="@(escenario.VersionMotor == ProyeccionFinanciera.VersionMotor)" />
+            @if (escenario.EstadoEscenario == EstadosEscenarioForecast.Borrador)
+            {
+                <EvidenciaFinancieraForecast IdEscenario="IdForecastEscenario" Generado="RefrescarEvidenciaAsync" />
+            }
             <section class="kpi-grid">
                 <article class="stat-card">
                     <span class="stat-label">Estado</span>
@@ -182,7 +181,7 @@
                             </div>
                             <div class="metric-list">
                                 <div class="metric-row">
-                                    <span>Total bruto proyectado</span>
+                                    <span>@(escenario.VersionMotor == ProyeccionFinanciera.VersionMotor ? "Costo laboral total proyectado" : "Total legado (no reproducible)")</span>
                                     <strong>@TextoMontoProyectado</strong>
                                 </div>
                                 <div class="metric-row">
@@ -194,7 +193,7 @@
                                     <strong>@escenario.CantidadPeriodos</strong>
                                 </div>
                             </div>
-                            <p class="text-muted">El desglose por colaborador, departamento, proyecto y período se habilitará en la consulta de resultados.</p>
+                            <p class="text-muted">Consulte el desglose de costos proyectados en Resultados.</p>
                         </article>
                     }
 
@@ -240,18 +239,18 @@
                         <div class="table-toolbar">
                             <div>
                                 <h2 class="card__title">Parámetros de proyección</h2>
-                                <p class="card__meta">Configuración persistida utilizada por el cálculo del escenario.</p>
+                                <p class="card__meta">Ajustes autorizados para el escenario. Los resultados se consultan en la versión guardada.</p>
                             </div>
                             <span class="badge badge--info">@ParametrosActivos.Count</span>
                         </div>
                         @if (ParametrosActivos.Count == 0)
                         {
                             <div class="empty-state">
-                                <strong>No hay parámetros configurados</strong>
-                                <p class="text-muted">El escenario conserva únicamente sus períodos y fuentes históricas.</p>
+                                <strong>No hay ajustes autorizados</strong>
+                                <p class="text-muted">El cálculo utiliza la configuración vigente y las fuentes seleccionadas. Registre ajustes únicamente cuando correspondan y cuenten con respaldo.</p>
                                 @if (configuracionParametros?.PuedeEditar == true)
                                 {
-                                    <a class="btn btn--primary" href="@($"rrhh/forecast/{IdForecastEscenario}/parametros")">Configurar parámetros</a>
+                                    <a class="btn btn--primary" href="#evidencia-financiera">Configurar conceptos y evidencia</a>
                                 }
                             </div>
                         }
@@ -271,11 +270,10 @@
                                         {
                                             <tr>
                                                 <td>
-                                                    <strong>@parametro.Nombre</strong>
-                                                    <p class="card__meta">@parametro.Codigo</p>
+                                                    <strong>@configuracionParametros?.Conceptos.FirstOrDefault(c => c.IdVersion == parametro.IdConceptoVersion)?.Nombre</strong>
                                                 </td>
-                                                <td>@parametro.TipoParametro</td>
-                                                <td>@TextoValorParametro(parametro)</td>
+                                                <td>@parametro.Tipo</td>
+                                                <td>@parametro.Valor.ToString("0.####") @parametro.Unidad</td>
                                             </tr>
                                         }
                                     </tbody>
@@ -288,7 +286,7 @@
                         <div class="table-toolbar">
                             <div>
                                 <h2 class="card__title">Composición de colaboradores</h2>
-                                <p class="card__meta">Snapshots persistidos que determinan la composición incluida en el cálculo.</p>
+                                <p class="card__meta">Versiones guardadas que determinan los participantes incluidos en el cálculo.</p>
                             </div>
                             <span class="badge badge--info">@ParticipantesPersistidos.Count</span>
                         </div>
@@ -348,7 +346,7 @@
                         <div class="table-toolbar">
                             <div>
                                 <h2 class="card__title">Cambios previstos de personal</h2>
-                                <p class="card__meta">Altas anónimas y primer día sin costo de las salidas planificadas.</p>
+                                <p class="card__meta">Altas anónimas y último día con costo (inclusive) de las salidas planificadas.</p>
                             </div>
                             <span class="badge badge--info">@(ContratacionesPrevistas.Count + SalidasPrevistas.Count)</span>
                         </div>
@@ -397,7 +395,7 @@
                                 </div>
                                 <div class="table-responsive">
                                     <table class="data-table">
-                                        <thead><tr><th>Colaborador</th><th>Departamento</th><th>Puesto</th><th>Primer día sin costo</th></tr></thead>
+                                        <thead><tr><th>Colaborador</th><th>Departamento</th><th>Puesto</th><th>Último día con costo (inclusive)</th></tr></thead>
                                         <tbody>
                                             @foreach (var salida in SalidasPrevistas)
                                             {
@@ -456,6 +454,10 @@
                             </div>
                             <span class="badge badge--accent">@escenario.FuentesHistoricas.Count</span>
                         </div>
+                        @if (escenario.CantidadFuentesHistoricas == 0)
+                        {
+                            <p class="alert alert--warning">Sin histórico disponible: 0 fuentes. La proyección requiere entradas explícitas completas.</p>
+                        }
                         <div class="table-responsive">
                             <table class="data-table">
                                 <thead>
@@ -506,13 +508,13 @@
     public long IdForecastEscenario { get; set; }
 
     private EscenarioForecastDetalle? escenario;
-    private ConfiguracionParametrosForecast? configuracionParametros;
+    private ConfiguracionEvidenciaForecast? configuracionParametros;
     private ConfiguracionParticipantesForecast? configuracionParticipantes;
     private ConfiguracionMovimientosForecast? configuracionMovimientos;
     private ConfiguracionAsignacionesProyectoForecast? configuracionAsignaciones;
     private bool cargando = true;
-    private bool generando;
     private bool guardando;
+    private bool esRrhh;
     private string? mensajeError;
     private string? mensajeOperacion;
     private string? mensajeErrorOperacion;
@@ -521,10 +523,11 @@
         && escenario.EstadoEscenario == EstadosEscenarioForecast.Borrador
         && configuracionAsignaciones?.EstaListaParaCalculo == true;
 
-    private bool PuedeGuardarEscenario => escenario?.EstadoEscenario == EstadosEscenarioForecast.Calculado;
+    private bool PuedeGuardarEscenario => escenario?.VersionMotor == ProyeccionFinanciera.VersionMotor
+        && escenario.EstadoEscenario == EstadosEscenarioForecast.Calculado;
 
-    private bool PuedeCompararEscenario => escenario?.EstadoEscenario is
-        EstadosEscenarioForecast.Guardado or EstadosEscenarioForecast.Comparado;
+    private bool PuedeCompararEscenario => escenario?.VersionMotor == ProyeccionFinanciera.VersionMotor
+        && escenario?.EstadoEscenario is EstadosEscenarioForecast.Guardado or EstadosEscenarioForecast.Comparado;
 
     private string TextoMontoProyectado => escenario is not null
         && string.Equals(escenario.EstadoEscenario, EstadosEscenarioForecast.Borrador, StringComparison.OrdinalIgnoreCase)
@@ -538,6 +541,7 @@
 
         try
         {
+            esRrhh = (await Autenticacion.GetAuthenticationStateAsync()).User.IsInRole("Recursos Humanos");
             var idActor = await ObtenerIdUsuarioActualAsync();
             await CargarDatosAsync(idActor);
         }
@@ -557,55 +561,8 @@
         }
     }
 
-    private async Task GenerarForecastAsync()
-    {
-        if (generando)
-        {
-            return;
-        }
 
-        mensajeOperacion = null;
-        mensajeErrorOperacion = null;
-        if (!PuedeGenerarForecast)
-        {
-            mensajeErrorOperacion = "Complete la composición y la distribución por proyecto antes de generar el forecast.";
-            return;
-        }
-
-        generando = true;
-        try
-        {
-            var idActor = await ObtenerIdUsuarioActualAsync();
-            var resultado = await ForecastCalculoService.GenerarForecastAsync(
-                IdForecastEscenario,
-                idActor);
-            await CargarDatosAsync(idActor);
-            mensajeOperacion = $"Se calcularon {resultado.CantidadPeriodos} período(s), "
-                + $"{resultado.CantidadParticipantes} participante(s) y {resultado.CantidadDetalles} detalle(s).";
-        }
-        catch (Exception ex) when (ex is ValidationException
-            or InvalidOperationException
-            or KeyNotFoundException
-            or ArgumentException)
-        {
-            Logger.LogWarning(ex, "La configuración del escenario forecast {IdForecastEscenario} no permite calcularlo.", IdForecastEscenario);
-            mensajeErrorOperacion = ex.Message;
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            Logger.LogWarning(ex, "Una cuenta no autorizada intentó calcular el escenario forecast {IdForecastEscenario}.", IdForecastEscenario);
-            mensajeErrorOperacion = "La cuenta actual no está autorizada para generar forecast.";
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "No se pudo generar el escenario forecast {IdForecastEscenario}.", IdForecastEscenario);
-            mensajeErrorOperacion = "Ocurrió un error al generar el forecast. Intente nuevamente.";
-        }
-        finally
-        {
-            generando = false;
-        }
-    }
+    private async Task RefrescarEvidenciaAsync()=>await CargarDatosAsync(await ObtenerIdUsuarioActualAsync());
 
     private async Task GuardarEscenarioAsync()
     {
@@ -655,7 +612,7 @@
             idActor);
         configuracionParametros = escenario is null
             ? null
-            : await ForecastParametroService.ObtenerConfiguracionAsync(
+            : await ForecastEvidenciaService.ConsultarConfiguracionAsync(
                 IdForecastEscenario,
                 idActor);
         configuracionParticipantes = escenario is null
@@ -688,10 +645,7 @@
     private static string TextoSalario(decimal? salario) =>
         salario.HasValue ? $"₡{salario:N2}" : "No disponible";
 
-    private IReadOnlyList<ParametroForecastConfigurado> ParametrosActivos =>
-        configuracionParametros?.Parametros
-            .Where(parametro => parametro.EstaHabilitado)
-            .ToList() ?? [];
+    private IReadOnlyList<SolicitudOverrideForecast> ParametrosActivos => configuracionParametros?.Overrides ?? [];
 
     private IReadOnlyList<ParticipanteForecastConfigurado> ParticipantesPersistidos =>
         configuracionParticipantes?.Participantes
@@ -706,18 +660,4 @@
             .Where(colaborador => colaborador.FechaSalidaPrevista.HasValue)
             .ToList() ?? [];
 
-    private static string TextoValorParametro(ParametroForecastConfigurado parametro)
-    {
-        if (parametro.ValorDecimal is null)
-        {
-            return "-";
-        }
-
-        return string.Equals(
-            parametro.TipoParametro,
-            TiposParametroPlanilla.Porcentaje,
-            StringComparison.OrdinalIgnoreCase)
-                ? $"{parametro.ValorDecimal:N4} %"
-                : $"₡{parametro.ValorDecimal:N4}";
-    }
 }

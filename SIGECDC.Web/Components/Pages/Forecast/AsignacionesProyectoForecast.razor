@@ -1,6 +1,6 @@
 @page "/rrhh/forecast/{IdForecastEscenario:long}/asignaciones-proyecto"
 @rendermode InteractiveServer
-@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Recursos Humanos")]
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Administrador,Recursos Humanos")]
 @using System.ComponentModel.DataAnnotations
 @using System.Globalization
 @using SIGECDC.Application.Forecast
@@ -20,6 +20,7 @@
 
 <section class="section-shell">
     <div class="container stack">
+        <NavegacionEscenarioForecast IdEscenario="IdForecastEscenario" Nombre="@configuracion?.NombreEscenario" Estado="@configuracion?.EstadoEscenario" Etapa="Distribución" />
         @if (!string.IsNullOrWhiteSpace(mensajeError))
         {
             <div class="alert alert--danger" role="alert">
@@ -197,7 +198,7 @@
                                             <tr @key="fila.ClaveInterfaz">
                                                 <td>
                                                     <select class="form-control" @bind="fila.IdProyecto" disabled="@(!configuracion.PuedeEditar || procesando)">
-                                                        <option value="0">Seleccione un proyecto</option>
+                                                        <option value="0">Sin asignar</option>
                                                         @if (!fila.EsProyectoElegible && fila.IdProyecto > 0)
                                                         {
                                                             <option value="@fila.IdProyecto">@fila.NombreProyecto · No elegible</option>
@@ -382,7 +383,7 @@
                 {
                     Asignaciones = filasEdicion.Select(item => new SolicitudAsignacionProyectoForecast
                     {
-                        IdProyecto = item.IdProyecto,
+                        IdProyecto = item.IdProyecto==0?null:item.IdProyecto,
                         Porcentaje = item.Porcentaje
                     }).ToList()
                 },

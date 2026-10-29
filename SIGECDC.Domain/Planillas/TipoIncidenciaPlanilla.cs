@@ -11,4 +11,8 @@ public sealed class TipoIncidenciaPlanilla
     public string? Descripcion { get; set; }
 
     public string EstadoRegistro { get; set; } = "Activo";
+
+    public long? IdConceptoPlanilla { get; set; }
+
+    public ConceptoPlanilla? ConceptoPlanilla { get; set; }
 }

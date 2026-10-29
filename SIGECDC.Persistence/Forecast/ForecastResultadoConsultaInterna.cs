@@ -6,6 +6,14 @@ namespace SIGECDC.Persistence.Forecast;
 
 internal static class ForecastResultadoConsultaInterna
 {
+    // Adaptador legado de comparación. M no está autorizado para consumir FIN-FOR-V1.
+    internal static async Task ExigirLecturaLegadaAsync(ApplicationDbContext contexto,IReadOnlyCollection<long> ids,CancellationToken ct)
+    {
+        if(await contexto.ForecastEscenarios.AsNoTracking().AnyAsync(e=>ids.Contains(e.IdForecastEscenario)
+            && e.VersionMotor==SIGECDC.Domain.Forecast.ProyeccionFinanciera.VersionMotor,ct))
+            throw new InvalidOperationException("COMPARACION_FIN_FOR_REQUIERE_LOOP_M: resultado L no comparable por el adaptador legado.");
+    }
+
     internal static IQueryable<DetalleResultadoConsulta> Crear(
         ApplicationDbContext contexto,
         IReadOnlyCollection<long> idsEscenarios,
@@ -16,6 +24,8 @@ internal static class ForecastResultadoConsultaInterna
             .Where(item => idsEscenarios.Contains(item.IdForecastEscenario)
                 && item.EstadoRegistro == EstadosRegistro.Activo
                 && item.ForecastAsignacionProyecto!.EstadoRegistro == EstadosRegistro.Activo
+                && !item.ForecastAsignacionProyecto.EsSinAsignar
+                && item.IdProyecto.HasValue
                 && item.ForecastAsignacionProyecto.ForecastPeriodo!.EstadoRegistro == EstadosRegistro.Activo
                 && item.ForecastAsignacionProyecto.ForecastParticipante!.EstadoRegistro == EstadosRegistro.Activo
                 && item.ForecastAsignacionProyecto.ForecastParticipante.EstaIncluido);
@@ -41,7 +51,7 @@ internal static class ForecastResultadoConsultaInterna
             IdDepartamento = item.ForecastAsignacionProyecto.ForecastParticipante.IdDepartamento,
             NombreDepartamento = item.ForecastAsignacionProyecto.ForecastParticipante.Departamento!.Nombre,
             NombrePuesto = item.ForecastAsignacionProyecto.ForecastParticipante.Puesto!.Nombre,
-            IdProyecto = item.IdProyecto,
+            IdProyecto = item.IdProyecto!.Value,
             CodigoProyecto = item.ForecastAsignacionProyecto.Proyecto!.CodigoProyecto,
             NombreProyecto = item.ForecastAsignacionProyecto.Proyecto.NombreProyecto,
             Concepto = item.Concepto,

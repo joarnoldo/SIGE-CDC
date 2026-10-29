@@ -17,7 +17,10 @@ public sealed class ForecastEscenarioConfiguracion : IEntityTypeConfiguration<Fo
                 "`FechaInicioProyeccion` <= `FechaFinProyeccion`");
             tabla.HasCheckConstraint(
                 "CK_ForecastEscenario_Historicos",
-                "`PeriodosHistoricosConsiderados` > 0");
+                "`PeriodosHistoricosConsiderados` >= 0");
+            tabla.HasCheckConstraint(
+                "CK_ForecastEscenario_HistoricoLimitado",
+                "`TieneHistoricoLimitado` IN (0,1)");
         });
 
         entidad.HasKey(escenario => escenario.IdForecastEscenario);
@@ -42,6 +45,8 @@ public sealed class ForecastEscenarioConfiguracion : IEntityTypeConfiguration<Fo
 
         entidad.Property(escenario => escenario.PeriodosHistoricosConsiderados)
             .HasDefaultValue(3)
+            // Cero es un valor explícito: EF no debe omitirlo y recibir el default SQL de tres.
+            .ValueGeneratedNever()
             .IsRequired();
 
         entidad.Property(escenario => escenario.EstadoEscenario)
@@ -60,9 +65,29 @@ public sealed class ForecastEscenarioConfiguracion : IEntityTypeConfiguration<Fo
         entidad.Property(escenario => escenario.DiferenciaTotal)
             .HasPrecision(18, 2);
 
+        entidad.Property(escenario => escenario.VersionMotor)
+            .HasMaxLength(100);
+
+        entidad.Property(escenario => escenario.Moneda)
+            .HasColumnType("char(3)")
+            .HasDefaultValue("CRC")
+            .IsRequired();
+
+        entidad.Property(escenario => escenario.TieneHistoricoLimitado)
+            .HasColumnType("tinyint(1)")
+            .HasDefaultValue(false)
+            .IsRequired();
+
         entidad.Property(escenario => escenario.FechaCreacion)
+            .HasColumnType("datetime")
             .HasDefaultValueSql("CURRENT_TIMESTAMP")
             .IsRequired();
+
+        entidad.Property(escenario => escenario.FechaCalculo)
+            .HasColumnType("datetime");
+
+        entidad.Property(escenario => escenario.FechaModificacion)
+            .HasColumnType("datetime");
 
         entidad.Property(escenario => escenario.CreadoPor)
             .HasMaxLength(255);

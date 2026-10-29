@@ -24,7 +24,7 @@ public sealed class SolicitudGuardarDistribucionForecast : IValidatableObject
             yield break;
         }
 
-        if (Asignaciones.Any(item => item.IdProyecto <= 0))
+        if (Asignaciones.Any(item => item.IdProyecto is <= 0))
         {
             yield return new ValidationResult(
                 "Todos los proyectos de la distribución deben ser válidos.",
@@ -63,6 +63,6 @@ public sealed class SolicitudGuardarDistribucionForecast : IValidatableObject
 
 public sealed class SolicitudAsignacionProyectoForecast
 {
-    public long IdProyecto { get; set; }
+    public long? IdProyecto { get; set; }
     public decimal Porcentaje { get; set; }
 }

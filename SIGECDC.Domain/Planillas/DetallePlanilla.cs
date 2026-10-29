@@ -8,6 +8,8 @@ public sealed class DetallePlanilla
 
     public long IdPlanilla { get; set; }
 
+    public long? IdEjecucionPlanilla { get; set; }
+
     public long IdColaborador { get; set; }
 
     public decimal SalarioBase { get; set; }
@@ -30,6 +32,26 @@ public sealed class DetallePlanilla
 
     public decimal CostoPatronalEstimado { get; set; }
 
+    public string? CodigoColaborador { get; set; }
+    public string? NombreCompleto { get; set; }
+    public string? NombrePuesto { get; set; }
+    public string? NombreDepartamento { get; set; }
+    public string? TipoContrato { get; set; }
+    public string? PeriodicidadPago { get; set; }
+    public string? CodigoJornada { get; set; }
+    public decimal? HorasOrdinariasDia { get; set; }
+    public decimal? SalarioContractual { get; set; }
+    public string? FuenteDimensionesSnapshot { get; set; }
+    public bool SnapshotCompleto { get; set; }
+    public decimal IngresosNoSalariales { get; set; }
+    public decimal CuotasObreras { get; set; }
+    public decimal ImpuestoSalario { get; set; }
+    public decimal OtrasDeducciones { get; set; }
+    public decimal CargasPatronales { get; set; }
+    public decimal RiesgosTrabajo { get; set; }
+    public decimal OtrosCostosPatronales { get; set; }
+    public decimal CostoLaboralTotal { get; set; }
+
     public string? Observaciones { get; set; }
 
     public DateTime FechaCreacion { get; set; }
@@ -39,4 +61,9 @@ public sealed class DetallePlanilla
     public Colaborador? Colaborador { get; set; }
 
     public ColillaPago? ColillaPago { get; set; }
+
+    public EjecucionPlanilla? EjecucionPlanilla { get; set; }
+    public ICollection<SegmentoCalculoPlanilla> Segmentos { get; set; } = [];
+    public ICollection<ConceptoDetallePlanilla> Conceptos { get; set; } = [];
+    public ICollection<DetallePlanillaDistribucionProyecto> DistribucionesProyecto { get; set; } = [];
 }

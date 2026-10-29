@@ -1,3 +1,4 @@
+using System.Data;
 using Microsoft.EntityFrameworkCore;
 using SIGECDC.Application.Planillas;
 using SIGECDC.Domain.Planillas;
@@ -225,6 +226,8 @@ public sealed class ParametroPlanillaService(ApplicationDbContext contexto) : IP
         string? idUsuarioActual = null,
         CancellationToken cancellationToken = default)
     {
+        await using var bloqueo = await BloqueoGobiernoFinanciero.AdquirirAsync(contexto, cancellationToken);
+        await using var transaccion = await contexto.Database.BeginTransactionAsync(IsolationLevel.ReadCommitted, cancellationToken);
         var datos = await ValidarSolicitudAsync(solicitud, null, cancellationToken);
 
         var parametro = new ParametroPlanilla
@@ -246,6 +249,7 @@ public sealed class ParametroPlanillaService(ApplicationDbContext contexto) : IP
 
         contexto.ParametrosPlanilla.Add(parametro);
         await contexto.SaveChangesAsync(cancellationToken);
+        await transaccion.CommitAsync(cancellationToken);
 
         return parametro.IdParametroPlanilla;
     }
@@ -256,6 +260,8 @@ public sealed class ParametroPlanillaService(ApplicationDbContext contexto) : IP
         string? idUsuarioActual = null,
         CancellationToken cancellationToken = default)
     {
+        await using var bloqueo = await BloqueoGobiernoFinanciero.AdquirirAsync(contexto, cancellationToken);
+        await using var transaccion = await contexto.Database.BeginTransactionAsync(IsolationLevel.ReadCommitted, cancellationToken);
         var parametro = await contexto.ParametrosPlanilla
             .FirstOrDefaultAsync(registro => registro.IdParametroPlanilla == idParametroPlanilla, cancellationToken)
             ?? throw new InvalidOperationException("No se encontró el parámetro solicitado.");
@@ -277,6 +283,7 @@ public sealed class ParametroPlanillaService(ApplicationDbContext contexto) : IP
         parametro.ModificadoPor = idUsuarioActual;
 
         await contexto.SaveChangesAsync(cancellationToken);
+        await transaccion.CommitAsync(cancellationToken);
     }
 
     public async Task DesactivarParametroAsync(
@@ -361,21 +368,15 @@ public sealed class ParametroPlanillaService(ApplicationDbContext contexto) : IP
                 ?? throw new InvalidOperationException("No se encontró la asignación activa solicitada.");
 
             MarcarAsignacionInactiva(asignacion, idUsuarioActual);
+            await contexto.SaveChangesAsync(cancellationToken);
         }
         else
         {
-            var asignacion = await contexto.ParametrosPlanillaPeriodo
-                .Include(registro => registro.PeriodoPlanilla)
-                    .ThenInclude(periodo => periodo!.EstadoPlanilla)
-                .FirstOrDefaultAsync(registro => registro.IdParametroPlanillaPeriodo == idAsignacion
-                    && registro.EstadoRegistro == EstadoActivo, cancellationToken)
-                ?? throw new InvalidOperationException("No se encontró la asignación activa solicitada.");
-
-            ValidarPeriodoNoBloqueado(asignacion.PeriodoPlanilla);
-            MarcarAsignacionInactiva(asignacion, idUsuarioActual);
+            await DesactivarAsignacionPeriodoAsync(
+                idAsignacion,
+                idUsuarioActual,
+                cancellationToken);
         }
-
-        await contexto.SaveChangesAsync(cancellationToken);
     }
 
     private async Task<long> GuardarAsignacionColaboradorAsync(
@@ -429,46 +430,126 @@ public sealed class ParametroPlanillaService(ApplicationDbContext contexto) : IP
         string? idUsuarioActual,
         CancellationToken cancellationToken)
     {
+        await using var transaccion = await contexto.Database.BeginTransactionAsync(
+            IsolationLevel.ReadCommitted,
+            cancellationToken);
+
+        try
+        {
+            var periodo = await BloqueoPeriodoPlanilla.ObtenerAsync(
+                contexto,
+                datos.IdDestino,
+                cancellationToken);
+            ValidarPeriodoDisponible(periodo);
+            ValidarPeriodoNoBloqueado(periodo);
+
+            var asignacion = await contexto.ParametrosPlanillaPeriodo
+                .FirstOrDefaultAsync(registro => registro.IdParametroPlanilla == idParametroPlanilla
+                    && registro.IdPeriodoPlanilla == datos.IdDestino, cancellationToken);
+
+            if (asignacion is null)
+            {
+                asignacion = new ParametroPlanillaPeriodo
+                {
+                    IdParametroPlanilla = idParametroPlanilla,
+                    IdPeriodoPlanilla = datos.IdDestino,
+                    FechaCreacion = DateTime.Now,
+                    CreadoPor = idUsuarioActual
+                };
+                contexto.ParametrosPlanillaPeriodo.Add(asignacion);
+            }
+            else
+            {
+                asignacion.FechaModificacion = DateTime.Now;
+                asignacion.ModificadoPor = idUsuarioActual;
+            }
+
+            asignacion.ValorDecimalOverride = datos.ValorDecimalOverride;
+            asignacion.ValorTextoOverride = datos.ValorTextoOverride;
+            asignacion.EstadoRegistro = EstadoActivo;
+
+            await RevalidarPeriodoAsync(datos.IdDestino, cancellationToken);
+            await contexto.SaveChangesAsync(cancellationToken);
+            await transaccion.CommitAsync(cancellationToken);
+            return asignacion.IdParametroPlanillaPeriodo;
+        }
+        catch
+        {
+            await transaccion.RollbackAsync(CancellationToken.None);
+            contexto.ChangeTracker.Clear();
+            throw;
+        }
+    }
+
+    private async Task DesactivarAsignacionPeriodoAsync(
+        long idAsignacion,
+        string? idUsuarioActual,
+        CancellationToken cancellationToken)
+    {
+        var idPeriodo = await contexto.ParametrosPlanillaPeriodo
+            .AsNoTracking()
+            .Where(registro => registro.IdParametroPlanillaPeriodo == idAsignacion
+                && registro.EstadoRegistro == EstadoActivo)
+            .Select(registro => (long?)registro.IdPeriodoPlanilla)
+            .SingleOrDefaultAsync(cancellationToken)
+            ?? throw new InvalidOperationException("No se encontró la asignación activa solicitada.");
+
+        await using var transaccion = await contexto.Database.BeginTransactionAsync(
+            IsolationLevel.ReadCommitted,
+            cancellationToken);
+
+        try
+        {
+            var periodo = await BloqueoPeriodoPlanilla.ObtenerAsync(
+                contexto,
+                idPeriodo,
+                cancellationToken);
+            ValidarPeriodoDisponible(periodo);
+            ValidarPeriodoNoBloqueado(periodo);
+
+            var asignacion = await contexto.ParametrosPlanillaPeriodo
+                .FirstOrDefaultAsync(registro => registro.IdParametroPlanillaPeriodo == idAsignacion
+                    && registro.EstadoRegistro == EstadoActivo, cancellationToken)
+                ?? throw new InvalidOperationException("No se encontró la asignación activa solicitada.");
+
+            if (asignacion.IdPeriodoPlanilla != idPeriodo)
+            {
+                throw new InvalidOperationException(
+                    "La asignación cambió de período durante la operación. Intente nuevamente.");
+            }
+
+            MarcarAsignacionInactiva(asignacion, idUsuarioActual);
+            await RevalidarPeriodoAsync(idPeriodo, cancellationToken);
+            await contexto.SaveChangesAsync(cancellationToken);
+            await transaccion.CommitAsync(cancellationToken);
+        }
+        catch
+        {
+            await transaccion.RollbackAsync(CancellationToken.None);
+            contexto.ChangeTracker.Clear();
+            throw;
+        }
+    }
+
+    private async Task RevalidarPeriodoAsync(
+        long idPeriodoPlanilla,
+        CancellationToken cancellationToken)
+    {
         var periodo = await contexto.PeriodosPlanilla
             .AsNoTracking()
             .Include(registro => registro.EstadoPlanilla)
-            .FirstOrDefaultAsync(registro => registro.IdPeriodoPlanilla == datos.IdDestino
-                && registro.EstadoRegistro == EstadoActivo, cancellationToken);
+            .SingleOrDefaultAsync(registro => registro.IdPeriodoPlanilla == idPeriodoPlanilla,
+                cancellationToken);
+        ValidarPeriodoDisponible(periodo);
+        ValidarPeriodoNoBloqueado(periodo);
+    }
 
-        if (periodo is null)
+    private static void ValidarPeriodoDisponible(PeriodoPlanilla? periodo)
+    {
+        if (periodo is null || periodo.EstadoRegistro != EstadoActivo)
         {
             throw new ArgumentException("El período seleccionado no está disponible.");
         }
-
-        ValidarPeriodoNoBloqueado(periodo);
-
-        var asignacion = await contexto.ParametrosPlanillaPeriodo
-            .FirstOrDefaultAsync(registro => registro.IdParametroPlanilla == idParametroPlanilla
-                && registro.IdPeriodoPlanilla == datos.IdDestino, cancellationToken);
-
-        if (asignacion is null)
-        {
-            asignacion = new ParametroPlanillaPeriodo
-            {
-                IdParametroPlanilla = idParametroPlanilla,
-                IdPeriodoPlanilla = datos.IdDestino,
-                FechaCreacion = DateTime.Now,
-                CreadoPor = idUsuarioActual
-            };
-            contexto.ParametrosPlanillaPeriodo.Add(asignacion);
-        }
-        else
-        {
-            asignacion.FechaModificacion = DateTime.Now;
-            asignacion.ModificadoPor = idUsuarioActual;
-        }
-
-        asignacion.ValorDecimalOverride = datos.ValorDecimalOverride;
-        asignacion.ValorTextoOverride = datos.ValorTextoOverride;
-        asignacion.EstadoRegistro = EstadoActivo;
-
-        await contexto.SaveChangesAsync(cancellationToken);
-        return asignacion.IdParametroPlanillaPeriodo;
     }
 
     private static void ValidarPeriodoNoBloqueado(PeriodoPlanilla? periodo)
@@ -480,6 +561,15 @@ public sealed class ParametroPlanillaService(ApplicationDbContext contexto) : IP
 
         if (FlujoEstadosPlanilla.EstaBloqueada(periodo.EstadoPlanilla?.Nombre))
         {
+            if (string.Equals(
+                    periodo.EstadoPlanilla?.Nombre,
+                    EstadosPlanilla.Calculada,
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException(
+                    "El cálculo del período se confirmó antes que la modificación; la asignación no fue guardada.");
+            }
+
             throw new InvalidOperationException(
                 $"El período está en estado {periodo.EstadoPlanilla!.Nombre} y no permite modificar asignaciones.");
         }
@@ -506,6 +596,11 @@ public sealed class ParametroPlanillaService(ApplicationDbContext contexto) : IP
         if (codigoExiste)
         {
             throw new InvalidOperationException("Ya existe un parámetro de planilla con el código indicado.");
+        }
+
+        if (await contexto.ParametrosNormativos.AnyAsync(parametro => parametro.Codigo == datos.Codigo, cancellationToken))
+        {
+            throw new InvalidOperationException("Una clave normativa no puede crearse ni editarse como parámetro interno.");
         }
 
         return datos;

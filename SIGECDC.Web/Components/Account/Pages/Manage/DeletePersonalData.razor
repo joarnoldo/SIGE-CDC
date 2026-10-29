@@ -1,97 +1,15 @@
-﻿@page "/Account/Manage/DeletePersonalData"
+@page "/Account/Manage/DeletePersonalData"
 
-@using System.ComponentModel.DataAnnotations
-@using Microsoft.AspNetCore.Identity
-@using SIGECDC.Persistence.Identity
+<PageTitle>Administración de la cuenta</PageTitle>
 
-@inject UserManager<ApplicationUser> UserManager
-@inject SignInManager<ApplicationUser> SignInManager
-@inject IdentityRedirectManager RedirectManager
-@inject ILogger<DeletePersonalData> Logger
+<h3>Administración de la cuenta</h3>
 
-<PageTitle>Eliminar datos personales</PageTitle>
-
-<StatusMessage Message="@message" />
-
-<h3>Eliminar datos personales</h3>
-
-<div class="alert alert-warning" role="alert">
-    <p>
-        <strong>Al eliminar estos datos, la cuenta se cerrará de forma permanente y no podrá recuperarse.</strong>
+<div class="alert alert-info" role="alert">
+    <strong>La eliminación de cuentas no está disponible.</strong>
+    <p class="mb-0">
+        La administración de la cuenta debe gestionarse mediante el proceso administrativo autorizado
+        mientras se define la política empresarial de retención, offboarding y recuperación.
     </p>
 </div>
 
-<div>
-    <EditForm Model="Input" FormName="delete-user" OnValidSubmit="OnValidSubmitAsync" method="post">
-        <DataAnnotationsValidator />
-        <ValidationSummary class="text-danger" role="alert" />
-        @if (requirePassword)
-        {
-            <div class="form-floating mb-3">
-                <InputText type="password" @bind-Value="Input.Password" id="Input.Password" class="form-control" autocomplete="current-password" aria-required="true" placeholder="Ingrese su contraseña." />
-                <label for="Input.Password" class="form-label">Contraseña</label>
-                <ValidationMessage For="() => Input.Password" class="text-danger" />
-            </div>
-        }
-        <button class="w-100 btn btn-lg btn-danger" type="submit">Eliminar datos y cerrar mi cuenta</button>
-    </EditForm>
-</div>
-
-@code {
-    private string? message;
-    private ApplicationUser? user;
-    private bool requirePassword;
-
-    [CascadingParameter]
-    private HttpContext HttpContext { get; set; } = default!;
-
-    [SupplyParameterFromForm]
-    private InputModel Input { get; set; } = default!;
-
-    protected override async Task OnInitializedAsync()
-    {
-        Input ??= new();
-
-        user = await UserManager.GetUserAsync(HttpContext.User);
-        if (user is null)
-        {
-            RedirectManager.RedirectToInvalidUser(UserManager, HttpContext);
-            return;
-        }
-        requirePassword = await UserManager.HasPasswordAsync(user);
-    }
-
-    private async Task OnValidSubmitAsync()
-    {
-        if (user is null)
-        {
-            RedirectManager.RedirectToInvalidUser(UserManager, HttpContext);
-            return;
-        }
-
-        if (requirePassword && !await UserManager.CheckPasswordAsync(user, Input.Password))
-        {
-            message = "Error: la contraseña no es correcta.";
-            return;
-        }
-
-        var result = await UserManager.DeleteAsync(user);
-        if (!result.Succeeded)
-        {
-            throw new InvalidOperationException("Ocurrió un error inesperado al eliminar el usuario.");
-        }
-
-        await SignInManager.SignOutAsync();
-
-        var userId = await UserManager.GetUserIdAsync(user);
-        Logger.LogInformation("El usuario con ID '{UserId}' eliminó su cuenta.", userId);
-
-        RedirectManager.RedirectToCurrentPage();
-    }
-
-    private sealed class InputModel
-    {
-        [DataType(DataType.Password)]
-        public string Password { get; set; } = "";
-    }
-}
+<a href="Account/Manage" class="btn btn-secondary">Volver a mi cuenta</a>

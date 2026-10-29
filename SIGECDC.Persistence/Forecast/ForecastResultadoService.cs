@@ -16,13 +16,21 @@ public sealed class ForecastResultadoService(ApplicationDbContext contexto)
         string idUsuarioActual,
         CancellationToken cancellationToken = default)
     {
-        await ForecastAutorizacion.ValidarRecursosHumanosAsync(
+        await ForecastAutorizacion.ValidarAdministracionFinancieraAsync(
             contexto,
             idUsuarioActual,
             cancellationToken);
         ValidarIdentificador(idForecastEscenario, nameof(idForecastEscenario));
         ArgumentNullException.ThrowIfNull(filtro);
         Validator.ValidateObject(filtro, new ValidationContext(filtro), true);
+
+        await using var lectura=await contexto.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable,cancellationToken);
+        var version=await contexto.ForecastEscenarios.AsNoTracking().Where(e=>e.IdForecastEscenario==idForecastEscenario).Select(e=>e.VersionMotor).SingleOrDefaultAsync(cancellationToken);
+        if(version==ProyeccionFinanciera.VersionMotor)
+        {
+            var snapshot=await ForecastSnapshotConsulta.LeerAsync(contexto,idForecastEscenario,filtro,cancellationToken);
+            await lectura.CommitAsync(cancellationToken);return snapshot;
+        }
 
         var escenario = await contexto.ForecastEscenarios
             .AsNoTracking()

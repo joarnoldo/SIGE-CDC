@@ -1,3 +1,4 @@
+using System.Data;
 using Microsoft.EntityFrameworkCore;
 using SIGECDC.Application.Planillas;
 using SIGECDC.Domain.Planillas;
@@ -227,26 +228,47 @@ public sealed class IncidenciaPlanillaService(ApplicationDbContext contexto) : I
         string? idUsuarioActual = null,
         CancellationToken cancellationToken = default)
     {
-        var datos = await ValidarSolicitudAsync(solicitud, cancellationToken);
+        var datos = DatosIncidenciaLimpios.DesdeSolicitud(solicitud);
+        await using var transaccion = await contexto.Database.BeginTransactionAsync(
+            IsolationLevel.ReadCommitted,
+            cancellationToken);
 
-        var incidencia = new IncidenciaPlanilla
+        try
         {
-            IdPeriodoPlanilla = datos.IdPeriodoPlanilla,
-            IdColaborador = datos.IdColaborador,
-            IdTipoIncidenciaPlanilla = datos.IdTipoIncidenciaPlanilla,
-            FechaIncidencia = datos.FechaIncidencia,
-            Cantidad = datos.Cantidad,
-            Monto = datos.Monto,
-            Descripcion = datos.Descripcion,
-            RegistradoPor = idUsuarioActual,
-            FechaRegistro = DateTime.Now,
-            EstadoRegistro = EstadoActivo
-        };
+            var periodo = await BloqueoPeriodoPlanilla.ObtenerAsync(
+                contexto,
+                datos.IdPeriodoPlanilla,
+                cancellationToken);
+            ValidarPeriodoDisponible(periodo);
+            ValidarPeriodoNoBloqueado(periodo);
+            await ValidarSolicitudAsync(datos, periodo!, cancellationToken);
 
-        contexto.IncidenciasPlanilla.Add(incidencia);
-        await contexto.SaveChangesAsync(cancellationToken);
+            var incidencia = new IncidenciaPlanilla
+            {
+                IdPeriodoPlanilla = datos.IdPeriodoPlanilla,
+                IdColaborador = datos.IdColaborador,
+                IdTipoIncidenciaPlanilla = datos.IdTipoIncidenciaPlanilla,
+                FechaIncidencia = datos.FechaIncidencia,
+                Cantidad = datos.Cantidad,
+                Monto = datos.Monto,
+                Descripcion = datos.Descripcion,
+                RegistradoPor = idUsuarioActual,
+                FechaRegistro = DateTime.Now,
+                EstadoRegistro = EstadoActivo
+            };
 
-        return incidencia.IdIncidenciaPlanilla;
+            contexto.IncidenciasPlanilla.Add(incidencia);
+            await RevalidarPeriodosAsync([datos.IdPeriodoPlanilla], cancellationToken);
+            await contexto.SaveChangesAsync(cancellationToken);
+            await transaccion.CommitAsync(cancellationToken);
+            return incidencia.IdIncidenciaPlanilla;
+        }
+        catch
+        {
+            await transaccion.RollbackAsync(CancellationToken.None);
+            contexto.ChangeTracker.Clear();
+            throw;
+        }
     }
 
     public async Task ActualizarIncidenciaAsync(
@@ -255,79 +277,134 @@ public sealed class IncidenciaPlanillaService(ApplicationDbContext contexto) : I
         string? idUsuarioActual = null,
         CancellationToken cancellationToken = default)
     {
-        var incidencia = await contexto.IncidenciasPlanilla
-            .Include(registro => registro.PeriodoPlanilla)
-                .ThenInclude(periodo => periodo!.EstadoPlanilla)
-            .FirstOrDefaultAsync(
-                registro => registro.IdIncidenciaPlanilla == idIncidenciaPlanilla
-                    && registro.EstadoRegistro == EstadoActivo,
-                cancellationToken);
+        var datos = DatosIncidenciaLimpios.DesdeSolicitud(solicitud);
+        var idPeriodoOriginal = await contexto.IncidenciasPlanilla
+            .AsNoTracking()
+            .Where(registro => registro.IdIncidenciaPlanilla == idIncidenciaPlanilla
+                && registro.EstadoRegistro == EstadoActivo)
+            .Select(registro => (long?)registro.IdPeriodoPlanilla)
+            .SingleOrDefaultAsync(cancellationToken);
 
-        if (incidencia is null)
+        if (!idPeriodoOriginal.HasValue)
         {
             throw new InvalidOperationException("No se encontro la incidencia solicitada o ya esta inactiva.");
         }
 
-        ValidarPeriodoNoBloqueado(incidencia.PeriodoPlanilla);
+        await using var transaccion = await contexto.Database.BeginTransactionAsync(
+            IsolationLevel.ReadCommitted,
+            cancellationToken);
 
-        var datos = await ValidarSolicitudAsync(solicitud, cancellationToken);
+        try
+        {
+            var idsPeriodos = new[] { idPeriodoOriginal.Value, datos.IdPeriodoPlanilla };
+            var periodos = await BloqueoPeriodoPlanilla.ObtenerAsync(
+                contexto,
+                idsPeriodos,
+                cancellationToken);
+            var periodoOriginal = periodos.GetValueOrDefault(idPeriodoOriginal.Value);
+            var periodoDestino = periodos.GetValueOrDefault(datos.IdPeriodoPlanilla);
+            ValidarPeriodoDisponible(periodoOriginal);
+            ValidarPeriodoDisponible(periodoDestino);
+            ValidarPeriodoNoBloqueado(periodoOriginal);
+            ValidarPeriodoNoBloqueado(periodoDestino);
 
-        incidencia.IdPeriodoPlanilla = datos.IdPeriodoPlanilla;
-        incidencia.IdColaborador = datos.IdColaborador;
-        incidencia.IdTipoIncidenciaPlanilla = datos.IdTipoIncidenciaPlanilla;
-        incidencia.FechaIncidencia = datos.FechaIncidencia;
-        incidencia.Cantidad = datos.Cantidad;
-        incidencia.Monto = datos.Monto;
-        incidencia.Descripcion = datos.Descripcion;
-        incidencia.RegistradoPor = idUsuarioActual;
+            var incidencia = await contexto.IncidenciasPlanilla
+                .FirstOrDefaultAsync(
+                    registro => registro.IdIncidenciaPlanilla == idIncidenciaPlanilla
+                        && registro.EstadoRegistro == EstadoActivo,
+                    cancellationToken)
+                ?? throw new InvalidOperationException(
+                    "No se encontro la incidencia solicitada o ya esta inactiva.");
 
-        await contexto.SaveChangesAsync(cancellationToken);
+            if (!periodos.ContainsKey(incidencia.IdPeriodoPlanilla))
+            {
+                throw new InvalidOperationException(
+                    "La incidencia cambió de período durante la operación. Intente nuevamente.");
+            }
+
+            await ValidarSolicitudAsync(datos, periodoDestino!, cancellationToken);
+            incidencia.IdPeriodoPlanilla = datos.IdPeriodoPlanilla;
+            incidencia.IdColaborador = datos.IdColaborador;
+            incidencia.IdTipoIncidenciaPlanilla = datos.IdTipoIncidenciaPlanilla;
+            incidencia.FechaIncidencia = datos.FechaIncidencia;
+            incidencia.Cantidad = datos.Cantidad;
+            incidencia.Monto = datos.Monto;
+            incidencia.Descripcion = datos.Descripcion;
+            incidencia.RegistradoPor = idUsuarioActual;
+
+            await RevalidarPeriodosAsync(idsPeriodos, cancellationToken);
+            await contexto.SaveChangesAsync(cancellationToken);
+            await transaccion.CommitAsync(cancellationToken);
+        }
+        catch
+        {
+            await transaccion.RollbackAsync(CancellationToken.None);
+            contexto.ChangeTracker.Clear();
+            throw;
+        }
     }
 
     public async Task DesactivarIncidenciaAsync(
         long idIncidenciaPlanilla,
         CancellationToken cancellationToken = default)
     {
-        var incidencia = await contexto.IncidenciasPlanilla
-            .Include(registro => registro.PeriodoPlanilla)
-                .ThenInclude(periodo => periodo!.EstadoPlanilla)
-            .FirstOrDefaultAsync(
-                registro => registro.IdIncidenciaPlanilla == idIncidenciaPlanilla
-                    && registro.EstadoRegistro == EstadoActivo,
-                cancellationToken);
+        var idPeriodoOriginal = await contexto.IncidenciasPlanilla
+            .AsNoTracking()
+            .Where(registro => registro.IdIncidenciaPlanilla == idIncidenciaPlanilla
+                && registro.EstadoRegistro == EstadoActivo)
+            .Select(registro => (long?)registro.IdPeriodoPlanilla)
+            .SingleOrDefaultAsync(cancellationToken);
 
-        if (incidencia is null)
+        if (!idPeriodoOriginal.HasValue)
         {
             throw new InvalidOperationException("No se encontro la incidencia solicitada o ya esta inactiva.");
         }
 
-        ValidarPeriodoNoBloqueado(incidencia.PeriodoPlanilla);
+        await using var transaccion = await contexto.Database.BeginTransactionAsync(
+            IsolationLevel.ReadCommitted,
+            cancellationToken);
 
-        incidencia.EstadoRegistro = EstadoInactivo;
-        await contexto.SaveChangesAsync(cancellationToken);
+        try
+        {
+            var periodo = await BloqueoPeriodoPlanilla.ObtenerAsync(
+                contexto,
+                idPeriodoOriginal.Value,
+                cancellationToken);
+            ValidarPeriodoDisponible(periodo);
+            ValidarPeriodoNoBloqueado(periodo);
+
+            var incidencia = await contexto.IncidenciasPlanilla
+                .FirstOrDefaultAsync(
+                    registro => registro.IdIncidenciaPlanilla == idIncidenciaPlanilla
+                        && registro.EstadoRegistro == EstadoActivo,
+                    cancellationToken)
+                ?? throw new InvalidOperationException(
+                    "No se encontro la incidencia solicitada o ya esta inactiva.");
+
+            if (incidencia.IdPeriodoPlanilla != idPeriodoOriginal.Value)
+            {
+                throw new InvalidOperationException(
+                    "La incidencia cambió de período durante la operación. Intente nuevamente.");
+            }
+
+            incidencia.EstadoRegistro = EstadoInactivo;
+            await RevalidarPeriodosAsync([idPeriodoOriginal.Value], cancellationToken);
+            await contexto.SaveChangesAsync(cancellationToken);
+            await transaccion.CommitAsync(cancellationToken);
+        }
+        catch
+        {
+            await transaccion.RollbackAsync(CancellationToken.None);
+            contexto.ChangeTracker.Clear();
+            throw;
+        }
     }
 
-    private async Task<DatosIncidenciaLimpios> ValidarSolicitudAsync(
-        SolicitudIncidenciaPlanilla solicitud,
+    private async Task ValidarSolicitudAsync(
+        DatosIncidenciaLimpios datos,
+        PeriodoPlanilla periodo,
         CancellationToken cancellationToken)
     {
-        var datos = DatosIncidenciaLimpios.DesdeSolicitud(solicitud);
-
-        var periodo = await contexto.PeriodosPlanilla
-            .AsNoTracking()
-            .Include(registro => registro.EstadoPlanilla)
-            .FirstOrDefaultAsync(
-                periodo => periodo.IdPeriodoPlanilla == datos.IdPeriodoPlanilla
-                    && periodo.EstadoRegistro == EstadoActivo,
-                cancellationToken);
-
-        if (periodo is null)
-        {
-            throw new ArgumentException("El periodo seleccionado no esta disponible.");
-        }
-
-        ValidarPeriodoNoBloqueado(periodo);
-
         if (datos.FechaIncidencia < periodo.FechaInicio.Date || datos.FechaIncidencia > periodo.FechaFin.Date)
         {
             throw new ArgumentException("La fecha de incidencia debe estar dentro del rango del periodo seleccionado.");
@@ -356,8 +433,36 @@ public sealed class IncidenciaPlanillaService(ApplicationDbContext contexto) : I
         {
             throw new ArgumentException("El tipo de incidencia seleccionado no esta disponible.");
         }
+    }
 
-        return datos;
+    private async Task RevalidarPeriodosAsync(
+        IEnumerable<long> idsPeriodos,
+        CancellationToken cancellationToken)
+    {
+        var ids = idsPeriodos.Distinct().OrderBy(id => id).ToArray();
+        var periodos = await contexto.PeriodosPlanilla
+            .AsNoTracking()
+            .Include(periodo => periodo.EstadoPlanilla)
+            .Where(periodo => ids.Contains(periodo.IdPeriodoPlanilla))
+            .ToListAsync(cancellationToken);
+
+        if (periodos.Count != ids.Length || periodos.Any(periodo => periodo.EstadoRegistro != EstadoActivo))
+        {
+            throw new ArgumentException("El período seleccionado no está disponible.");
+        }
+
+        foreach (var periodo in periodos)
+        {
+            ValidarPeriodoNoBloqueado(periodo);
+        }
+    }
+
+    private static void ValidarPeriodoDisponible(PeriodoPlanilla? periodo)
+    {
+        if (periodo is null || periodo.EstadoRegistro != EstadoActivo)
+        {
+            throw new ArgumentException("El período seleccionado no está disponible.");
+        }
     }
 
     private static void ValidarPeriodoNoBloqueado(PeriodoPlanilla? periodo)
@@ -369,6 +474,15 @@ public sealed class IncidenciaPlanillaService(ApplicationDbContext contexto) : I
 
         if (FlujoEstadosPlanilla.EstaBloqueada(periodo.EstadoPlanilla?.Nombre))
         {
+            if (string.Equals(
+                    periodo.EstadoPlanilla?.Nombre,
+                    EstadosPlanilla.Calculada,
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException(
+                    "El cálculo del período se confirmó antes que la modificación; la incidencia no fue guardada.");
+            }
+
             throw new InvalidOperationException(
                 $"El período está en estado {periodo.EstadoPlanilla!.Nombre} y no permite modificar incidencias.");
         }

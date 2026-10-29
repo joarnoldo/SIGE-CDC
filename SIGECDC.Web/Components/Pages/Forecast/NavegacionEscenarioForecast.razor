@@ -1,0 +1,39 @@
+@inject AuthenticationStateProvider Autenticacion
+<nav aria-label="Etapas del escenario Forecast" class="card stack">
+    <strong>Escenario: @(Nombre ?? "Forecast seleccionado") · Etapa: @Etapa</strong>
+    @if (!string.IsNullOrEmpty(Estado)) { <span>Estado: @Estado</span> }
+    <div class="page-actions">
+        <a href="@Ruta()">Resumen, condiciones y cálculo</a>
+        @if (Estado is null or "Borrador")
+        {
+            <a href="@Ruta("participantes")">Participantes</a>
+            <a href="@Ruta("movimientos")">Altas y salidas futuras</a>
+            <a href="@Ruta("parametros")">Parámetros y ajustes</a>
+            <a href="@Ruta("asignaciones-proyecto")">Distribución</a>
+        }
+        @if (Estado is "Calculado" or "Guardado" or "Comparado")
+        {
+            <a href="@Ruta("resultados")">Resultados y PDF/Excel</a>
+        }
+        @if (SnapshotVigente && Estado is ("Guardado" or "Comparado"))
+        {
+            @if (rrhh) { <a href="@($"/rrhh/forecast/comparar?base={IdEscenario}")">Comparar escenarios</a> }
+            <a href="@Ruta("comparacion-real")">Comparación con Planilla real</a>
+        }
+    </div>
+    <p>@(Estado switch {
+        "Calculado" => "Revise los resultados y vuelva al resumen para guardar el escenario sin recalcular.",
+        "Guardado" or "Comparado" => "Consulte los resultados guardados y sus comparaciones. La ausencia de Planilla real no equivale a cero.",
+        _ => "Complete participantes y movimientos, confirme condiciones y parámetros, distribuya el 100 % por período y calcule desde el resumen. Sin datos obligatorios no se calcula."
+    })</p>
+</nav>
+@code {
+    [Parameter] public long IdEscenario { get; set; }
+    [Parameter] public string? Nombre { get; set; }
+    [Parameter] public string? Estado { get; set; }
+    [Parameter] public string Etapa { get; set; } = "Resumen";
+    [Parameter] public bool SnapshotVigente { get; set; }
+    private bool rrhh;
+    protected override async Task OnInitializedAsync() => rrhh = (await Autenticacion.GetAuthenticationStateAsync()).User.IsInRole("Recursos Humanos");
+    private string Ruta(string? pagina = null) => $"/rrhh/forecast/{IdEscenario}" + (pagina is null ? "" : "/" + pagina);
+}

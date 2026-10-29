@@ -6,6 +6,11 @@ obj/
 .vs/
 *.user
 *.suo
+*.publishSettings
+*.pubxml
+*.pubxml.user
+*.pfx
+*.p12
 
 # Rider / ReSharper
 .idea/

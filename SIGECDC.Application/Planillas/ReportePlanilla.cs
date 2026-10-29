@@ -2,6 +2,16 @@ namespace SIGECDC.Application.Planillas;
 
 public sealed class ReportePlanilla
 {
+    public int ColillasGeneradas { get; set; }
+    public long IdEjecucionPlanilla { get; set; }
+    public int NumeroVersion { get; set; }
+    public string Rotulo => PublicacionPlanilla.Rotulo(EstadoPlanilla);
+    public decimal IngresosNoSalarialesTotal { get; set; }
+    public decimal BrutoPagaderoTotal { get; set; }
+    public decimal CargasPatronalesTotal { get; set; }
+    public decimal RiesgosTrabajoTotal { get; set; }
+    public decimal OtrosCostosPatronalesTotal { get; set; }
+    public decimal CostoLaboralTotal { get; set; }
     public long IdPeriodoPlanilla { get; set; }
 
     public string CodigoPeriodo { get; set; } = string.Empty;
