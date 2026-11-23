@@ -1,0 +1,295 @@
+{
+  "QA01": {
+    "contenido_verificado": true,
+    "medios_originales_conservados": 4,
+    "excluidas": [
+      "HU-INFO-005",
+      "HU-INFO-006",
+      "HU-INFO-009",
+      "HU-INFO-010",
+      "HU-ACT-009",
+      "HU-FOR-004",
+      "HU-FOR-005",
+      "HU-FOR-008",
+      "HU-FOR-009"
+    ]
+  },
+  "QA02": {
+    "TC": 42,
+    "HU": 30,
+    "HU_oficiales": 39,
+    "cobertura_funcional": "76,92 %",
+    "prioridades": {
+      "BAJA": 1,
+      "MEDIA": 15,
+      "ALTA": 26
+    },
+    "Execution_Type": "42 Automatizada",
+    "Execution_Date_vacias": 42,
+    "Result_vacias": 42,
+    "Comments_vacias": 42,
+    "anchos_y_combinaciones_preservados": true
+  },
+  "automatizacion": {
+    "metodos": 42,
+    "omitidos_por_Skip": 0,
+    "trazabilidad": [
+      {
+        "TC": "PUB-001",
+        "HU": "HU-INFO-001",
+        "Archivo": "PublicoAcademicoTests.cs",
+        "Metodo": "Pub001_ConsultarPaginasInstitucionalesSinSesion"
+      },
+      {
+        "TC": "PUB-002",
+        "HU": "HU-INFO-002",
+        "Archivo": "PublicoAcademicoTests.cs",
+        "Metodo": "Pub002_FiltrarPortafolioYConsultarDetalle"
+      },
+      {
+        "TC": "PUB-003",
+        "HU": "HU-INFO-003",
+        "Archivo": "PublicoAcademicoTests.cs",
+        "Metodo": "Pub003_EnviarConsultaContactoValida"
+      },
+      {
+        "TC": "PUB-004",
+        "HU": "HU-INFO-003",
+        "Archivo": "PublicoAcademicoTests.cs",
+        "Metodo": "Pub004_RechazarContactoConObligatoriosVacios"
+      },
+      {
+        "TC": "PUB-005",
+        "HU": "HU-INFO-004",
+        "Archivo": "PublicoAcademicoTests.cs",
+        "Metodo": "Pub005_CrearActualizarYPublicarContenido"
+      },
+      {
+        "TC": "PUB-006",
+        "HU": "HU-INFO-007",
+        "Archivo": "PublicoAcademicoTests.cs",
+        "Metodo": "Pub006_PublicarYOcultarProyecto"
+      },
+      {
+        "TC": "AUTH-001",
+        "HU": "Transversal",
+        "Archivo": "IdentidadAcademicoTests.cs",
+        "Metodo": "Auth001_IniciarSesionConCredencialesValidas"
+      },
+      {
+        "TC": "AUTH-002",
+        "HU": "Transversal",
+        "Archivo": "IdentidadAcademicoTests.cs",
+        "Metodo": "Auth002_RechazarCredencialesInvalidas"
+      },
+      {
+        "TC": "AUTH-003",
+        "HU": "Transversal",
+        "Archivo": "IdentidadAcademicoTests.cs",
+        "Metodo": "Auth003_CerrarSesionYBloquearReingresoDirecto"
+      },
+      {
+        "TC": "AUTH-004",
+        "HU": "Transversal",
+        "Archivo": "IdentidadAcademicoTests.cs",
+        "Metodo": "Auth004_AutorizarFuncionesPropiasYDenegarOtroRol"
+      },
+      {
+        "TC": "RH-001",
+        "HU": "HU-RH-001",
+        "Archivo": "RecursosHumanosAcademicoTests.cs",
+        "Metodo": "Rh001_RegistrarYConsultarColaborador"
+      },
+      {
+        "TC": "RH-002",
+        "HU": "HU-RH-001",
+        "Archivo": "RecursosHumanosAcademicoTests.cs",
+        "Metodo": "Rh002_ActualizarDatosDeColaborador"
+      },
+      {
+        "TC": "RH-003",
+        "HU": "HU-RH-001",
+        "Archivo": "RecursosHumanosAcademicoTests.cs",
+        "Metodo": "Rh003_DesactivarColaboradorSinEliminarHistorial"
+      },
+      {
+        "TC": "RH-004",
+        "HU": "HU-RH-002",
+        "Archivo": "RecursosHumanosAcademicoTests.cs",
+        "Metodo": "Rh004_CrearPuestoDepartamentoYAsignarColaborador"
+      },
+      {
+        "TC": "RH-005",
+        "HU": "HU-RH-003",
+        "Archivo": "RecursosHumanosAcademicoTests.cs",
+        "Metodo": "Rh005_AdjuntarDocumentoAlExpedienteCorrecto"
+      },
+      {
+        "TC": "RH-006",
+        "HU": "HU-RH-003",
+        "Archivo": "RecursosHumanosAcademicoTests.cs",
+        "Metodo": "Rh006_RechazarArchivoQueNoEsPdf"
+      },
+      {
+        "TC": "PLA-001",
+        "HU": "HU-RH-004",
+        "Archivo": "PlanillaAcademicoTests.cs",
+        "Metodo": "Pla001_RegistrarHorasExtraAusenciaYBono"
+      },
+      {
+        "TC": "PLA-002",
+        "HU": "HU-RH-005",
+        "Archivo": "PlanillaAcademicoTests.cs",
+        "Metodo": "Pla002_CalcularPlanillaConTotalesEsperados"
+      },
+      {
+        "TC": "PLA-003",
+        "HU": "HU-RH-005",
+        "Archivo": "PlanillaAcademicoTests.cs",
+        "Metodo": "Pla003_RechazarCalculoIncompletoSinPersistenciaParcial"
+      },
+      {
+        "TC": "PLA-004",
+        "HU": "HU-RH-006",
+        "Archivo": "PlanillaAcademicoTests.cs",
+        "Metodo": "Pla004_ConfigurarYAsignarConceptoAUnColaborador"
+      },
+      {
+        "TC": "PLA-005",
+        "HU": "HU-RH-007",
+        "Archivo": "PlanillaAcademicoTests.cs",
+        "Metodo": "Pla005_ConsultarYDescargarColillaPropia"
+      },
+      {
+        "TC": "PLA-006",
+        "HU": "HU-RH-007",
+        "Archivo": "PlanillaAcademicoTests.cs",
+        "Metodo": "Pla006_DenegarColillaAjenaPorAccesoDirecto"
+      },
+      {
+        "TC": "PLA-007",
+        "HU": "HU-RH-008",
+        "Archivo": "PlanillaAcademicoTests.cs",
+        "Metodo": "Pla007_AprobarCerrarYRechazarCambios"
+      },
+      {
+        "TC": "PLA-008",
+        "HU": "HU-RH-009",
+        "Archivo": "PlanillaAcademicoTests.cs",
+        "Metodo": "Pla008_ExportarReporteConPeriodoYTotalesCorrectos"
+      },
+      {
+        "TC": "ACT-001",
+        "HU": "HU-ACT-001",
+        "Archivo": "ActivosAcademicoTests.cs",
+        "Metodo": "Act001_RegistrarActivoDisponible"
+      },
+      {
+        "TC": "ACT-002",
+        "HU": "HU-ACT-002",
+        "Archivo": "ActivosAcademicoTests.cs",
+        "Metodo": "Act002_ActualizarEstadoYUbicacion"
+      },
+      {
+        "TC": "ACT-003",
+        "HU": "HU-ACT-003",
+        "Archivo": "ActivosAcademicoTests.cs",
+        "Metodo": "Act003_ConsultarDisponibilidadPorFechasYEstado"
+      },
+      {
+        "TC": "ACT-004",
+        "HU": "HU-ACT-004",
+        "Archivo": "ActivosAcademicoTests.cs",
+        "Metodo": "Act004_CrearYActualizarProyecto"
+      },
+      {
+        "TC": "ACT-005",
+        "HU": "HU-ACT-005",
+        "Archivo": "ActivosAcademicoTests.cs",
+        "Metodo": "Act005_AsignarActivoDisponibleAProyecto"
+      },
+      {
+        "TC": "ACT-006",
+        "HU": "HU-ACT-005",
+        "Archivo": "ActivosAcademicoTests.cs",
+        "Metodo": "Act006_RechazarAsignacionSolapada"
+      },
+      {
+        "TC": "ACT-007",
+        "HU": "HU-ACT-006",
+        "Archivo": "ActivosAcademicoTests.cs",
+        "Metodo": "Act007_DefinirMantenimientoPreventivo"
+      },
+      {
+        "TC": "ACT-008",
+        "HU": "HU-ACT-007",
+        "Archivo": "ActivosAcademicoTests.cs",
+        "Metodo": "Act008_CompletarOrdenCorrectivaConEvidencia"
+      },
+      {
+        "TC": "ACT-009",
+        "HU": "HU-ACT-008",
+        "Archivo": "ActivosAcademicoTests.cs",
+        "Metodo": "Act009_AcumularLecturasYConsultarTiempoFueraServicio"
+      },
+      {
+        "TC": "FOR-001",
+        "HU": "HU-FOR-001",
+        "Archivo": "ForecastAcademicoTests.cs",
+        "Metodo": "For001_GenerarProyeccionFuturaConHistoricoAutorizado"
+      },
+      {
+        "TC": "FOR-002",
+        "HU": "HU-FOR-001",
+        "Archivo": "ForecastAcademicoTests.cs",
+        "Metodo": "For002_RechazarFuenteHistoricaNoAprobada"
+      },
+      {
+        "TC": "FOR-003",
+        "HU": "HU-FOR-002",
+        "Archivo": "ForecastAcademicoTests.cs",
+        "Metodo": "For003_AplicarParametroSinModificarHistorico"
+      },
+      {
+        "TC": "FOR-004",
+        "HU": "HU-FOR-003",
+        "Archivo": "ForecastAcademicoTests.cs",
+        "Metodo": "For004_ActualizarTotalesAlExcluirYReincorporarColaborador"
+      },
+      {
+        "TC": "FOR-005",
+        "HU": "HU-FOR-006",
+        "Archivo": "ForecastAcademicoTests.cs",
+        "Metodo": "For005_GuardarYCompararEscenariosCompatibles"
+      },
+      {
+        "TC": "FOR-006",
+        "HU": "HU-FOR-007",
+        "Archivo": "ForecastAcademicoTests.cs",
+        "Metodo": "For006_CompararProyeccionConPlanillaRealCompatible"
+      },
+      {
+        "TC": "AUD-001",
+        "HU": "HU-INFO-008",
+        "Archivo": "AuditoriaAcademicoTests.cs",
+        "Metodo": "Aud001_ConsultarHistorialAccesosYContactoSinEdicion"
+      },
+      {
+        "TC": "AUD-002",
+        "HU": "HU-RH-010",
+        "Archivo": "AuditoriaAcademicoTests.cs",
+        "Metodo": "Aud002_ConsultarTrazabilidadDeRecursosHumanosYPlanilla"
+      },
+      {
+        "TC": "AUD-003",
+        "HU": "HU-ACT-010",
+        "Archivo": "AuditoriaAcademicoTests.cs",
+        "Metodo": "Aud003_ConsultarTrazabilidadDeActivosProyectosYAsignaciones"
+      }
+    ]
+  },
+  "integridad": {
+    "archivos_protegidos": 651,
+    "alterados": []
+  }
+}

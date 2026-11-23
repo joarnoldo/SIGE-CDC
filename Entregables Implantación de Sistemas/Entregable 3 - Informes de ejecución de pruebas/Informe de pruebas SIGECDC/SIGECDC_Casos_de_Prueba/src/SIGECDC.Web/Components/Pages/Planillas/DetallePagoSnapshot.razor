@@ -1,0 +1,50 @@
+@using SIGECDC.Application.Planillas
+@using SIGECDC.Domain.Planillas
+<article class="table-card">
+    <div class="table-toolbar">
+        <div><h3>@Detalle.CodigoColaborador · @Detalle.NombreColaborador</h3>
+            <p>@Detalle.Puesto · @Detalle.Departamento</p></div>
+    </div>
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead><tr><th>Desde / hasta</th><th>Puesto / departamento</th><th>Contrato / jornada</th><th>Salario mensual</th><th>Días base 30</th></tr></thead>
+            <tbody>@foreach (var s in Detalle.Segmentos)
+            {
+                <tr><td>@s.Inicio.ToString("dd/MM/yyyy") – @s.Fin.ToString("dd/MM/yyyy")</td>
+                    <td>@s.Puesto / @s.Departamento</td><td>@s.TipoContrato / @s.Jornada · @Cantidad(s.HorasDia) h/día</td>
+                    <td>@Moneda(s.SalarioMensual)</td><td>@Cantidad(s.DiasBase30)</td></tr>
+            }</tbody>
+        </table>
+        <table class="data-table">
+            <thead><tr><th>Concepto</th><th>Efecto</th><th>Fecha</th><th>Cantidad / unidad</th><th>Monto</th></tr></thead>
+            <tbody>@foreach (var l in Detalle.Lineas.Where(l => MostrarCostos || l.Efecto != EfectoMonetario.CargaPatronal))
+            {
+                <tr><td>@l.Descripcion</td><td>@l.EtiquetaEfecto</td><td>@l.Fecha?.ToString("dd/MM/yyyy")</td>
+                    <td>@Cantidad(l.Cantidad) @l.Unidad</td><td>@Moneda(l.Monto)</td></tr>
+            }</tbody>
+        </table>
+        <dl>
+            <dt>Bruto salarial</dt><dd>@Moneda(Detalle.SalarioBruto)</dd>
+            <dt>Ingresos no salariales / reembolsos</dt><dd>@Moneda(Detalle.IngresosNoSalariales)</dd>
+            <dt>Bruto pagadero</dt><dd>@Moneda(Detalle.BrutoPagadero)</dd>
+            <dt>Cuotas obreras</dt><dd>@Moneda(Detalle.CuotasObreras)</dd>
+            <dt>Impuesto sobre salarios</dt><dd>@Moneda(Detalle.ImpuestoSalario)</dd>
+            <dt>Otras deducciones autorizadas</dt><dd>@Moneda(Detalle.OtrasDeducciones)</dd>
+            <dt>Deducciones</dt><dd>@Moneda(Detalle.TotalDeducciones)</dd>
+            <dt>Neto</dt><dd><strong>@Moneda(Detalle.SalarioNeto)</strong></dd>
+            @if (MostrarCostos)
+            {
+                <dt>Carga patronal</dt><dd>@Moneda(Detalle.CargasPatronales)</dd>
+                <dt>Riesgos del Trabajo</dt><dd>@Moneda(Detalle.RiesgosTrabajo)</dd>
+                <dt>Otros costos patronales</dt><dd>@Moneda(Detalle.OtrosCostosPatronales)</dd>
+                <dt>Costo laboral total</dt><dd>@Moneda(Detalle.CostoLaboralTotal)</dd>
+            }
+        </dl>
+    </div>
+</article>
+@code {
+    [Parameter, EditorRequired] public DetalleReportePlanilla Detalle { get; set; } = default!;
+    [Parameter] public bool MostrarCostos { get; set; }
+    private static string Moneda(decimal valor) => "₡" + valor.ToString("N2", System.Globalization.CultureInfo.GetCultureInfo("es-CR"));
+    private static string Cantidad(decimal? valor) => valor?.ToString("0.############################", System.Globalization.CultureInfo.GetCultureInfo("es-CR")) ?? "—";
+}

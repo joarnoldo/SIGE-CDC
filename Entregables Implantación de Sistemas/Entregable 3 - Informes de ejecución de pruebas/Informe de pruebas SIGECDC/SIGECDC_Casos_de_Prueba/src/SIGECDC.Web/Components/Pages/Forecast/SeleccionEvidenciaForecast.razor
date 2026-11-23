@@ -1,0 +1,14 @@
+@using SIGECDC.Application.Forecast
+<label class="form-label">@Etiqueta
+    <select class="form-select" value="@Valor" @onchange="CambiarAsync">
+        <option value="0">Seleccione…</option>
+        @foreach(var opcion in Opciones){<option value="@opcion.Id">@opcion.Etiqueta</option>}
+    </select>
+</label>
+@code {
+    [Parameter] public string Etiqueta {get;set;}="";
+    [Parameter] public long Valor {get;set;}
+    [Parameter] public EventCallback<long> ValorChanged {get;set;}
+    [Parameter] public IReadOnlyList<OpcionEvidenciaForecast> Opciones {get;set;}=[];
+    private Task CambiarAsync(ChangeEventArgs e)=>ValorChanged.InvokeAsync(long.TryParse(e.Value?.ToString(),out var id)?id:0);
+}

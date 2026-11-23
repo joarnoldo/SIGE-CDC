@@ -1,0 +1,36 @@
+@page "/rrhh/incidencias-planilla"
+@rendermode InteractiveServer
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Recursos Humanos")]
+@inherits ComponenteRecorridoPlanilla
+@inject IConsultaRecorridoPlanilla Consulta
+
+<PageTitle>Incidencias de Planilla | SIGE-CDC</PageTitle>
+<section class="section-shell"><div class="container stack">
+    <h1>Incidencias y confirmaciones</h1>
+    <MensajeRecorrido Texto="@Mensaje" Error="@EsError" />
+    <div class="page-actions"><a class="btn btn--primary" href="@($"rrhh/incidencias-planilla/nueva?periodo={Periodo}")">Registrar incidencia</a><a href="rrhh/periodos-planilla">Períodos</a></div>
+    <p>Una captura no es una confirmación. Las cantidades alimentan el motor; no se capturan importes de horas extra ni ausencias.</p>
+    @if (catalogos is not null)
+    {
+        <label>Período<select @bind="Periodo" @bind:after="CargarDesdeFiltroAsync"><option value="">Todos</option>@foreach (var p in catalogos.Periodos) { <option value="@p.IdPeriodoPlanilla">@p.CodigoPeriodo · @p.Nombre</option> }</select></label>
+    }
+    <table class="data-table"><thead><tr><th>Colaborador</th><th>Concepto</th><th>Fecha</th><th>Cantidad / unidad</th><th>Confirmación</th><th>Estado</th><th>Acción</th></tr></thead><tbody>
+        @foreach (var h in hechos)
+        {
+            <tr><td>@h.Colaborador</td><td>@h.Concepto</td><td>@h.Captura.FechaHecho.ToString("dd/MM/yyyy")</td><td>@h.Captura.Cantidad @h.Captura.Unidad</td>
+                <td>@(h.UltimaConfirmacion == 0 ? "Pendiente" : $"V{h.UltimaConfirmacion} registrada; comprobar evidencia")</td><td>@h.Estado · @h.EstadoPeriodo</td>
+                <td><a href="@($"rrhh/incidencias-planilla/{h.Id}")">Revisar / confirmar</a></td></tr>
+        }
+    </tbody></table>
+</div></section>
+@code {
+    [SupplyParameterFromQuery(Name = "periodo")] public long? Periodo { get; set; }
+    private CatalogosRecorridoPlanilla? catalogos;
+    private IReadOnlyList<IncidenciaRecorrido> hechos = [];
+    protected override Task OnParametersSetAsync() => AccionAsync(async () =>
+    {
+        catalogos = await Consulta.CatalogosAsync(await ActorAsync()); await CargarAsync();
+    });
+    private async Task CargarAsync() => hechos = await Consulta.IncidenciasAsync(Periodo, await ActorAsync());
+    private Task CargarDesdeFiltroAsync() => AccionAsync(CargarAsync);
+}

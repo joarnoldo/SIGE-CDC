@@ -1,0 +1,47 @@
+<div class="form-grid">
+    <label>Período<select @bind="Solicitud.IdPeriodo"><option value="0">Seleccione un período</option>
+        @foreach (var p in Catalogos.Periodos.Where(p => p.EstadoPlanilla == "Borrador")) { <option value="@p.IdPeriodoPlanilla">@p.CodigoPeriodo · @p.Nombre</option> }
+    </select></label>
+    <label>Colaborador<select @bind="Solicitud.IdColaborador"><option value="0">Seleccione</option>
+        @foreach (var c in Catalogos.Colaboradores) { <option value="@c.Id">@c.Nombre</option> }
+    </select></label>
+    <label>Fecha del hecho<input type="date" @bind="Solicitud.Fecha" /></label>
+    <label>Concepto gobernado<select @bind="Solicitud.IdConceptoVersion" @bind:after="CambiarConcepto"><option value="0">Seleccione</option>
+        @foreach (var c in Disponibles) { <option value="@c.IdVersion">@c.Nombre · @c.Vigencia.Inicio.ToString("dd/MM/yyyy") – @(c.Vigencia.Fin?.ToString("dd/MM/yyyy") ?? "sin fin")</option> }
+    </select></label>
+    @if (Concepto is { } concepto)
+    {
+        @if (concepto.Codigo == "AUSENCIA_SIN_GOCE")
+        {
+            <label>Unidad<select @bind="Solicitud.Unidad"><option value="">Seleccione</option><option>Día</option><option>Hora</option></select></label>
+        }
+        else { <p>Unidad del concepto: @concepto.UnidadPermitida</p> }
+        @if (concepto.Codigo is "HORA_EXTRA_ORDINARIA" or "AUSENCIA_SIN_GOCE")
+        {
+            <label>Cantidad<InputNumber @bind-Value="Solicitud.Cantidad" /></label>
+            <p>Sin monto manual. Registre cada fecha por separado; para ausencia diaria, como máximo un día por hecho.</p>
+        }
+        else if (concepto.PermiteMontoManual && concepto.TipoBase == "MONTO_AUTORIZADO")
+        {
+            <label>Monto del hecho respaldado (CRC)<InputNumber @bind-Value="Solicitud.Monto" /></label>
+            <p>El concepto permite un monto documentado; si usa un parámetro interno, vincúlelo al confirmar.</p>
+        }
+        else { <p>El valor se obtiene del parámetro interno que deberá seleccionar al confirmar; no ingrese el resultado calculado.</p> }
+    }
+    <label>Referencia o descripción del hecho<InputTextArea @bind-Value="Solicitud.ReferenciaHecho" maxlength="300" /></label>
+    <label>Referencia de la relación ordinaria acreditada<InputText @bind-Value="Solicitud.RelacionOrdinaria" maxlength="500" /></label>
+</div>
+<p>Si falta un concepto, revise su clasificación y vigencia gobernadas. El legado genérico no es una opción financiera válida.</p>
+@code {
+    [Parameter, EditorRequired] public CapturaIncidenciaInterfaz Solicitud { get; set; } = default!;
+    [Parameter, EditorRequired] public CatalogosRecorridoPlanilla Catalogos { get; set; } = default!;
+    private ConceptoMonetarioVersion? Concepto => Catalogos.Conceptos.SingleOrDefault(c => c.IdVersion == Solicitud.IdConceptoVersion);
+    private IEnumerable<ConceptoMonetarioVersion> Disponibles => Catalogos.Conceptos.Where(c =>
+        Catalogos.Tipos.Count(t => t.IdConcepto == c.IdConcepto) == 1 &&
+        (c.Codigo is "HORA_EXTRA_ORDINARIA" or "AUSENCIA_SIN_GOCE" || RecorridoPlanilla.EsParametroInternoAdmitido(c)));
+    private void CambiarConcepto()
+    {
+        Solicitud.Unidad = Concepto?.Codigo == "AUSENCIA_SIN_GOCE" ? "" : Concepto?.UnidadPermitida ?? "";
+        Solicitud.Cantidad = null; Solicitud.Monto = null;
+    }
+}

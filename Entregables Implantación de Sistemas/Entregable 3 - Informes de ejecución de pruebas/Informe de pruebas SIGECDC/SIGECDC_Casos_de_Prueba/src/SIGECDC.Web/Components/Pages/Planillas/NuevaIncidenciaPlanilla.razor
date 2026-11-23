@@ -1,0 +1,38 @@
+@page "/rrhh/incidencias-planilla/nueva"
+@rendermode InteractiveServer
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Recursos Humanos")]
+@inherits ComponenteRecorridoPlanilla
+@inject IConsultaRecorridoPlanilla Consulta
+@inject RecorridoPlanilla Recorrido
+@inject NavigationManager Navegacion
+
+<PageTitle>Registrar incidencia | SIGE-CDC</PageTitle>
+<section class="section-shell"><div class="container stack">
+    <h1>Registrar hecho de Planilla</h1>
+    <p>Primero registre el hecho; después confirme su respaldo y autorización. Las horas extra y ausencias las calcula el motor.</p>
+    <MensajeRecorrido Texto="@Mensaje" Error="@EsError" />
+    <a href="rrhh/incidencias-planilla">Volver a incidencias</a>
+    @if (catalogos is not null)
+    {
+        <EditForm Model="solicitud" OnValidSubmit="GuardarAsync" class="form-section stack">
+            <DataAnnotationsValidator /><ValidationSummary />
+            <IncidenciaPlanillaFormularioCampos Solicitud="solicitud" Catalogos="catalogos" />
+            <button class="btn btn--primary" type="submit" disabled="@Ocupado">Guardar y continuar a confirmación</button>
+        </EditForm>
+    }
+</div></section>
+@code {
+    [SupplyParameterFromQuery(Name = "periodo")] public long? PeriodoInicial { get; set; }
+    private CapturaIncidenciaInterfaz solicitud = new();
+    private CatalogosRecorridoPlanilla? catalogos;
+    protected override Task OnInitializedAsync() => AccionAsync(async () =>
+    {
+        catalogos = await Consulta.CatalogosAsync(await ActorAsync());
+        solicitud.IdPeriodo = PeriodoInicial ?? 0;
+    });
+    private Task GuardarAsync() => AccionAsync(async () =>
+    {
+        var id = await Recorrido.CapturarAsync(solicitud, await ActorAsync());
+        Navegacion.NavigateTo($"rrhh/incidencias-planilla/{id}");
+    });
+}

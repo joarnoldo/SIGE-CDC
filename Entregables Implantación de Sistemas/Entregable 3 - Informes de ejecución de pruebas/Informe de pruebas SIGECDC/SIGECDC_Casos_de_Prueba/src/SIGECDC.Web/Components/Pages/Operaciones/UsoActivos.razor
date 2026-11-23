@@ -1,0 +1,655 @@
+@page "/operaciones/uso-activos"
+@rendermode InteractiveServer
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Administrador,Operaciones")]
+
+@using Microsoft.AspNetCore.Components.Authorization
+@using SIGECDC.Application.Activos
+
+@inject IRegistroUsoActivoService RegistroUsoActivoService
+@inject AuthenticationStateProvider Autenticacion
+@inject ILogger<UsoActivos> Logger
+
+<PageTitle>Uso de activos | SIGE-CDC</PageTitle>
+
+<section class="page-banner">
+    <div class="container page-banner__inner stack--tight">
+        <p class="eyebrow">Operaciones</p>
+        <h1>Uso de activos</h1>
+        <p class="lead">
+            Registre lecturas de uso y consulte el historial operativo de cada activo.
+        </p>
+    </div>
+</section>
+
+<section class="section-shell">
+    <div class="container stack">
+        @if (!string.IsNullOrWhiteSpace(mensajeEstado))
+        {
+            <div class="alert alert--@(mensajeEsError ? "danger" : "success")"
+                 role="@(mensajeEsError ? "alert" : "status")">
+                <strong>@(mensajeEsError ? "No se pudo completar la acción" : "Acción completada")</strong>
+                <span>@mensajeEstado</span>
+            </div>
+        }
+
+        <section class="page-grid">
+            <div class="page-main stack">
+                <article class="table-card">
+                    <div class="table-toolbar">
+                        <div>
+                            <p class="eyebrow">Consulta</p>
+                            <h2 class="card__title">Resumen por activo</h2>
+                            <p class="card__meta">
+                                La consulta está disponible aun cuando el activo no pueda recibir nuevas lecturas.
+                            </p>
+                        </div>
+                    </div>
+
+                    @if (cargando)
+                    {
+                        <div class="empty-state">
+                            <strong>Cargando activos</strong>
+                            <p class="text-muted">Estamos recuperando la información de uso registrada.</p>
+                        </div>
+                    }
+                    else if (activos.Count == 0)
+                    {
+                        <div class="empty-state">
+                            <strong>No hay activos registrados</strong>
+                            <p class="text-muted">Registre un activo antes de administrar sus lecturas de uso.</p>
+                        </div>
+                    }
+                    else if (solicitud.IdActivo <= 0)
+                    {
+                        <div class="empty-state">
+                            <strong>Seleccione un activo</strong>
+                            <p class="text-muted">
+                                Su lectura actual, acumulado e historial aparecerán en esta sección.
+                            </p>
+                        </div>
+                    }
+                    else if (consultando)
+                    {
+                        <div class="empty-state">
+                            <strong>Consultando historial</strong>
+                            <p class="text-muted">Estamos recuperando las lecturas y períodos fuera de servicio.</p>
+                        </div>
+                    }
+                    else if (resumen is null)
+                    {
+                        <div class="empty-state">
+                            <strong>No se encontró información del activo</strong>
+                            <p class="text-muted">Seleccione nuevamente el activo o recargue la página.</p>
+                        </div>
+                    }
+                    else
+                    {
+                        <section class="metric-grid" aria-label="Resumen de uso del activo">
+                            <article class="metric-card">
+                                <span>Lectura actual</span>
+                                <strong>@FormatearLectura(resumen.LecturaUsoActual)</strong>
+                                <small>@TextoTipoMedicion(resumen.TipoMedicionUso)</small>
+                            </article>
+                            <article class="metric-card">
+                                <span>Uso acumulado</span>
+                                <strong>@FormatearLectura(resumen.TotalUsoRegistrado)</strong>
+                                <small>Según lecturas registradas</small>
+                            </article>
+                            <article class="metric-card">
+                                <span>Registros</span>
+                                <strong>@resumen.Registros.Count</strong>
+                                <small>@resumen.CodigoActivo · @resumen.NombreActivo</small>
+                            </article>
+                        </section>
+
+                        <div class="table-toolbar">
+                            <div>
+                                <p class="eyebrow">Lecturas</p>
+                                <h3 class="card__title">Historial de uso</h3>
+                            </div>
+                            <span class="badge badge--info">@TextoRegistros(resumen.Registros.Count)</span>
+                        </div>
+
+                        @if (resumen.Registros.Count == 0)
+                        {
+                            <div class="empty-state">
+                                <strong>Sin lecturas registradas</strong>
+                                <p class="text-muted">El activo todavía no posee historial de uso.</p>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="table-responsive">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Fecha</th>
+                                            <th>Lectura anterior</th>
+                                            <th>Lectura nueva</th>
+                                            <th>Uso</th>
+                                            <th>Proyecto</th>
+                                            <th>Observaciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var registro in resumen.Registros)
+                                        {
+                                            <tr>
+                                                <td>@FormatearFecha(registro.FechaRegistro)</td>
+                                                <td>@FormatearLectura(registro.LecturaAnterior)</td>
+                                                <td>@FormatearLectura(registro.LecturaNueva)</td>
+                                                <td>@FormatearLectura(registro.CantidadUso)</td>
+                                                <td>@TextoOpcional(registro.Proyecto)</td>
+                                                <td>@TextoOpcional(registro.Observaciones)</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                    }
+                </article>
+
+                @if (!consultando && resumen is not null)
+                {
+                    <article class="table-card">
+                        <div class="table-toolbar">
+                            <div>
+                                <p class="eyebrow">Disponibilidad operativa</p>
+                                <h2 class="card__title">Períodos fuera de servicio</h2>
+                                <p class="card__meta">
+                                    Información proveniente de las órdenes de mantenimiento del activo.
+                                </p>
+                            </div>
+                            <span class="badge badge--info">
+                                @TextoPeriodos(resumen.PeriodosFueraServicio.Count)
+                            </span>
+                        </div>
+
+                        @if (resumen.PeriodosFueraServicio.Count == 0)
+                        {
+                            <div class="empty-state">
+                                <strong>Sin períodos registrados</strong>
+                                <p class="text-muted">
+                                    No hay ejecuciones de mantenimiento asociadas al activo.
+                                </p>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="table-responsive">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Orden</th>
+                                            <th>Tipo</th>
+                                            <th>Estado</th>
+                                            <th>Inicio</th>
+                                            <th>Fin</th>
+                                            <th>Tiempo fuera de servicio</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var periodo in resumen.PeriodosFueraServicio)
+                                        {
+                                            <tr>
+                                                <td>#@periodo.IdMantenimiento</td>
+                                                <td>@periodo.TipoMantenimiento</td>
+                                                <td>
+                                                    <span class="badge @ClaseEstadoMantenimiento(periodo.EstadoMantenimiento)">
+                                                        @periodo.EstadoMantenimiento
+                                                    </span>
+                                                </td>
+                                                <td>@FormatearFechaHora(periodo.FechaInicio)</td>
+                                                <td>@FormatearFechaHora(periodo.FechaFin)</td>
+                                                <td>@FormatearHoras(periodo.TiempoFueraServicioHoras)</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                    </article>
+                }
+            </div>
+
+            <aside class="page-aside">
+                <EditForm Model="solicitud"
+                          OnValidSubmit="RegistrarUsoAsync"
+                          OnInvalidSubmit="LimpiarMensaje"
+                          class="form-section stack">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
+
+                    <div>
+                        <p class="eyebrow">Nueva lectura</p>
+                        <h2>Registrar uso</h2>
+                        <p class="text-muted">
+                            El responsable será el usuario de la sesión y el proyecto se asociará según
+                            la asignación vigente del activo.
+                        </p>
+                    </div>
+
+                    <div>
+                        <label for="uso-activo">Activo</label>
+                        <InputSelect id="uso-activo"
+                                     class="form-control"
+                                     disabled="@(cargando || registrando || consultando)"
+                                     @bind-Value="solicitud.IdActivo"
+                                     @bind-Value:after="OnActivoSeleccionadoAsync">
+                            <option value="0">Seleccione un activo</option>
+                            @foreach (var activo in activos)
+                            {
+                                <option value="@activo.IdActivo">
+                                    @activo.CodigoActivo - @activo.NombreActivo
+                                </option>
+                            }
+                        </InputSelect>
+                        <ValidationMessage For="() => solicitud.IdActivo" />
+                    </div>
+
+                    @if (ActivoSeleccionado is not null)
+                    {
+                        <div class="stack--tight">
+                            <span class="badge @(ActivoSeleccionado.PuedeRegistrarUso ? "badge--success" : "badge--danger")">
+                                @(ActivoSeleccionado.PuedeRegistrarUso ? "Utilizable" : "No utilizable")
+                            </span>
+                            <span class="card__meta">Estado: @ActivoSeleccionado.EstadoActivo</span>
+                            @if (!ActivoSeleccionado.PuedeRegistrarUso)
+                            {
+                                <span class="help-text">@TextoMotivoNoDisponible(ActivoSeleccionado)</span>
+                            }
+                        </div>
+                    }
+
+                    <div>
+                        <label for="uso-fecha">Fecha de registro</label>
+                        <InputDate id="uso-fecha"
+                                   class="form-control"
+                                   disabled="@(registrando || consultando)"
+                                   @bind-Value="solicitud.FechaRegistro" />
+                        <ValidationMessage For="() => solicitud.FechaRegistro" />
+                    </div>
+
+                    @if (ActivoSeleccionado is not null)
+                    {
+                        @if (ActivoSeleccionado.IdTipoMedicionUso.HasValue)
+                        {
+                            <div>
+                                <label>Tipo de medición</label>
+                                <div class="form-control" aria-readonly="true">
+                                    @TextoTipoMedicion(ActivoSeleccionado.TipoMedicionUso)
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div>
+                                <label for="uso-tipo-medicion">Tipo de medición</label>
+                                <InputSelect id="uso-tipo-medicion"
+                                             class="form-control"
+                                             disabled="@(registrando || consultando)"
+                                             @bind-Value="solicitud.IdTipoMedicionUso">
+                                    <option value="">Seleccione un tipo</option>
+                                    @foreach (var tipo in tiposMedicion)
+                                    {
+                                        <option value="@tipo.IdTipoMedicionUso">@tipo.Nombre</option>
+                                    }
+                                </InputSelect>
+                                <ValidationMessage For="() => solicitud.IdTipoMedicionUso" />
+                            </div>
+                        }
+
+                        @if (ActivoSeleccionado.LecturaUsoActual.HasValue)
+                        {
+                            <div>
+                                <label>Lectura actual</label>
+                                <div class="form-control" aria-readonly="true">
+                                    @FormatearLectura(ActivoSeleccionado.LecturaUsoActual)
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div>
+                                <label for="uso-lectura-inicial">Lectura inicial</label>
+                                <input id="uso-lectura-inicial"
+                                       class="form-control"
+                                       type="number"
+                                       min="0"
+                                       max="9999999999999999.99"
+                                       step="0.01"
+                                       disabled="@(registrando || consultando)"
+                                       @bind="solicitud.LecturaInicial"
+                                       @bind:event="oninput" />
+                                <ValidationMessage For="() => solicitud.LecturaInicial" />
+                            </div>
+                        }
+                    }
+
+                    <div>
+                        <label for="uso-lectura-nueva">Lectura nueva</label>
+                        <input id="uso-lectura-nueva"
+                               class="form-control"
+                               type="number"
+                               min="0"
+                               max="9999999999999999.99"
+                               step="0.01"
+                               disabled="@(registrando || consultando)"
+                               @bind="solicitud.LecturaNueva"
+                               @bind:event="oninput" />
+                        <ValidationMessage For="() => solicitud.LecturaNueva" />
+                    </div>
+
+                    <div>
+                        <label for="uso-observaciones">Observaciones (opcional)</label>
+                        <InputTextArea id="uso-observaciones"
+                                       class="form-control"
+                                       rows="4"
+                                       maxlength="500"
+                                       disabled="@(registrando || consultando)"
+                                       @bind-Value="solicitud.Observaciones" />
+                        <ValidationMessage For="() => solicitud.Observaciones" />
+                    </div>
+
+                    <button class="btn btn--primary"
+                            type="submit"
+                            disabled="@(registrando || consultando || cargando || !PuedeRegistrarUso)">
+                        @(registrando ? "Registrando..." : "Registrar lectura")
+                    </button>
+                </EditForm>
+            </aside>
+        </section>
+    </div>
+</section>
+
+@code {
+    private List<ActivoUsoOpcion> activos = [];
+    private List<TipoMedicionUsoOpcion> tiposMedicion = [];
+    private SolicitudRegistrarUsoActivo solicitud = NuevaSolicitud();
+    private UsoActivoAcumuladoResumen? resumen;
+    private bool cargando = true;
+    private bool consultando;
+    private bool registrando;
+    private bool mensajeEsError;
+    private string? mensajeEstado;
+
+    private ActivoUsoOpcion? ActivoSeleccionado =>
+        activos.FirstOrDefault(activo => activo.IdActivo == solicitud.IdActivo);
+
+    private bool PuedeRegistrarUso =>
+        ActivoSeleccionado?.PuedeRegistrarUso == true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            await CargarCatalogosAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudo cargar la gestión de uso de activos.");
+            MostrarError("No se pudo cargar la información de uso de activos. Intente nuevamente.");
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private async Task CargarCatalogosAsync()
+    {
+        activos =
+        [
+            .. await RegistroUsoActivoService.ObtenerActivosParaUsoAsync()
+        ];
+        tiposMedicion =
+        [
+            .. await RegistroUsoActivoService.ObtenerTiposMedicionUsoAsync()
+        ];
+    }
+
+    private async Task OnActivoSeleccionadoAsync()
+    {
+        LimpiarMensaje();
+        resumen = null;
+        solicitud.LecturaInicial = null;
+        solicitud.LecturaNueva = null;
+        solicitud.Observaciones = null;
+
+        var activo = ActivoSeleccionado;
+        solicitud.IdTipoMedicionUso = activo?.IdTipoMedicionUso;
+
+        if (activo is null)
+        {
+            return;
+        }
+
+        await ConsultarResumenAsync(activo.IdActivo);
+    }
+
+    private async Task ConsultarResumenAsync(long idActivo)
+    {
+        if (idActivo <= 0 || consultando)
+        {
+            return;
+        }
+
+        consultando = true;
+
+        try
+        {
+            resumen =
+                await RegistroUsoActivoService.ObtenerResumenUsoActivoAsync(idActivo);
+        }
+        catch (ArgumentException ex)
+        {
+            MostrarError(ex.Message);
+        }
+        catch (InvalidOperationException ex) when (EsErrorFuncional(ex))
+        {
+            MostrarError(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(
+                ex,
+                "No se pudo consultar el resumen de uso del activo {IdActivo}.",
+                idActivo);
+            MostrarError("No se pudo consultar el historial de uso. Intente nuevamente.");
+        }
+        finally
+        {
+            consultando = false;
+        }
+    }
+
+    private async Task RegistrarUsoAsync()
+    {
+        if (registrando || consultando)
+        {
+            return;
+        }
+
+        var activo = ActivoSeleccionado;
+        if (activo is null)
+        {
+            MostrarError("Seleccione un activo válido.");
+            return;
+        }
+
+        if (!activo.PuedeRegistrarUso)
+        {
+            MostrarError(TextoMotivoNoDisponible(activo));
+            return;
+        }
+
+        registrando = true;
+        LimpiarMensaje();
+
+        try
+        {
+            var idActivo = solicitud.IdActivo;
+            await RegistroUsoActivoService.RegistrarUsoAsync(
+                solicitud,
+                await ObtenerIdUsuarioActualAsync());
+
+            solicitud = NuevaSolicitud(idActivo);
+
+            try
+            {
+                await CargarCatalogosAsync();
+                PrepararSolicitudParaActivo(idActivo);
+                await ConsultarResumenAsync(idActivo);
+                MostrarExito("La lectura de uso se registró correctamente.");
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning(
+                    ex,
+                    "El uso del activo {IdActivo} se registró, pero no se pudo recargar la vista.",
+                    idActivo);
+                MostrarExito(
+                    "La lectura se registró correctamente. No se pudo actualizar la vista; recargue la página para consultar el resultado.");
+            }
+        }
+        catch (ArgumentException ex)
+        {
+            MostrarError(ex.Message);
+        }
+        catch (InvalidOperationException ex) when (EsErrorFuncional(ex))
+        {
+            MostrarError(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(
+                ex,
+                "No se pudo registrar el uso del activo {IdActivo}.",
+                solicitud.IdActivo);
+            MostrarError("No se pudo registrar la lectura de uso. Intente nuevamente.");
+        }
+        finally
+        {
+            registrando = false;
+        }
+    }
+
+    private void PrepararSolicitudParaActivo(long idActivo)
+    {
+        solicitud.IdActivo = idActivo;
+        var activo = activos.FirstOrDefault(registro => registro.IdActivo == idActivo);
+        solicitud.IdTipoMedicionUso = activo?.IdTipoMedicionUso;
+    }
+
+    private async Task<string> ObtenerIdUsuarioActualAsync()
+    {
+        var estadoAutenticacion = await Autenticacion.GetAuthenticationStateAsync();
+        return estadoAutenticacion.User
+            .FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)
+            ?.Value
+            ?? throw new InvalidOperationException("No se pudo identificar al usuario actual.");
+    }
+
+    private void MostrarExito(string mensaje)
+    {
+        mensajeEsError = false;
+        mensajeEstado = mensaje;
+    }
+
+    private void MostrarError(string mensaje)
+    {
+        mensajeEsError = true;
+        mensajeEstado = mensaje;
+    }
+
+    private void LimpiarMensaje()
+    {
+        mensajeEstado = null;
+        mensajeEsError = false;
+    }
+
+    private static bool EsErrorFuncional(InvalidOperationException excepcion)
+    {
+        var mensaje = excepcion.Message;
+        return mensaje.StartsWith("No se encontró ", StringComparison.Ordinal)
+            || mensaje.StartsWith("No se puede ", StringComparison.Ordinal)
+            || mensaje.StartsWith("Solo se puede ", StringComparison.Ordinal)
+            || mensaje.StartsWith("El activo ", StringComparison.Ordinal)
+            || mensaje.StartsWith("La lectura ", StringComparison.Ordinal)
+            || mensaje.StartsWith("La fecha ", StringComparison.Ordinal)
+            || mensaje.StartsWith("El tipo de medición ", StringComparison.Ordinal)
+            || mensaje.StartsWith("Existe ", StringComparison.Ordinal)
+            || mensaje.StartsWith("Ya existe ", StringComparison.Ordinal);
+    }
+
+    private static SolicitudRegistrarUsoActivo NuevaSolicitud(long idActivo = 0)
+    {
+        return new SolicitudRegistrarUsoActivo
+        {
+            IdActivo = idActivo,
+            FechaRegistro = DateTime.Today
+        };
+    }
+
+    private static string TextoMotivoNoDisponible(ActivoUsoOpcion activo)
+    {
+        return string.IsNullOrWhiteSpace(activo.MotivoNoDisponible)
+            ? "El activo no está habilitado para registrar uso."
+            : activo.MotivoNoDisponible;
+    }
+
+    private static string TextoTipoMedicion(string? tipoMedicion)
+    {
+        return string.IsNullOrWhiteSpace(tipoMedicion)
+            ? "Tipo de medición pendiente"
+            : tipoMedicion;
+    }
+
+    private static string TextoOpcional(string? texto)
+    {
+        return string.IsNullOrWhiteSpace(texto) ? "-" : texto;
+    }
+
+    private static string FormatearFecha(DateTime fecha)
+    {
+        return fecha.ToString("dd/MM/yyyy");
+    }
+
+    private static string FormatearFechaHora(DateTime? fecha)
+    {
+        return fecha?.ToString("dd/MM/yyyy HH:mm") ?? "-";
+    }
+
+    private static string FormatearLectura(decimal? lectura)
+    {
+        return lectura?.ToString("N2") ?? "-";
+    }
+
+    private static string FormatearHoras(decimal? horas)
+    {
+        return horas.HasValue ? $"{horas.Value:N2} h" : "-";
+    }
+
+    private static string ClaseEstadoMantenimiento(string estado)
+    {
+        return estado switch
+        {
+            "Programado" => "badge--info",
+            "En proceso" => "badge--accent",
+            "Finalizado" => "badge--success",
+            "Cancelado" => "badge--ink",
+            _ => "badge--ink"
+        };
+    }
+
+    private static string TextoRegistros(int cantidad)
+    {
+        return cantidad == 1 ? "1 registro" : $"{cantidad} registros";
+    }
+
+    private static string TextoPeriodos(int cantidad)
+    {
+        return cantidad == 1 ? "1 período" : $"{cantidad} períodos";
+    }
+}

@@ -1,0 +1,233 @@
+@page "/admin/contenido-paginas"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Administrador")]
+@rendermode InteractiveServer
+@using SIGECDC.Application.SitioPublico
+@inject IPaginaContenidoService PaginaContenidoService
+@inject ILogger<ContenidoPaginas> Logger
+
+<PageTitle>Contenido de páginas | SIGE-CDC</PageTitle>
+
+<section class="page-banner">
+    <div class="container page-banner__inner stack--tight">
+        <p class="eyebrow">Administración</p>
+        <h1>Contenido de páginas y secciones.</h1>
+        <p class="lead">Cree, edite y publique información institucional visible en el sitio público.</p>
+    </div>
+</section>
+
+<section class="section-shell">
+    <div class="container admin-grid">
+        <article class="form-section">
+            <h2>@TituloFormulario</h2>
+
+            @if (!string.IsNullOrWhiteSpace(mensajeFormulario))
+            {
+                <div class="alert alert--info">@mensajeFormulario</div>
+            }
+
+            <EditForm Model="solicitud" OnValidSubmit="GuardarPaginaAsync">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <div class="form-grid">
+                    <div class="field">
+                        <label for="codigoPagina">Código de página</label>
+                        <InputText id="codigoPagina" class="form-control" @bind-Value="solicitud.CodigoPagina" />
+                    </div>
+
+                    <div class="field">
+                        <label for="titulo">Título</label>
+                        <InputText id="titulo" class="form-control" @bind-Value="solicitud.Titulo" />
+                    </div>
+
+                    <div class="field field--span-2">
+                        <label for="contenido">Contenido</label>
+                        <InputTextArea id="contenido" class="form-control" @bind-Value="solicitud.Contenido" />
+                    </div>
+
+                    <label class="checkbox-card field--span-2">
+                        <InputCheckbox @bind-Value="solicitud.EstaPublicado" />
+                        <span>Publicado en el sitio público</span>
+                    </label>
+                </div>
+
+                <div class="form-actions mt-3">
+                    <button class="btn btn--primary" type="submit" disabled="@guardando">
+                        @(guardando ? "Guardando..." : "Guardar contenido")
+                    </button>
+                    <button class="btn btn--secondary" type="button" disabled="@guardando" @onclick="PrepararNuevaPagina">Nuevo contenido</button>
+                </div>
+            </EditForm>
+        </article>
+
+        <article class="table-card">
+            <div class="table-toolbar">
+                <div>
+                    <h2 class="card__title">Páginas registradas</h2>
+                    <p class="card__meta">Contenido activo disponible para gestión.</p>
+                </div>
+                <span class="badge badge--info">@paginas.Count registros</span>
+            </div>
+
+            @if (cargando)
+            {
+                <div class="empty-state">
+                    <strong>Cargando contenido</strong>
+                    <p class="text-muted">Estamos recuperando las páginas registradas.</p>
+                </div>
+            }
+            else if (paginas.Count == 0)
+            {
+                <div class="empty-state">
+                    <strong>No hay contenido registrado</strong>
+                    <p class="text-muted">Puede crear una página o sección desde el formulario.</p>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Código</th>
+                                <th>Título</th>
+                                <th>Estado</th>
+                                <th>Actualización</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var pagina in paginas)
+                            {
+                                <tr>
+                                    <td>@pagina.CodigoPagina</td>
+                                    <td>@pagina.Titulo</td>
+                                    <td>
+                                        <span class="badge @(pagina.EstaPublicado ? "badge--accent" : "badge--info")">
+                                            @(pagina.EstaPublicado ? "Publicado" : "Borrador")
+                                        </span>
+                                    </td>
+                                    <td>@((pagina.FechaModificacion ?? pagina.FechaCreacion).ToString("dd/MM/yyyy HH:mm"))</td>
+                                    <td>
+                                        <div class="table-actions">
+                                            <button type="button" @onclick="() => EditarPagina(pagina)">Editar</button>
+                                            <button type="button" @onclick="() => CambiarPublicacionAsync(pagina)">
+                                                @(pagina.EstaPublicado ? "Ocultar" : "Publicar")
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </article>
+    </div>
+</section>
+
+@code {
+    private List<PaginaContenidoResumen> paginas = [];
+    private SolicitudPaginaContenido solicitud = new();
+    private bool cargando = true;
+    private bool guardando;
+    private string? mensajeFormulario;
+
+    private string TituloFormulario => solicitud.IdPaginaContenido == 0
+        ? "Nuevo contenido"
+        : "Editar contenido";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarPaginasAsync();
+    }
+
+    private async Task CargarPaginasAsync()
+    {
+        cargando = true;
+        try
+        {
+            paginas = [.. await PaginaContenidoService.ObtenerPaginasAsync()];
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudo cargar el contenido administrable.");
+            paginas = [];
+            mensajeFormulario = "No se pudo cargar el contenido. Intente nuevamente.";
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private async Task GuardarPaginaAsync()
+    {
+        if (guardando)
+        {
+            return;
+        }
+
+        guardando = true;
+
+        try
+        {
+            await PaginaContenidoService.GuardarPaginaAsync(solicitud);
+            mensajeFormulario = "Contenido guardado correctamente.";
+            PrepararNuevaPagina();
+            await CargarPaginasAsync();
+        }
+        catch (ArgumentException ex)
+        {
+            mensajeFormulario = ex.Message;
+        }
+        catch (InvalidOperationException ex)
+        {
+            mensajeFormulario = ex.Message;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudo guardar el contenido de página.");
+            mensajeFormulario = "No se pudo guardar el contenido. Intente nuevamente.";
+        }
+        finally
+        {
+            guardando = false;
+        }
+    }
+
+    private async Task CambiarPublicacionAsync(PaginaContenidoResumen pagina)
+    {
+        try
+        {
+            await PaginaContenidoService.CambiarPublicacionAsync(pagina.IdPaginaContenido, !pagina.EstaPublicado);
+            mensajeFormulario = pagina.EstaPublicado
+                ? "El contenido quedó oculto."
+                : "El contenido quedó publicado.";
+            await CargarPaginasAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudo cambiar la publicación del contenido {IdPaginaContenido}.", pagina.IdPaginaContenido);
+            mensajeFormulario = "No se pudo cambiar el estado de publicación. Intente nuevamente.";
+        }
+    }
+
+    private void EditarPagina(PaginaContenidoResumen pagina)
+    {
+        solicitud = new SolicitudPaginaContenido
+        {
+            IdPaginaContenido = pagina.IdPaginaContenido,
+            CodigoPagina = pagina.CodigoPagina,
+            Titulo = pagina.Titulo,
+            Contenido = pagina.Contenido,
+            EstaPublicado = pagina.EstaPublicado
+        };
+        mensajeFormulario = null;
+    }
+
+    private void PrepararNuevaPagina()
+    {
+        solicitud = new SolicitudPaginaContenido();
+    }
+}

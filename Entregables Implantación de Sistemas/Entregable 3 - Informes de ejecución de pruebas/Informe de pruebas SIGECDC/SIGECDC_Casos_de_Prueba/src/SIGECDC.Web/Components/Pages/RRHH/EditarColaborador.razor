@@ -1,0 +1,322 @@
+@page "/rrhh/colaboradores/{IdColaborador:long}"
+@rendermode InteractiveServer
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Administrador,Recursos Humanos")]
+@using SIGECDC.Application.RecursosHumanos
+@inject IColaboradorService ColaboradorService
+@inject AuthenticationStateProvider Autenticacion
+@inject ILogger<EditarColaborador> Logger
+
+<PageTitle>Editar colaborador | SIGE-CDC</PageTitle>
+
+<section class="page-banner">
+    <div class="container page-banner__inner stack--tight">
+        <p class="eyebrow">RRHH / Colaboradores</p>
+        <h1>Ficha de colaborador.</h1>
+        <p class="lead">Consulte y actualice los datos básicos del expediente laboral.</p>
+    </div>
+</section>
+
+<section class="section-shell">
+    <div class="container page-grid">
+        <section class="page-main">
+            @if (!string.IsNullOrWhiteSpace(mensajeEstado))
+            {
+                <div class="alert alert--@(mensajeEsError ? "danger" : "success")" role="alert">
+                    <strong>@(mensajeEsError ? "No se pudo completar la acción" : "Acción completada")</strong>
+                    <span>@mensajeEstado</span>
+                </div>
+            }
+
+            @if (cargando)
+            {
+                <div class="empty-state">
+                    <strong>Cargando colaborador</strong>
+                    <p class="text-muted">Estamos recuperando el expediente solicitado.</p>
+                </div>
+            }
+            else if (colaborador is null)
+            {
+                <div class="empty-state">
+                    <strong>Colaborador no encontrado</strong>
+                    <p class="text-muted">El expediente solicitado no existe o no está activo en el sistema.</p>
+                    <a class="btn btn--secondary" href="rrhh/colaboradores">Volver al listado</a>
+                </div>
+            }
+            else
+            {
+                <EditForm Model="solicitud" OnValidSubmit="GuardarAsync" OnInvalidSubmit="LimpiarMensaje" class="stack">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
+
+                    <ColaboradorFormularioCampos Solicitud="solicitud"
+                                                 EstadosLaborales="estadosLaborales"
+                                                 Departamentos="departamentos"
+                                                 Puestos="puestos"
+                                                 DepartamentoCambiado="CambiarDepartamentoAsync" />
+
+                    <div class="form-actions">
+                        <a class="btn btn--secondary" href="rrhh/colaboradores">Volver</a>
+                        <div class="page-actions">
+                            <button class="btn btn--danger"
+                                    type="button"
+                                    disabled="@NoPuedeDesactivar"
+                                    @onclick="DesactivarAsync">
+                                Desactivar
+                            </button>
+                            <button class="btn btn--primary" type="submit" disabled="@guardando">
+                                @(guardando ? "Guardando..." : "Guardar cambios")
+                            </button>
+                        </div>
+                    </div>
+                </EditForm>
+
+                <article class="form-section stack">
+                    <div>
+                        <p class="eyebrow">Acceso del empleado</p>
+                        <h2>Cuenta vinculada</h2>
+                        <p class="text-muted">
+                            La cuenta seleccionada podrá consultar únicamente las colillas de este colaborador.
+                        </p>
+                    </div>
+
+                    <EditForm Model="vinculoCuenta" OnValidSubmit="GuardarVinculoCuentaAsync" class="stack">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary />
+
+                        <div class="form-field">
+                            <label for="cuenta-empleado">Cuenta activa con rol Empleado</label>
+                            <InputSelect id="cuenta-empleado" @bind-Value="vinculoCuenta.IdUsuario">
+                                <option value="">Sin cuenta vinculada</option>
+                                @foreach (var cuenta in cuentasEmpleado)
+                                {
+                                    <option value="@cuenta.IdUsuario">@cuenta.NombreMostrado</option>
+                                }
+                            </InputSelect>
+                            <small>
+                                Actual: @(string.IsNullOrWhiteSpace(colaborador.CuentaUsuario)
+                                    ? "Sin cuenta vinculada"
+                                    : colaborador.CuentaUsuario)
+                            </small>
+                        </div>
+
+                        <div class="form-actions">
+                            <button class="btn btn--secondary" type="submit" disabled="@guardandoVinculo">
+                                @(guardandoVinculo ? "Guardando vínculo..." : "Guardar vínculo")
+                            </button>
+                        </div>
+                    </EditForm>
+                </article>
+            }
+        </section>
+
+        <aside class="page-aside">
+            <article class="card card--accent stack">
+                <p class="eyebrow">Resumen del expediente</p>
+                <h2>@NombreResumen</h2>
+                <div class="metric-list">
+                    <div class="metric-row"><span>Código</span><strong>@(colaborador?.CodigoColaborador ?? "-")</strong></div>
+                    <div class="metric-row"><span>Estado</span><strong>@(colaborador?.EstadoLaboral ?? "-")</strong></div>
+                    <div class="metric-row"><span>Departamento</span><strong>@(colaborador?.Departamento ?? "-")</strong></div>
+                    <div class="metric-row"><span>Puesto</span><strong>@(colaborador?.Puesto ?? "-")</strong></div>
+                </div>
+            </article>
+            <article class="card stack">
+                <h3>Desactivación</h3>
+                <p>La desactivación cambia el estado laboral a Inactivo y conserva el expediente para trazabilidad.</p>
+            </article>
+            <article class="card stack">
+                <h3>Contratos y documentos</h3>
+                <p>Consulte contratos, adjunte respaldos y reemplace documentos del expediente laboral.</p>
+                <a class="btn btn--secondary" href="@($"rrhh/colaboradores/{IdColaborador}/documentos")">Ver documentos</a>
+            </article>
+        </aside>
+    </div>
+</section>
+
+@code {
+    [Parameter]
+    public long IdColaborador { get; set; }
+
+    private SolicitudColaborador solicitud = new();
+    private ColaboradorDetalle? colaborador;
+    private IReadOnlyList<OpcionCatalogo> estadosLaborales = [];
+    private IReadOnlyList<OpcionCatalogo> departamentos = [];
+    private IReadOnlyList<OpcionCatalogo> puestos = [];
+    private IReadOnlyList<CuentaEmpleadoOpcion> cuentasEmpleado = [];
+    private SolicitudVinculoCuentaColaborador vinculoCuenta = new();
+    private bool cargando = true;
+    private bool guardando;
+    private bool guardandoVinculo;
+    private bool desactivando;
+    private bool mensajeEsError;
+    private string? mensajeEstado;
+
+    private bool NoPuedeDesactivar => desactivando
+        || string.Equals(colaborador?.EstadoLaboral, "Inactivo", StringComparison.OrdinalIgnoreCase);
+
+    private string NombreResumen => colaborador is null
+        ? "Sin expediente"
+        : $"{colaborador.Nombre} {colaborador.PrimerApellido}";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await CargarAsync();
+    }
+
+    private async Task CargarAsync()
+    {
+        cargando = true;
+
+        estadosLaborales = await ColaboradorService.ObtenerEstadosLaboralesAsync();
+        departamentos = await ColaboradorService.ObtenerDepartamentosAsync();
+        colaborador = await ColaboradorService.ObtenerColaboradorPorIdAsync(IdColaborador);
+
+        if (colaborador is not null)
+        {
+            solicitud = new SolicitudColaborador
+            {
+                CodigoColaborador = colaborador.CodigoColaborador,
+                TipoIdentificacion = colaborador.TipoIdentificacion,
+                Identificacion = colaborador.Identificacion,
+                Nombre = colaborador.Nombre,
+                PrimerApellido = colaborador.PrimerApellido,
+                SegundoApellido = colaborador.SegundoApellido,
+                FechaNacimiento = colaborador.FechaNacimiento,
+                CorreoElectronico = colaborador.CorreoElectronico,
+                Telefono = colaborador.Telefono,
+                Direccion = colaborador.Direccion,
+                FechaIngreso = colaborador.FechaIngreso,
+                FechaSalida = colaborador.FechaSalida,
+                IdEstadoLaboral = colaborador.IdEstadoLaboral,
+                IdDepartamento = colaborador.IdDepartamento,
+                IdPuesto = colaborador.IdPuesto,
+                Observaciones = colaborador.Observaciones
+            };
+
+            await CargarPuestosAsync(solicitud.IdDepartamento);
+            cuentasEmpleado = await ColaboradorService.ObtenerCuentasEmpleadoDisponiblesAsync(IdColaborador);
+            vinculoCuenta = new SolicitudVinculoCuentaColaborador
+            {
+                IdUsuario = colaborador.IdUsuario
+            };
+        }
+
+        cargando = false;
+    }
+
+    private async Task CambiarDepartamentoAsync(int idDepartamento)
+    {
+        solicitud.IdDepartamento = idDepartamento;
+        await CargarPuestosAsync(idDepartamento);
+
+        if (!puestos.Any(puesto => puesto.Id == solicitud.IdPuesto))
+        {
+            solicitud.IdPuesto = puestos.FirstOrDefault()?.Id ?? 0;
+        }
+    }
+
+    private async Task CargarPuestosAsync(int idDepartamento)
+    {
+        puestos = await ColaboradorService.ObtenerPuestosAsync(idDepartamento > 0 ? idDepartamento : null);
+    }
+
+    private async Task GuardarAsync()
+    {
+        guardando = true;
+        mensajeEstado = null;
+        mensajeEsError = false;
+
+        try
+        {
+            var idUsuarioActual = await ObtenerIdUsuarioActualAsync();
+            await ColaboradorService.ActualizarColaboradorAsync(IdColaborador, solicitud, idUsuarioActual);
+            mensajeEstado = "El expediente del colaborador fue actualizado.";
+            colaborador = await ColaboradorService.ObtenerColaboradorPorIdAsync(IdColaborador);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudo actualizar el colaborador {IdColaborador}.", IdColaborador);
+            mensajeEsError = true;
+            mensajeEstado = ex.Message;
+        }
+        finally
+        {
+            guardando = false;
+        }
+    }
+
+    private async Task DesactivarAsync()
+    {
+        desactivando = true;
+        mensajeEstado = null;
+        mensajeEsError = false;
+
+        try
+        {
+            var idUsuarioActual = await ObtenerIdUsuarioActualAsync();
+            await ColaboradorService.DesactivarColaboradorAsync(IdColaborador, idUsuarioActual);
+            mensajeEstado = "El colaborador fue marcado como Inactivo.";
+            await CargarAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudo desactivar el colaborador {IdColaborador}.", IdColaborador);
+            mensajeEsError = true;
+            mensajeEstado = ex.Message;
+        }
+        finally
+        {
+            desactivando = false;
+        }
+    }
+
+    private async Task GuardarVinculoCuentaAsync()
+    {
+        guardandoVinculo = true;
+        mensajeEstado = null;
+        mensajeEsError = false;
+
+        try
+        {
+            var idUsuarioActual = await ObtenerIdUsuarioActualAsync();
+            await ColaboradorService.VincularCuentaEmpleadoAsync(
+                IdColaborador,
+                vinculoCuenta,
+                idUsuarioActual);
+            mensajeEstado = string.IsNullOrWhiteSpace(vinculoCuenta.IdUsuario)
+                ? "La cuenta fue desvinculada del colaborador."
+                : "La cuenta Empleado fue vinculada correctamente.";
+            colaborador = await ColaboradorService.ObtenerColaboradorPorIdAsync(IdColaborador);
+            cuentasEmpleado = await ColaboradorService.ObtenerCuentasEmpleadoDisponiblesAsync(IdColaborador);
+            vinculoCuenta = new SolicitudVinculoCuentaColaborador
+            {
+                IdUsuario = colaborador?.IdUsuario
+            };
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudo actualizar el vínculo de cuenta del colaborador {IdColaborador}.", IdColaborador);
+            mensajeEsError = true;
+            mensajeEstado = ex is ArgumentException or InvalidOperationException
+                ? ex.Message
+                : "No se pudo actualizar el vínculo de cuenta.";
+        }
+        finally
+        {
+            guardandoVinculo = false;
+        }
+    }
+
+    private void LimpiarMensaje()
+    {
+        mensajeEstado = null;
+        mensajeEsError = false;
+    }
+
+    private async Task<string> ObtenerIdUsuarioActualAsync()
+    {
+        var estadoAutenticacion = await Autenticacion.GetAuthenticationStateAsync();
+        return estadoAutenticacion.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+            ?? throw new InvalidOperationException("No se pudo identificar al usuario actual.");
+    }
+}

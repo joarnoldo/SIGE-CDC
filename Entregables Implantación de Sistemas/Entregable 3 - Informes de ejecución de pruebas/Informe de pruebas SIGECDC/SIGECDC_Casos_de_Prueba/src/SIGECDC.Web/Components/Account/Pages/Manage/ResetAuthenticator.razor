@@ -1,0 +1,57 @@
+﻿@page "/Account/Manage/ResetAuthenticator"
+
+@using Microsoft.AspNetCore.Identity
+@using SIGECDC.Persistence.Identity
+
+@inject UserManager<ApplicationUser> UserManager
+@inject SignInManager<ApplicationUser> SignInManager
+@inject IdentityRedirectManager RedirectManager
+@inject ILogger<ResetAuthenticator> Logger
+
+<PageTitle>Restablecer clave de autenticador</PageTitle>
+
+<StatusMessage />
+<h3>Restablecer clave de autenticador</h3>
+<div class="alert alert-warning" role="alert">
+    <p>
+        <span class="glyphicon glyphicon-warning-sign"></span>
+        <strong>Si restablece la clave del autenticador, la aplicación autenticadora no funcionará hasta configurarla nuevamente.</strong>
+    </p>
+    <p>
+        Este proceso desactiva 2FA hasta que verifique nuevamente la aplicación autenticadora.
+        Si no completa la configuración de la aplicación autenticadora, podría perder acceso a su cuenta.
+    </p>
+</div>
+<div>
+    <form @formname="reset-authenticator" @onsubmit="OnSubmitAsync" method="post">
+        <AntiforgeryToken />
+        <button class="btn btn-danger" type="submit">Restablecer clave de autenticador</button>
+    </form>
+</div>
+
+@code {
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    private async Task OnSubmitAsync()
+    {
+        var user = await UserManager.GetUserAsync(HttpContext.User);
+        if (user is null)
+        {
+            RedirectManager.RedirectToInvalidUser(UserManager, HttpContext);
+            return;
+        }
+
+        await UserManager.SetTwoFactorEnabledAsync(user, false);
+        await UserManager.ResetAuthenticatorKeyAsync(user);
+        var userId = await UserManager.GetUserIdAsync(user);
+        Logger.LogInformation("El usuario con ID '{UserId}' restableció la clave de la aplicación autenticadora.", userId);
+
+        await SignInManager.RefreshSignInAsync(user);
+
+        RedirectManager.RedirectToWithStatus(
+            "Account/Manage/EnableAuthenticator",
+            "La clave de la aplicación autenticadora fue restablecida. Debe configurar la aplicación con la nueva clave.",
+            HttpContext);
+    }
+}

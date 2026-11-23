@@ -1,0 +1,193 @@
+@using SIGECDC.Application.Forecast
+@using SIGECDC.Domain.Planillas
+@using System.Security.Claims
+@inject IForecastEvidenciaService Evidencia
+@inject IForecastCalculoService Calculo
+@inject AuthenticationStateProvider Autenticacion
+@inject ILogger<EvidenciaFinancieraForecast> Logger
+
+<article class="card stack" id="evidencia-financiera">
+    <h2>@(SoloOverrides ? "Parámetros y ajustes autorizados" : "Condiciones y evidencia de la proyección")</h2>
+    <p>Registre únicamente datos respaldados para la proyección. Las condiciones de los contratos se conservan.</p>
+    @if(mensaje is not null){<div class="alert alert--warning" role="status">@mensaje</div>}
+    @if(configuracion is {PuedeEditar:true} cfg)
+    {
+        <fieldset disabled="@ocupado">
+            @if (!SoloOverrides)
+            {
+            <details>
+                <summary>Registrar condición por participante y período</summary>
+                <label class="form-label">Condición RRHH disponible (requiere confirmación de soporte)
+                    <select class="form-select" @onchange="SeleccionarExistente">
+                        <option value="-1">Captura proyectada explícita</option>
+                        @for(var i=0;i<cfg.CondicionesDisponibles.Count;i++){<option value="@i">@cfg.CondicionesDisponibles[i].Etiqueta</option>}
+                    </select>
+                </label>
+                <div class="row g-3">
+                    <div class="col-md-6"><SeleccionEvidenciaForecast Etiqueta="Participante" Opciones="cfg.Participantes" @bind-Valor="participante"/></div>
+                    <div class="col-md-6"><SeleccionEvidenciaForecast Etiqueta="Período" Opciones="Periodos" @bind-Valor="periodo"/></div>
+                    <label class="col-md-4">Origen
+                        <select class="form-select" @bind="origen">
+                            <option value="">Seleccione…</option><option value="CondicionExistente">Condición RRHH seleccionada</option>
+                            <option value="ContratacionFutura">Contratación futura</option><option value="CambioFuturo">Cambio futuro explícito</option>
+                        </select>
+                    </label>
+                    <label class="col-md-4">Inicio inclusivo<input class="form-control" type="date" @bind="inicio"/></label>
+                    <label class="col-md-4">Fin inclusivo<input class="form-control" type="date" @bind="fin"/></label>
+                    <label class="col-md-4">Salario mensual<input class="form-control" type="number" step="0.01" @bind="salario"/></label>
+                    <div class="col-md-4"><SeleccionEvidenciaForecast Etiqueta="Puesto" Opciones="cfg.Puestos" @bind-Valor="puesto"/></div>
+                    <div class="col-md-4"><SeleccionEvidenciaForecast Etiqueta="Departamento" Opciones="cfg.Departamentos" @bind-Valor="departamento"/></div>
+                    <div class="col-md-6"><SeleccionEvidenciaForecast Etiqueta="Jornada y vigencia" Opciones="cfg.Jornadas" @bind-Valor="jornada"/></div>
+                    <div class="col-md-6"><SeleccionEvidenciaForecast Etiqueta="Ocupación homologada" Opciones="cfg.Ocupaciones" @bind-Valor="ocupacion"/></div>
+                    <label class="col-md-6">Tipo contractual demostrado<input class="form-control" maxlength="100" @bind="tipoContrato"/></label>
+                    <label class="col-md-6">Periodicidad
+                        <select class="form-select" @bind="periodicidad"><option value="">Seleccione…</option><option>Mensual</option><option>Quincenal</option></select>
+                    </label>
+                    <label class="col-12">Referencia de soporte de la condición<input class="form-control" maxlength="500" @bind="soporte"/></label>
+                    <div class="col-md-6"><SeleccionEvidenciaForecast Etiqueta="Póliza, actividad y vigencia RT" Opciones="cfg.Polizas" @bind-Valor="poliza"/></div>
+                    <label class="col-md-6">Modalidad RT acreditada
+                        <select class="form-select" @bind="modalidad">
+                            <option value="@ModalidadBaseRiesgo.Desconocida">Sin acreditar</option>
+                            <option value="@ModalidadBaseRiesgo.RemuneracionSalarialOrdinaria">Remuneración salarial ordinaria</option>
+                            <option value="@ModalidadBaseRiesgo.Especial">Especial (no calculable)</option>
+                        </select>
+                    </label>
+                    <label class="col-12">Referencia de la asociación y modalidad RT<input class="form-control" maxlength="500" @bind="soporteRt"/></label>
+                </div>
+                <button class="btn btn--primary" type="button" @onclick="RegistrarCondicionAsync">Confirmar condición proyectada</button>
+                <p>@cfg.CondicionesRegistradas.Count segmento(s) registrados. Para consultar el resultado histórico utilice Resultados.</p>
+                <ul>@foreach(var s in cfg.CondicionesRegistradas){<li>@Nombre(s.IdParticipante) — @s.Inicio.ToString("dd/MM/yyyy") a @s.Fin.ToString("dd/MM/yyyy"): ₡@s.SalarioMensual.ToString("N2") (@s.Origen)</li>}</ul>
+            </details>
+            }
+            <details open="@SoloOverrides">
+                <summary>Override por concepto</summary>
+                <p>Cada ajuste sustituye el valor histórico de su concepto. Un valor de cero se conserva como decisión explícita. La modalidad debe corresponder al concepto seleccionado.</p>
+                <SeleccionEvidenciaForecast Etiqueta="Concepto y vigencia" Opciones="Conceptos" Valor="concepto" ValorChanged="CambiarConcepto"/>
+                <div class="row g-3">
+                    <label class="col-md-4">Modalidad<select class="form-select" @bind="tipoOverride"><option value="">Seleccione…</option>@foreach(var m in Modalidades){<option>@m</option>}</select></label>
+                    <label class="col-md-4">Unidad<select class="form-select" @bind="unidad"><option value="">Seleccione…</option>@foreach(var u in Unidades){<option>@u</option>}</select></label>
+                    <label class="col-md-4">Valor explícito<input class="form-control" type="number" step="0.0001" @bind="valor"/></label>
+                    <label class="col-12">Referencia de soporte<input class="form-control" maxlength="500" @bind="soporteOverride"/></label>
+                    <label class="col-12">Referencia de autorización (si el concepto la exige)<input class="form-control" maxlength="500" @bind="autorizacion"/></label>
+                </div>
+                <button class="btn btn--primary" type="button" @onclick="RegistrarOverrideAsync">Registrar ajuste</button>
+                <ul>@foreach(var o in cfg.Overrides){<li>@cfg.Conceptos.FirstOrDefault(c=>c.IdVersion==o.IdConceptoVersion)?.Nombre: @o.Valor.ToString("0.####") @o.Unidad</li>}</ul>
+            </details>
+            @if (!SoloOverrides)
+            {
+            <details>
+                <summary>Acreditación CCSS/LPT y cálculo</summary>
+                <p>Confirme la aplicabilidad de cada componente para cada participante. No se presume una excepción ni su ausencia. La acreditación cubre el rango proyectado; los casos con cambios de aplicabilidad requieren hechos separados mediante el servicio financiero.</p>
+                <div class="table-responsive"><table class="data-table"><thead><tr><th>Participante / componente</th><th>Regla acreditada</th><th>Clave de aplicación</th><th>Respaldo / regla</th></tr></thead><tbody>
+                    @foreach(var a in acreditaciones)
+                    {
+                        <tr><td>@Nombre(a.Participante)<br/>@a.Componente</td><td>
+                            <select class="form-select" @bind="a.Regla">
+                                <option value="@ReglaBaseCuota.Desconocida">Sin acreditar</option>
+                                <option value="@ReglaBaseCuota.RemuneracionContributiva">Remuneración contributiva</option>
+                                <option value="@ReglaBaseCuota.MinimoMensualOrdinario">Mínimo mensual ordinario</option>
+                                <option value="@ReglaBaseCuota.ExcepcionSinMinimo">Excepción acreditada sin mínimo</option>
+                            </select>
+                        </td><td><input class="form-control" aria-label="Clave de aplicación" @bind="a.Clave"/></td><td>
+                            <input class="form-control" aria-label="Referencia de soporte" placeholder="Respaldo" maxlength="500" @bind="a.Soporte"/>
+                            <input class="form-control" aria-label="Referencia de la regla" placeholder="Regla acreditada" maxlength="500" @bind="a.Referencia"/>
+                        </td></tr>
+                    }
+                </tbody></table></div>
+                <button class="btn btn--primary" type="button" @onclick="GenerarAsync">Generar con evidencia acreditada</button>
+            </details>
+            }
+        </fieldset>
+    }
+    else if (configuracion is not null)
+    {
+        <p>El escenario ya fue calculado. Sus condiciones y parámetros están conservados: consulte Resultados; no se modifican históricos.</p>
+    }
+</article>
+
+@code {
+    [Parameter] public long IdEscenario {get;set;}
+    [Parameter] public bool SoloOverrides {get;set;}
+    [Parameter] public EventCallback Generado {get;set;}
+    private ConfiguracionEvidenciaForecast? configuracion;
+    private string? mensaje;
+    private bool ocupado;
+    private long cargado,participante,periodo,puesto,departamento,jornada,ocupacion,poliza,concepto;
+    private long? contrato,condicion;
+    private DateTime inicio,fin;
+    private decimal salario;
+    private decimal? valor;
+    private string origen="",tipoContrato="",periodicidad="",soporte="",soporteRt="",tipoOverride="",unidad="",soporteOverride="",autorizacion="";
+    private ModalidadBaseRiesgo modalidad;
+    private readonly List<AcreditacionFormulario> acreditaciones=[];
+    private IReadOnlyList<OpcionEvidenciaForecast> Periodos=>configuracion?.Periodos.Select(p=>new OpcionEvidenciaForecast(p.IdForecastPeriodo,$"{p.TipoPeriodo}: {p.FechaInicio:dd/MM/yyyy}–{p.FechaFin:dd/MM/yyyy}")).ToArray()??[];
+    private IReadOnlyList<OpcionEvidenciaForecast> Conceptos=>configuracion?.Conceptos.Select(c=>new OpcionEvidenciaForecast(c.IdVersion,$"{c.Codigo} — {c.Nombre} ({c.Unidad})")).ToArray()??[];
+    private string Nombre(long id)=>configuracion?.Participantes.FirstOrDefault(p=>p.Id==id)?.Etiqueta??"Participante";
+    private ConceptoEvidenciaForecast? ConceptoSeleccionado => configuracion?.Conceptos.FirstOrDefault(c => c.IdVersion == concepto);
+    private IReadOnlyList<string> Modalidades => ConceptoSeleccionado is not {} c ? []
+        : c.Unidad == "Monto" && c.PermiteMonto ? ["Monto"]
+        : c.Unidad == "Porcentaje" && c.TipoBase == "SALARIO_DEVENGADO" ? ["Porcentaje"]
+        : c.Unidad is "Hora" or "Día" or "Cantidad" ? ["Cantidad"] : [];
+    private IReadOnlyList<string> Unidades => ConceptoSeleccionado is not {} c ? [] : c.Unidad == "Cantidad" ? ["Cantidad", "Hora", "Día"] : [c.Unidad];
+    private void CambiarConcepto(long id) { concepto = id; tipoOverride = unidad = ""; valor = null; }
+    private async Task<string> ActorAsync()=>(await Autenticacion.GetAuthenticationStateAsync()).User.FindFirstValue(ClaimTypes.NameIdentifier)??throw new UnauthorizedAccessException();
+    protected override async Task OnParametersSetAsync()
+    {
+        if(cargado==IdEscenario)return;
+        await EjecutarAsync(async()=>
+        {
+            await CargarAsync();cargado=IdEscenario;
+            inicio=configuracion!.Inicio;fin=configuracion.Fin;
+            acreditaciones.Clear();
+            foreach(var p in configuracion.Participantes)
+            foreach(var c in CatalogoCuotasSociales.Componentes.Where(c=>c.Sujeto!="Estado"))
+                acreditaciones.Add(new(){Participante=p.Id,Componente=c.Codigo});
+        },null);
+    }
+    private async Task CargarAsync()=>configuracion=await Evidencia.ConsultarConfiguracionAsync(IdEscenario,await ActorAsync());
+    private void SeleccionarExistente(ChangeEventArgs e)
+    {
+        if(!int.TryParse(e.Value?.ToString(),out var i) || i<0 || i>=configuracion!.CondicionesDisponibles.Count){contrato=condicion=null;origen="";return;}
+        var c=configuracion.CondicionesDisponibles[i].Condicion;
+        participante=c.IdParticipante;periodo=c.IdPeriodo;inicio=c.Inicio;fin=c.Fin;salario=c.SalarioMensual;
+        puesto=c.IdPuesto;departamento=c.IdDepartamento;jornada=c.IdJornada;ocupacion=c.IdOcupacion;contrato=c.IdContrato;condicion=c.IdCondicion;
+        origen=c.Origen;tipoContrato=c.TipoContrato;periodicidad=c.Periodicidad;soporte="";
+    }
+    private Task RegistrarCondicionAsync()=>EjecutarAsync(async()=>
+    {
+        await Evidencia.RegistrarCondicionAsync(new(IdEscenario,periodo,participante,inicio,fin,origen,salario,checked((int)puesto),checked((int)departamento),
+            jornada,ocupacion,tipoContrato,periodicidad,soporte,origen=="CondicionExistente"?contrato:null,origen=="CondicionExistente"?condicion:null,
+            poliza>0?poliza:null,modalidad,soporteRt),await ActorAsync());
+        await CargarAsync();
+    },"Condición registrada.");
+    private Task RegistrarOverrideAsync()=>EjecutarAsync(async()=>
+    {
+        if (valor is null) throw new ConfiguracionConceptoException("OVERRIDE_FORECAST_NO_DEMOSTRADO");
+        await Evidencia.RegistrarOverrideAsync(new(IdEscenario,concepto,tipoOverride,unidad,valor.Value,soporteOverride,autorizacion),await ActorAsync());await CargarAsync();
+    },"Override registrado.");
+    private Task GenerarAsync()=>EjecutarAsync(async()=>
+    {
+        var actor=await ActorAsync();
+        var pruebas=acreditaciones.Select(a=>new AplicabilidadCuota(a.Participante,a.Componente,a.Clave,
+            new(configuracion!.Inicio,configuracion.Fin),a.Regla,a.Soporte,a.Referencia,actor)).ToArray();
+        await Calculo.GenerarForecastAsync(new SolicitudCalculoFinancieroForecast(IdEscenario,pruebas),actor);
+        await Generado.InvokeAsync();await CargarAsync();
+    },"Forecast calculado; consulte la versión guardada en Resultados.");
+    private async Task EjecutarAsync(Func<Task> accion,string? exito)
+    {
+        if(ocupado)return;ocupado=true;mensaje=null;
+        try{await accion();mensaje=exito;}
+        catch(ConfiguracionConceptoException ex){mensaje=SIGECDC.Web.Configuracion.MensajesRecorridoForecast.Para(ex);}
+        catch(UnauthorizedAccessException){mensaje="La cuenta no está autorizada.";}
+        catch(InvalidOperationException){mensaje="El estado o la evidencia del escenario no permiten completar la operación.";}
+        catch(ArgumentException){mensaje="Revise las fechas y datos de la solicitud.";}
+        catch(Exception ex){Logger.LogError("Fallo al procesar evidencia Forecast {Escenario}; tipo {Tipo}",IdEscenario,ex.GetType().Name);mensaje="No se pudo completar la operación.";}
+        finally{ocupado=false;}
+    }
+    private sealed class AcreditacionFormulario
+    {
+        public long Participante {get;init;} public string Componente {get;init;}="";
+        public ReglaBaseCuota Regla {get;set;} public string Clave {get;set;}="";
+        public string Soporte {get;set;}="";public string Referencia {get;set;}="";
+    }
+}

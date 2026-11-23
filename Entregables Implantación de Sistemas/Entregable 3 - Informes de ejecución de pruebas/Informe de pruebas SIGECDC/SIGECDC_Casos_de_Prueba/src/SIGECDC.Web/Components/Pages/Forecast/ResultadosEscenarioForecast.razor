@@ -1,0 +1,9 @@
+@page "/rrhh/forecast/{IdForecastEscenario:long}/resultados"
+@rendermode InteractiveServer
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Administrador,Recursos Humanos")]
+
+<ConsultaSnapshotForecast IdForecastEscenario="IdForecastEscenario" />
+
+@code {
+    [Parameter] public long IdForecastEscenario { get; set; }
+}

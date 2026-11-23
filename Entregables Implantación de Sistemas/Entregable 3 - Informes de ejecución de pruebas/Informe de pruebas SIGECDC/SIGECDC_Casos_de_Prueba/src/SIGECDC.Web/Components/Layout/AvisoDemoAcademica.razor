@@ -1,0 +1,19 @@
+@using Microsoft.AspNetCore.Http
+@using SIGECDC.Web.Configuracion
+@inject DisponibilidadFuncionesFinancieras Disponibilidad
+
+@if (Disponibilidad.ModoDemoAcademicaHabilitado && EsRutaFinanciera)
+{
+    <div class="alert alert-warning" role="note" aria-label="Modo de demostración académica">
+        <strong>MODO DE DEMOSTRACIÓN ACADÉMICA</strong>
+        <div>Datos utilizados únicamente para fines de demostración.</div>
+        <div>No autorizado para operación ni pago real.</div>
+    </div>
+}
+
+@code {
+    [Parameter] public string RutaActual { get; set; } = "";
+
+    private bool EsRutaFinanciera => ContencionFuncionesFinancierasMiddleware.EsRutaFinanciera(
+        new PathString("/" + RutaActual.Split('?', '#')[0].TrimStart('/')));
+}

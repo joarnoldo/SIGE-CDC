@@ -1,0 +1,98 @@
+@page "/preguntas-frecuentes"
+@using SIGECDC.Application.SitioPublico
+@inject IFaqService FaqService
+@inject ILogger<PreguntasFrecuentes> Logger
+@rendermode InteractiveServer
+
+<PageTitle>Preguntas Frecuentes - Canales y Drenajes del Caribe S.R.L.</PageTitle>
+
+<section class="public-section">
+    <div class="container">
+        <h1 class="section-title">Preguntas Frecuentes</h1>
+        <p class="section-subtitle">Encuentre respuestas a consultas comunes sobre nuestros servicios.</p>
+
+        @if (cargando)
+        {
+            <p>Cargando...</p>
+        }
+        else if (!string.IsNullOrWhiteSpace(mensajeError))
+        {
+            <div class="alert alert--danger stack--tight" role="alert">
+                <span>@mensajeError</span>
+                <div>
+                    <button class="btn btn--secondary" type="button" @onclick="CargarAsync">Reintentar</button>
+                </div>
+            </div>
+        }
+        else if (faqs.Count == 0)
+        {
+            <p class="text-muted">No hay preguntas frecuentes disponibles en este momento.</p>
+        }
+        else
+        {
+            <div class="faq-lista">
+                @foreach (var faq in faqs)
+                {
+                    <div class="faq-item">
+                        <button class="faq-pregunta" @onclick="() => AlternarPregunta(faq.IdFAQ)">
+                            <span>@faq.Pregunta</span>
+                            <span class="faq-icono">@(abiertas.Contains(faq.IdFAQ) ? "-" : "+")</span>
+                        </button>
+                        @if (abiertas.Contains(faq.IdFAQ))
+                        {
+                            <div class="faq-respuesta">
+                                <p>@faq.Respuesta</p>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+
+            <div class="faq-contacto">
+                <p>Si necesita información adicional, puede escribirnos desde el <a href="/contacto">formulario de contacto</a>.</p>
+            </div>
+        }
+    </div>
+</section>
+
+@code {
+    private List<FaqResumen> faqs = [];
+    private HashSet<long> abiertas = [];
+    private bool cargando = true;
+    private string? mensajeError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarAsync();
+    }
+
+    private async Task CargarAsync()
+    {
+        cargando = true;
+        mensajeError = null;
+        faqs = [];
+        abiertas.Clear();
+
+        try
+        {
+            faqs = [.. await FaqService.ObtenerPublicadasAsync()];
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudieron cargar las preguntas frecuentes públicas.");
+            mensajeError = "No pudimos cargar las preguntas frecuentes en este momento.";
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private void AlternarPregunta(long idFaq)
+    {
+        if (!abiertas.Add(idFaq))
+        {
+            abiertas.Remove(idFaq);
+        }
+    }
+}

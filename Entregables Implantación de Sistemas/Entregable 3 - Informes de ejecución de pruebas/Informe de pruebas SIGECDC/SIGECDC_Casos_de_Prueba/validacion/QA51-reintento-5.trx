@@ -1,0 +1,98 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="209f4b86-aa8f-4ce7-958d-cad0ea60572d" name="jloca@JARVIS 2026-10-25 13:01:14" runUser="JARVIS\jloca" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-10-25T13:01:14.3450233-06:00" queuing="2026-10-25T13:01:14.3450236-06:00" start="2026-10-25T13:00:52.8391987-06:00" finish="2026-10-25T13:01:42.6927117-06:00" />
+  <TestSettings name="default" id="41c5ca37-013f-48de-9f04-e2f15c7b9dd4">
+    <Deployment runDeploymentRoot="jloca_JARVIS_2026-10-25_13_01_14" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="9817478c-2b79-49f7-bccd-cdf0d1d0b532" testId="efab46e6-6a20-4be4-aef5-c1cb9bcf9b25" testName="PUB-010 — Pregunta frecuente actualizada y publicada" computerName="JARVIS" duration="00:00:05.2599928" startTime="2026-10-25T13:01:40.9431267-06:00" endTime="2026-10-25T13:01:40.9431268-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="9817478c-2b79-49f7-bccd-cdf0d1d0b532" />
+    <UnitTestResult executionId="5234aecd-e5de-4261-9ea7-6cd79c359d83" testId="f65cd337-8e67-301f-9aca-75a9862a7b0d" testName="FOR-008 — Resultados por colaborador, departamento, proyecto y período" computerName="JARVIS" duration="00:00:06.4513232" startTime="2026-10-25T13:01:35.6803374-06:00" endTime="2026-10-25T13:01:35.6803375-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="5234aecd-e5de-4261-9ea7-6cd79c359d83" />
+    <UnitTestResult executionId="cc15cdef-6b42-4967-9fa3-16e9e57342d6" testId="1d483c47-042b-d4a3-b648-fb8d4d27151a" testName="FOR-007 — Alta y salida futuras con efecto temporal" computerName="JARVIS" duration="00:00:13.0568391" startTime="2026-10-25T13:01:14.3155089-06:00" endTime="2026-10-25T13:01:14.3155500-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="cc15cdef-6b42-4967-9fa3-16e9e57342d6">
+      <Output>
+        <ErrorInfo>
+          <Message>System.InvalidOperationException : Sequence contains no matching element</Message>
+          <StackTrace>   at System.Linq.ThrowHelper.ThrowNoMatchException()&#xD;
+   at System.Linq.Enumerable.Single[TSource](IEnumerable`1 source, Func`2 predicate)&#xD;
+   at SIGECDC.Tests.EntregableImplantacion.ForecastAdicionalAcademicoTests.For007_ContratacionYSalidaConImportesEsperados()&#xD;
+   at SIGECDC.Tests.EntregableImplantacion.ForecastAdicionalAcademicoTests.For007_ContratacionYSalidaConImportesEsperados()&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="2f0026b1-fcfb-40a0-b659-daba52068ae8" testId="f67edbb8-1588-2496-80f8-47a7c6d1c6b9" testName="FOR-009 — Desviaciones absolutas, porcentuales y agrupaciones" computerName="JARVIS" duration="00:00:06.5466981" startTime="2026-10-25T13:01:29.2292412-06:00" endTime="2026-10-25T13:01:29.2292416-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="2f0026b1-fcfb-40a0-b659-daba52068ae8">
+      <Output>
+        <ErrorInfo>
+          <Message>QA51-DEF-002: M conserva dimensiones históricas por persona, pero QA02 exige variaciones agrupadas por departamento y la consulta no devuelve esa agrupación.</Message>
+          <StackTrace>   at SIGECDC.Tests.EntregableImplantacion.ForecastAdicionalAcademicoTests.For009_DesviacionesConReglaM_YDepartamentoRequerido()&#xD;
+   at SIGECDC.Tests.EntregableImplantacion.ForecastAdicionalAcademicoTests.For009_DesviacionesConReglaM_YDepartamentoRequerido()&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="387701f8-a3c2-4513-b958-29c627138a97" testId="a47dcbd6-7ac7-fba9-4715-d13d1f4a9050" testName="FOR-010 — PDF y Excel del mismo resultado filtrado" computerName="JARVIS" duration="00:00:08.3677151" startTime="2026-10-25T13:01:22.6813924-06:00" endTime="2026-10-25T13:01:22.6813926-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="387701f8-a3c2-4513-b958-29c627138a97" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="FOR-009 — Desviaciones absolutas, porcentuales y agrupaciones" storage="c:\users\jloca\onedrive\desktop\sige-cdc\entrega\sigecdc_qa_51_casos\pruebas\sigecdc.tests.dll" id="f67edbb8-1588-2496-80f8-47a7c6d1c6b9">
+      <Execution id="2f0026b1-fcfb-40a0-b659-daba52068ae8" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\entrega\SIGECDC_QA_51_Casos\pruebas\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.ForecastAdicionalAcademicoTests" name="For009_DesviacionesConReglaM_YDepartamentoRequerido" />
+    </UnitTest>
+    <UnitTest name="FOR-010 — PDF y Excel del mismo resultado filtrado" storage="c:\users\jloca\onedrive\desktop\sige-cdc\entrega\sigecdc_qa_51_casos\pruebas\sigecdc.tests.dll" id="a47dcbd6-7ac7-fba9-4715-d13d1f4a9050">
+      <Execution id="387701f8-a3c2-4513-b958-29c627138a97" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\entrega\SIGECDC_QA_51_Casos\pruebas\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.ForecastAdicionalAcademicoTests" name="For010_ExportacionesFiltradasDesdeResultadosPersistidos" />
+    </UnitTest>
+    <UnitTest name="FOR-007 — Alta y salida futuras con efecto temporal" storage="c:\users\jloca\onedrive\desktop\sige-cdc\entrega\sigecdc_qa_51_casos\pruebas\sigecdc.tests.dll" id="1d483c47-042b-d4a3-b648-fb8d4d27151a">
+      <Execution id="cc15cdef-6b42-4967-9fa3-16e9e57342d6" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\entrega\SIGECDC_QA_51_Casos\pruebas\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.ForecastAdicionalAcademicoTests" name="For007_ContratacionYSalidaConImportesEsperados" />
+    </UnitTest>
+    <UnitTest name="PUB-010 — Pregunta frecuente actualizada y publicada" storage="c:\users\jloca\onedrive\desktop\sige-cdc\entrega\sigecdc_qa_51_casos\pruebas\sigecdc.tests.dll" id="efab46e6-6a20-4be4-aef5-c1cb9bcf9b25">
+      <Execution id="9817478c-2b79-49f7-bccd-cdf0d1d0b532" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\entrega\SIGECDC_QA_51_Casos\pruebas\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.PublicoAdicionalAcademicoTests" name="Pub010_ActualizarPreguntaYRespuestaPublicadas" />
+    </UnitTest>
+    <UnitTest name="FOR-008 — Resultados por colaborador, departamento, proyecto y período" storage="c:\users\jloca\onedrive\desktop\sige-cdc\entrega\sigecdc_qa_51_casos\pruebas\sigecdc.tests.dll" id="f65cd337-8e67-301f-9aca-75a9862a7b0d">
+      <Execution id="5234aecd-e5de-4261-9ea7-6cd79c359d83" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\entrega\SIGECDC_QA_51_Casos\pruebas\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.ForecastAdicionalAcademicoTests" name="For008_DimensionesConciliadasSinOmisiones" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="efab46e6-6a20-4be4-aef5-c1cb9bcf9b25" executionId="9817478c-2b79-49f7-bccd-cdf0d1d0b532" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="f65cd337-8e67-301f-9aca-75a9862a7b0d" executionId="5234aecd-e5de-4261-9ea7-6cd79c359d83" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1d483c47-042b-d4a3-b648-fb8d4d27151a" executionId="cc15cdef-6b42-4967-9fa3-16e9e57342d6" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="f67edbb8-1588-2496-80f8-47a7c6d1c6b9" executionId="2f0026b1-fcfb-40a0-b659-daba52068ae8" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="a47dcbd6-7ac7-fba9-4715-d13d1f4a9050" executionId="387701f8-a3c2-4513-b958-29c627138a97" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Resultados sin formato de lista" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="Todos los resultados cargados" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="5" executed="5" passed="3" failed="2" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.8.2+699d445a1a (64-bit .NET 10.0.12)&#xD;
+[xUnit.net 00:00:00.17]   Discovering: SIGECDC.Tests&#xD;
+[xUnit.net 00:00:00.46]   Discovered:  SIGECDC.Tests&#xD;
+[xUnit.net 00:00:00.48]   Starting:    SIGECDC.Tests&#xD;
+[xUnit.net 00:00:20.56]       System.InvalidOperationException : Sequence contains no matching element&#xD;
+[xUnit.net 00:00:20.56]       Stack Trace:&#xD;
+[xUnit.net 00:00:20.56]            at System.Linq.ThrowHelper.ThrowNoMatchException()&#xD;
+[xUnit.net 00:00:20.56]            at System.Linq.Enumerable.Single[TSource](IEnumerable`1 source, Func`2 predicate)&#xD;
+[xUnit.net 00:00:20.56]            at SIGECDC.Tests.EntregableImplantacion.ForecastAdicionalAcademicoTests.For007_ContratacionYSalidaConImportesEsperados()&#xD;
+[xUnit.net 00:00:20.56]            at SIGECDC.Tests.EntregableImplantacion.ForecastAdicionalAcademicoTests.For007_ContratacionYSalidaConImportesEsperados()&#xD;
+[xUnit.net 00:00:20.56]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:35.48]       QA51-DEF-002: M conserva dimensiones históricas por persona, pero QA02 exige variaciones agrupadas por departamento y la consulta no devuelve esa agrupación.&#xD;
+[xUnit.net 00:00:35.48]       Stack Trace:&#xD;
+[xUnit.net 00:00:35.48]            at SIGECDC.Tests.EntregableImplantacion.ForecastAdicionalAcademicoTests.For009_DesviacionesConReglaM_YDepartamentoRequerido()&#xD;
+[xUnit.net 00:00:35.48]            at SIGECDC.Tests.EntregableImplantacion.ForecastAdicionalAcademicoTests.For009_DesviacionesConReglaM_YDepartamentoRequerido()&#xD;
+[xUnit.net 00:00:35.48]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:48.84]   Finished:    SIGECDC.Tests&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="JARVIS" outcome="Error" timestamp="2026-10-25T13:01:14.3122059-06:00">
+        <Text>[xUnit.net 00:00:20.56]     FOR-007 — Alta y salida futuras con efecto temporal [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="JARVIS" outcome="Error" timestamp="2026-10-25T13:01:29.2289597-06:00">
+        <Text>[xUnit.net 00:00:35.48]     FOR-009 — Desviaciones absolutas, porcentuales y agrupaciones [FAIL]</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

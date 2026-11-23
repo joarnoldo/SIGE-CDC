@@ -1,0 +1,174 @@
+@inherits LayoutComponentBase
+@implements IDisposable
+
+@inject NavigationManager NavigationManager
+
+@if (EsRutaInterna)
+{
+    <AuthorizeView>
+        <Authorized>
+            <div class="app-shell">
+                <input id="menu-interno-toggle"
+                       class="sidebar-toggle"
+                       type="checkbox"
+                       aria-label="Mostrar u ocultar menú interno"
+                       aria-controls="menu-interno" />
+
+                <InternalSidebar RutaActual="@rutaActual" />
+                <label class="sidebar-backdrop" for="menu-interno-toggle" aria-hidden="true"></label>
+
+                <main class="app-main">
+                    <header class="app-topbar">
+                        <label class="sidebar-toggle-button" for="menu-interno-toggle" title="Mostrar u ocultar menú">
+                            <span class="sidebar-toggle-symbol" aria-hidden="true">&#9776;</span>
+                            <span>Menú</span>
+                        </label>
+                        <div class="app-topbar__context">
+                            <strong>Área interna</strong>
+                            <span>Canales y Drenajes del Caribe S.R.L.</span>
+                        </div>
+                    </header>
+
+                    <div class="page-frame">
+                        @Body
+                    </div>
+                </main>
+            </div>
+        </Authorized>
+        <NotAuthorized>
+            @Body
+        </NotAuthorized>
+    </AuthorizeView>
+}
+else
+{
+<header class="site-header">
+    <div class="container site-header__inner">
+        <a class="brand" href="">
+            <span class="brand-mark">CDC</span>
+            <span class="brand-copy">
+                <strong>Canales y Drenajes del Caribe S.R.L.</strong>
+                <span>Obras civiles e infraestructura</span>
+            </span>
+        </a>
+
+        <nav class="site-nav" aria-label="Navegación pública">
+            <NavLink href="" Match="NavLinkMatch.All" ActiveClass="is-active">Inicio</NavLink>
+            <NavLink href="quienes-somos" ActiveClass="is-active">Quiénes Somos</NavLink>
+            <NavLink href="servicios" ActiveClass="is-active">Servicios</NavLink>
+            <NavLink href="portafolio" ActiveClass="is-active">Portafolio</NavLink>
+            <NavLink href="noticias" ActiveClass="is-active">Noticias</NavLink>
+            <NavLink href="galeria" ActiveClass="is-active">Galería</NavLink>
+            <NavLink href="preguntas-frecuentes" ActiveClass="is-active">Preguntas Frecuentes</NavLink>
+            <NavLink href="contacto" ActiveClass="is-active">Contacto</NavLink>
+            <NavLink href="politicas" ActiveClass="is-active">Políticas</NavLink>
+        </nav>
+
+        <AuthorizeView>
+            <Authorized>
+                <nav class="site-nav" aria-label="Sesión">
+                    <NavLink href="Account/Manage" ActiveClass="is-active">Mi cuenta</NavLink>
+                    <form action="Account/Logout" method="post">
+                        <AntiforgeryToken />
+                        <input type="hidden" name="ReturnUrl" value="@rutaActual" />
+                        <button class="btn btn--secondary" type="submit">Cerrar sesión</button>
+                    </form>
+                </nav>
+            </Authorized>
+            <NotAuthorized>
+                <a class="btn btn--secondary" href="Account/Login">Acceso interno SIGE-CDC</a>
+            </NotAuthorized>
+        </AuthorizeView>
+    </div>
+</header>
+
+<main class="public-main">
+    @Body
+</main>
+
+<footer class="site-footer">
+    <div class="container">
+        <div class="site-footer__inner">
+            <a class="brand" href="">
+                <span class="brand-mark">CDC</span>
+                <span class="brand-copy">
+                    <strong>Canales y Drenajes del Caribe S.R.L.</strong>
+                    <span>Obras civiles e infraestructura</span>
+                </span>
+            </a>
+            <span>Canales y Drenajes del Caribe S.R.L.</span>
+        </div>
+        <div class="site-footer__grid">
+            <section>
+                <h3>Canales y Drenajes del Caribe S.R.L.</h3>
+                <p>Empresa costarricense dedicada a obras civiles, puentes, drenajes y soporte operativo para proyectos de infraestructura.</p>
+            </section>
+            <section>
+                <h3>Sitio público</h3>
+                <ul>
+                    <li><a href="">Inicio</a></li>
+                    <li><a href="quienes-somos">Quiénes Somos</a></li>
+                    <li><a href="servicios">Servicios</a></li>
+                    <li><a href="portafolio">Portafolio</a></li>
+                    <li><a href="noticias">Noticias</a></li>
+                    <li><a href="galeria">Galería</a></li>
+                    <li><a href="preguntas-frecuentes">Preguntas Frecuentes</a></li>
+                </ul>
+            </section>
+            <section>
+                <h3>Contacto</h3>
+                <ul>
+                    <li><a href="contacto">Formulario de contacto</a></li>
+                    <li><a href="politicas">Políticas del sitio</a></li>
+                </ul>
+            </section>
+            <section>
+                <h3>Acceso</h3>
+                <ul>
+                    <li><a href="Account/Login">Acceso privado</a></li>
+                </ul>
+            </section>
+        </div>
+    </div>
+</footer>
+}
+
+<div id="blazor-error-ui" data-nosnippet>
+    Ocurrió un error inesperado.
+    <a href="." class="reload">Recargar</a>
+    <span class="dismiss">x</span>
+</div>
+
+@code {
+    private string rutaActual = "";
+
+    private bool EsRutaInterna =>
+        RutaIniciaCon("admin") ||
+        RutaIniciaCon("rrhh") ||
+        RutaIniciaCon("operaciones") ||
+        RutaIniciaCon("empleado") ||
+        RutaIniciaCon("Account/Manage");
+
+    protected override void OnInitialized()
+    {
+        rutaActual = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+        NavigationManager.LocationChanged += OnLocationChanged;
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        rutaActual = NavigationManager.ToBaseRelativePath(e.Location);
+        StateHasChanged();
+    }
+
+    private bool RutaIniciaCon(string prefijo)
+    {
+        return rutaActual.Equals(prefijo, StringComparison.OrdinalIgnoreCase) ||
+               rutaActual.StartsWith($"{prefijo}/", StringComparison.OrdinalIgnoreCase);
+    }
+
+    public void Dispose()
+    {
+        NavigationManager.LocationChanged -= OnLocationChanged;
+    }
+}

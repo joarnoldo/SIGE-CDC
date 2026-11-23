@@ -1,0 +1,7 @@
+{
+  "profiles": {
+    "SIGECDC.Application": {
+      "commandName": "Project"
+    }
+  }
+}

@@ -1,0 +1,12 @@
+@using SIGECDC.Application.Forecast
+<div class="table-responsive"><table class="data-table">
+    <thead><tr><th>Concepto</th><th>Base CRC</th><th>Alternativo CRC</th><th>Diferencia con signo</th><th>Absoluta CRC</th><th>%</th><th>Observación</th></tr></thead>
+    <tbody>@foreach (var importe in Importes)
+    {
+        <tr><td>@importe.Nombre</td><td>@N(importe.Base)</td><td>@N(importe.Alternativo)</td><td>@N(importe.Diferencia.Firmada)</td><td>@N(importe.Diferencia.Absoluta)</td><td>@N(importe.Diferencia.Porcentual, 4)</td><td>@importe.Motivo</td></tr>
+    }</tbody>
+</table></div>
+@code {
+    [Parameter] public IReadOnlyList<ImporteComparadoForecast> Importes { get; set; } = [];
+    private static string N(decimal? valor, int decimales = 2) => valor?.ToString("N" + decimales) ?? "No disponible";
+}

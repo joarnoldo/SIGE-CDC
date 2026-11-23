@@ -1,0 +1,2 @@
+# Preserve the exact bytes verified by MANIFIESTO_SHA256.json.
+* -text

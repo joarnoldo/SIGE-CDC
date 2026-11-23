@@ -1,0 +1,184 @@
+@page "/portafolio"
+@rendermode InteractiveServer
+@using SIGECDC.Application.SitioPublico
+@inject IProyectoPublicadoService ProyectoPublicadoService
+@inject ILogger<Portafolio> Logger
+
+<PageTitle>Portafolio | SIGE-CDC</PageTitle>
+
+<section class="page-banner">
+    <div class="container page-banner__inner stack--tight">
+        <p class="eyebrow">Portafolio institucional</p>
+        <h1>Proyectos visibles.</h1>
+        <p class="lead">Obras y servicios publicados por la administración para consulta pública.</p>
+    </div>
+</section>
+
+<section class="section-shell">
+    <div class="container stack">
+        @if (estadosDisponibles.Count > 0)
+        {
+            <section class="toolbar" aria-label="Filtros del portafolio">
+                <div class="toolbar__group">
+                    <label class="field">
+                        <span>Estado del proyecto</span>
+                        <select value="@estadoSeleccionado" @onchange="CambiarEstadoAsync" disabled="@cargando">
+                            <option value="">Todos los estados</option>
+                            @foreach (var estado in estadosDisponibles)
+                            {
+                                <option value="@estado">@estado</option>
+                            }
+                        </select>
+                    </label>
+                </div>
+                <span class="badge badge--info" aria-live="polite">@TextoCantidad</span>
+            </section>
+        }
+
+        @if (cargando)
+        {
+            <div class="empty-state" aria-live="polite">
+                <strong>Cargando proyectos</strong>
+                <p class="text-muted">Estamos recuperando el portafolio publicado.</p>
+            </div>
+        }
+        else if (!string.IsNullOrWhiteSpace(mensajeError))
+        {
+            <div class="alert alert--danger" role="alert">@mensajeError</div>
+        }
+        else if (proyectos.Count == 0 && string.IsNullOrWhiteSpace(estadoSeleccionado))
+        {
+            <div class="empty-state" role="status">
+                <strong>No hay proyectos publicados</strong>
+                <p class="text-muted">Cuando la administración publique tarjetas, aparecerán en este portafolio.</p>
+            </div>
+        }
+        else if (proyectos.Count == 0)
+        {
+            <div class="empty-state" role="status">
+                <strong>No hay proyectos para este estado</strong>
+                <p class="text-muted">Seleccione otro estado o muestre todos los proyectos.</p>
+            </div>
+        }
+        else
+        {
+            <div class="project-grid">
+                @foreach (var proyecto in proyectos)
+                {
+                    <article class="project-card stack--tight" @key="proyecto.IdProyectoPublicado">
+                        <span class="badge badge--info">@TextoEstado(proyecto)</span>
+                        <h2>@proyecto.Titulo</h2>
+                        <p>@TextoDescripcion(proyecto)</p>
+                        <div class="project-card__meta">
+                            <button class="btn btn--secondary"
+                                    type="button"
+                                    aria-expanded="@(EstaSeleccionado(proyecto) ? "true" : "false")"
+                                    aria-controls="detalle-proyecto-publicado"
+                                    @onclick="() => AlternarDetalle(proyecto)">
+                                @(EstaSeleccionado(proyecto) ? "Cerrar detalle" : "Ver detalle")
+                            </button>
+                        </div>
+                    </article>
+                }
+            </div>
+
+            @if (proyectoSeleccionado is not null)
+            {
+                <section id="detalle-proyecto-publicado" class="panel-highlight stack--tight" aria-labelledby="titulo-detalle-proyecto">
+                    <p class="eyebrow">Detalle público del proyecto</p>
+                    <h2 id="titulo-detalle-proyecto">@proyectoSeleccionado.Titulo</h2>
+                    <span class="badge badge--info">@TextoEstado(proyectoSeleccionado)</span>
+                    <p>@TextoDescripcion(proyectoSeleccionado)</p>
+                    <div>
+                        <button class="btn btn--secondary" type="button" @onclick="CerrarDetalle">Cerrar detalle</button>
+                    </div>
+                </section>
+            }
+        }
+    </div>
+</section>
+
+@code {
+    private IReadOnlyList<ProyectoPortafolioResumen> proyectos = [];
+    private IReadOnlyList<string> estadosDisponibles = [];
+    private ProyectoPortafolioResumen? proyectoSeleccionado;
+    private bool cargando = true;
+    private string? estadoSeleccionado;
+    private string? mensajeError;
+
+    private string TextoCantidad => proyectos.Count == 1
+        ? "1 proyecto"
+        : $"{proyectos.Count} proyectos";
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            estadosDisponibles = await ProyectoPublicadoService.ObtenerEstadosPublicadosAsync();
+            proyectos = await ProyectoPublicadoService.ObtenerProyectosPublicadosAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudo cargar el portafolio público.");
+            mensajeError = "No se pudo cargar el portafolio en este momento. Intente nuevamente más tarde.";
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private async Task CambiarEstadoAsync(ChangeEventArgs args)
+    {
+        estadoSeleccionado = string.IsNullOrWhiteSpace(args.Value?.ToString())
+            ? null
+            : args.Value.ToString();
+        proyectoSeleccionado = null;
+        mensajeError = null;
+        cargando = true;
+
+        try
+        {
+            proyectos = await ProyectoPublicadoService.ObtenerProyectosPublicadosAsync(estadoSeleccionado);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudo filtrar el portafolio público por el estado {EstadoVisual}.", estadoSeleccionado);
+            proyectos = [];
+            mensajeError = "No se pudo actualizar el portafolio en este momento. Intente nuevamente más tarde.";
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private void AlternarDetalle(ProyectoPortafolioResumen proyecto)
+    {
+        proyectoSeleccionado = EstaSeleccionado(proyecto) ? null : proyecto;
+    }
+
+    private void CerrarDetalle()
+    {
+        proyectoSeleccionado = null;
+    }
+
+    private bool EstaSeleccionado(ProyectoPortafolioResumen proyecto)
+    {
+        return proyectoSeleccionado?.IdProyectoPublicado == proyecto.IdProyectoPublicado;
+    }
+
+    private static string TextoEstado(ProyectoPortafolioResumen proyecto)
+    {
+        return string.IsNullOrWhiteSpace(proyecto.EstadoVisual)
+            ? "Estado no informado"
+            : proyecto.EstadoVisual;
+    }
+
+    private static string TextoDescripcion(ProyectoPortafolioResumen proyecto)
+    {
+        return string.IsNullOrWhiteSpace(proyecto.Descripcion)
+            ? "Este proyecto no tiene una descripción pública disponible."
+            : proyecto.Descripcion;
+    }
+}

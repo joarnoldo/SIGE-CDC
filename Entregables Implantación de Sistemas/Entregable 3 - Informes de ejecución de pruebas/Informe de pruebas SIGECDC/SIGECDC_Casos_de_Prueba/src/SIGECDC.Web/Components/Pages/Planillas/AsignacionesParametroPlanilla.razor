@@ -1,0 +1,63 @@
+@page "/rrhh/parametros-planilla/{IdParametroPlanilla:int}/asignaciones"
+@rendermode InteractiveServer
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Recursos Humanos")]
+@inherits ComponenteRecorridoPlanilla
+@inject IConsultaRecorridoPlanilla Consulta
+@inject RecorridoPlanilla Recorrido
+
+<PageTitle>Asignar parámetro interno | SIGE-CDC</PageTitle>
+<section class="section-shell"><div class="container stack">
+    <h1>Asignaciones internas con respaldo</h1>
+    <MensajeRecorrido Texto="@Mensaje" Error="@EsError" />
+    <a href="@($"rrhh/parametros-planilla/{IdParametroPlanilla}")">Volver al parámetro</a>
+    @if (parametro is not null && catalogos is not null)
+    {
+        <p>@parametro.Nombre · @parametro.Concepto · Global: @parametro.Version.ValorDecimal @parametro.Version.Tipo</p>
+        <p>Vigencia de esta versión: @parametro.Version.Vigencia!.Inicio.ToString("dd/MM/yyyy") – @(parametro.Version.Vigencia.Fin?.ToString("dd/MM/yyyy") ?? "sin fin"). Colaborador sustituye Período, que sustituye Global.</p>
+        @if (parametro.Version.Activo)
+        {
+            <div class="form-section stack">
+                <label>Ámbito<select @bind="ambito" @bind:after="() => destino = 0"><option value="">Seleccione</option><option value="Periodo">Período</option><option value="Colaborador">Colaborador</option></select></label>
+                <label>Destino<select @bind="destino"><option value="0">Seleccione</option>
+                    @if (ambito == "Periodo") { @foreach (var p in catalogos.Periodos.Where(p => p.EstadoPlanilla == "Borrador")) { <option value="@p.IdPeriodoPlanilla">@p.CodigoPeriodo · @p.Nombre</option> } }
+                    @if (ambito == "Colaborador") { @foreach (var c in catalogos.Colaboradores) { <option value="@c.Id">@c.Nombre</option> } }
+                </select></label>
+                <label>Valor que sustituye al global (@parametro.Version.Tipo)<input type="number" step="0.0001" @bind="valor" /></label>
+                <label>Referencia de respaldo<input maxlength="300" @bind="soporte" /></label>
+                <button class="btn btn--primary" disabled="@(Ocupado || destino == 0 || valor is null || string.IsNullOrWhiteSpace(soporte))" @onclick="GuardarAsync">Registrar asignación</button>
+            </div>
+        }
+        <table class="data-table"><thead><tr><th>Ámbito</th><th>Destino</th><th>Valor</th><th>Estado / evidencia</th></tr></thead><tbody>
+            @foreach (var a in parametro.Asignaciones)
+            {
+                <tr><td>@a.Ambito</td><td>@NombreDestino(a)</td><td>@a.ValorDecimal @parametro.Version.Tipo</td>
+                    <td>@(a.Activo ? "Activo" : "Inactivo") · @(a.EvidenciaConfirmada ? "Confirmada" : "No demostrada; bloquea el cálculo")</td></tr>
+            }
+        </tbody></table>
+        <p>No se sobrescriben asignaciones existentes. Cada ocurrencia requiere una incidencia confirmada que vincule el parámetro; no se genera una deducción automáticamente.</p>
+    }
+</div></section>
+@code {
+    [Parameter] public int IdParametroPlanilla { get; set; }
+    private ParametroRecorrido? parametro;
+    private CatalogosRecorridoPlanilla? catalogos;
+    private string ambito = "", soporte = "";
+    private long destino;
+    private decimal? valor;
+    protected override Task OnParametersSetAsync() => AccionAsync(CargarAsync);
+    private async Task CargarAsync()
+    {
+        var actor = await ActorAsync(); catalogos = await Consulta.CatalogosAsync(actor);
+        parametro = (await Consulta.ParametrosAsync(actor)).SingleOrDefault(p => p.Version.IdVersion == IdParametroPlanilla);
+    }
+    private string NombreDestino(OverrideParametroInterno a) => a.Ambito == AmbitoParametroInterno.Colaborador
+        ? catalogos!.Colaboradores.FirstOrDefault(c => c.Id == a.IdDestino)?.Nombre ?? "Colaborador no disponible"
+        : catalogos!.Periodos.FirstOrDefault(p => p.IdPeriodoPlanilla == a.IdDestino)?.Nombre ?? "Período no disponible";
+    private Task GuardarAsync() => AccionAsync(async () =>
+    {
+        if (!Enum.TryParse<AmbitoParametroInterno>(ambito, out var a) || a == AmbitoParametroInterno.Global)
+            throw new ConfiguracionConceptoException("AMBITO_OVERRIDE_INVALIDO");
+        await Recorrido.AsignarParametroAsync(new(IdParametroPlanilla, a, destino, valor, null, soporte.Trim()), await ActorAsync());
+        await CargarAsync();
+    }, "Asignación gobernada registrada. Vincule el parámetro al confirmar la incidencia correspondiente.");
+}

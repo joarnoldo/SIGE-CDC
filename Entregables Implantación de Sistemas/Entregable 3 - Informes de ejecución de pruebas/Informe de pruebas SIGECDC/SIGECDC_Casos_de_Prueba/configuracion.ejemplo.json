@@ -1,0 +1,7 @@
+{
+  "Modo": "LocalAislado",
+  "UrlRemotaSoloLectura": "https://sigecdc.runasp.net/",
+  "CasosRemotos": ["PUB-001", "PUB-009"],
+  "CredencialesRemotasRequeridas": false,
+  "ConexionBaseRemotaPermitida": false
+}

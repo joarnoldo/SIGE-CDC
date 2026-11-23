@@ -1,0 +1,58 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="cfd1308e-cdc8-4b2f-a37e-f75bc735e79f" name="jloca@JARVIS 2026-10-05 15:38:15" runUser="JARVIS\jloca" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-10-05T15:38:15.2159999-06:00" queuing="2026-10-05T15:38:15.2160000-06:00" start="2026-10-05T15:37:49.1562930-06:00" finish="2026-10-05T15:39:07.7300418-06:00" />
+  <TestSettings name="default" id="65eba3c3-2bc2-4c4a-b37b-a139ac6b815b">
+    <Deployment runDeploymentRoot="jloca_JARVIS_2026-10-05_15_38_15" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="3305ae3b-e2fb-41cb-b7dc-b6022a8aad7e" testId="6981801a-17ed-114d-daa7-f8e459c4f629" testName="PLA-008 — Reportes de planilla en PDF y Excel" computerName="JARVIS" duration="00:00:10.6713639" startTime="2026-10-05T15:39:05.8831211-06:00" endTime="2026-10-05T15:39:05.8831211-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="3305ae3b-e2fb-41cb-b7dc-b6022a8aad7e" />
+    <UnitTestResult executionId="4fd43315-557a-4d11-84f6-f6ac42e33742" testId="0f535992-2a51-481b-421e-bfdbfb353c13" testName="PLA-005 — Consultar y descargar colilla propia" computerName="JARVIS" duration="00:00:11.5055640" startTime="2026-10-05T15:38:55.2112001-06:00" endTime="2026-10-05T15:38:55.2112003-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="4fd43315-557a-4d11-84f6-f6ac42e33742" />
+    <UnitTestResult executionId="048ab01d-282e-4289-b532-ca10bc090945" testId="d2065e7d-0a7e-fefd-a03a-9130fd2b2e62" testName="FOR-003 — Parámetro proyectado y preservación del histórico" computerName="JARVIS" duration="00:00:10.9197735" startTime="2026-10-05T15:38:43.7021654-06:00" endTime="2026-10-05T15:38:43.7021655-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="048ab01d-282e-4289-b532-ca10bc090945" />
+    <UnitTestResult executionId="8e52cf6b-5699-456e-afef-72ef08cabfaf" testId="35877acb-fadd-d042-8aa5-0f4b5553ae97" testName="FOR-005 — Guardar, recuperar y comparar escenarios" computerName="JARVIS" duration="00:00:17.5915085" startTime="2026-10-05T15:38:32.7818876-06:00" endTime="2026-10-05T15:38:32.7818877-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="8e52cf6b-5699-456e-afef-72ef08cabfaf" />
+    <UnitTestResult executionId="c629e9f5-59da-4cd6-b39d-c651d6ecc53e" testId="866bde4a-9637-e14a-7797-b1f1a33a42a5" testName="FOR-004 — Excluir y reincorporar en escenario editable" computerName="JARVIS" duration="00:00:16.4143777" startTime="2026-10-05T15:38:15.1873424-06:00" endTime="2026-10-05T15:38:15.1874138-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c629e9f5-59da-4cd6-b39d-c651d6ecc53e" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="PLA-005 — Consultar y descargar colilla propia" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="0f535992-2a51-481b-421e-bfdbfb353c13">
+      <Execution id="4fd43315-557a-4d11-84f6-f6ac42e33742" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.PlanillaAcademicoTests" name="Pla005_ConsultarYDescargarColillaPropia" />
+    </UnitTest>
+    <UnitTest name="PLA-008 — Reportes de planilla en PDF y Excel" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="6981801a-17ed-114d-daa7-f8e459c4f629">
+      <Execution id="3305ae3b-e2fb-41cb-b7dc-b6022a8aad7e" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.PlanillaAcademicoTests" name="Pla008_ExportarReporteConPeriodoYTotalesCorrectos" />
+    </UnitTest>
+    <UnitTest name="FOR-003 — Parámetro proyectado y preservación del histórico" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="d2065e7d-0a7e-fefd-a03a-9130fd2b2e62">
+      <Execution id="048ab01d-282e-4289-b532-ca10bc090945" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.ForecastAcademicoTests" name="For003_AplicarParametroSinModificarHistorico" />
+    </UnitTest>
+    <UnitTest name="FOR-005 — Guardar, recuperar y comparar escenarios" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="35877acb-fadd-d042-8aa5-0f4b5553ae97">
+      <Execution id="8e52cf6b-5699-456e-afef-72ef08cabfaf" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.ForecastAcademicoTests" name="For005_GuardarYCompararEscenariosCompatibles" />
+    </UnitTest>
+    <UnitTest name="FOR-004 — Excluir y reincorporar en escenario editable" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="866bde4a-9637-e14a-7797-b1f1a33a42a5">
+      <Execution id="c629e9f5-59da-4cd6-b39d-c651d6ecc53e" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.ForecastAcademicoTests" name="For004_ActualizarTotalesAlExcluirYReincorporarColaborador" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="6981801a-17ed-114d-daa7-f8e459c4f629" executionId="3305ae3b-e2fb-41cb-b7dc-b6022a8aad7e" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="0f535992-2a51-481b-421e-bfdbfb353c13" executionId="4fd43315-557a-4d11-84f6-f6ac42e33742" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="d2065e7d-0a7e-fefd-a03a-9130fd2b2e62" executionId="048ab01d-282e-4289-b532-ca10bc090945" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="35877acb-fadd-d042-8aa5-0f4b5553ae97" executionId="8e52cf6b-5699-456e-afef-72ef08cabfaf" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="866bde4a-9637-e14a-7797-b1f1a33a42a5" executionId="c629e9f5-59da-4cd6-b39d-c651d6ecc53e" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Resultados sin formato de lista" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="Todos los resultados cargados" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Completed">
+    <Counters total="5" executed="5" passed="5" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.8.2+699d445a1a (64-bit .NET 10.0.12)&#xD;
+[xUnit.net 00:00:00.14]   Discovering: SIGECDC.Tests&#xD;
+[xUnit.net 00:00:00.33]   Discovered:  SIGECDC.Tests&#xD;
+[xUnit.net 00:00:00.34]   Starting:    SIGECDC.Tests&#xD;
+[xUnit.net 00:01:17.83]   Finished:    SIGECDC.Tests&#xD;
+</StdOut>
+    </Output>
+  </ResultSummary>
+</TestRun>

@@ -1,0 +1,982 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="87abcb27-3714-4bf0-9f97-1075b41a9075" name="jloca@JARVIS 2026-10-04 22:55:05" runUser="JARVIS\jloca" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-10-04T22:55:05.3490828-06:00" queuing="2026-10-04T22:55:05.3490832-06:00" start="2026-10-04T22:54:43.0785486-06:00" finish="2026-10-04T23:01:21.4079139-06:00" />
+  <TestSettings name="default" id="33b07387-cb6c-4f1e-a0b6-37a7d9ee4cdd">
+    <Deployment runDeploymentRoot="jloca_JARVIS_2026-10-04_22_55_05" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="a3aa9b81-3855-436c-8b34-fd885f41bc46" testId="92b5195d-5974-af72-3b9b-241f27bb39c9" testName="PUB-001 — Páginas institucionales anónimas" computerName="JARVIS" duration="00:00:07.5000124" startTime="2026-10-04T22:59:52.1394760-06:00" endTime="2026-10-04T22:59:52.1394765-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a3aa9b81-3855-436c-8b34-fd885f41bc46">
+      <Output>
+        <ErrorInfo>
+          <Message>System.InvalidOperationException : A configuration source is not registered. Please register one before setting a value.</Message>
+          <StackTrace>   at Microsoft.Extensions.Configuration.ConfigurationRoot.SetConfiguration(IList`1 providers, String key, String value)&#xD;
+   at Microsoft.Extensions.Configuration.ConfigurationManager.set_Item(String key, String value)&#xD;
+   at Microsoft.AspNetCore.Builder.ConfigureWebHostBuilder.UseSetting(String key, String value)&#xD;
+   at SIGECDC.Tests.EntregableImplantacion.Soporte.WebAcademica.IniciarAsync(EntornoAcademico entorno) in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\Soporte\WebAcademica.cs:line 31&#xD;
+   at SIGECDC.Tests.EntregableImplantacion.PublicoAcademicoTests.Pub001_ConsultarPaginasInstitucionalesSinSesion() in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\PublicoAcademicoTests.cs:line 17&#xD;
+   at SIGECDC.Tests.EntregableImplantacion.PublicoAcademicoTests.Pub001_ConsultarPaginasInstitucionalesSinSesion() in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\PublicoAcademicoTests.cs:line 19&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="e12829ad-478f-4dc0-8d8d-0862ce12e160" testId="63976883-a9b0-31c0-b8a5-f04a0a44fd2d" testName="AUTH-002 — Contraseña inválida rechazada" computerName="JARVIS" duration="00:00:07.3521153" startTime="2026-10-04T22:57:52.7830455-06:00" endTime="2026-10-04T22:57:52.7830456-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="e12829ad-478f-4dc0-8d8d-0862ce12e160">
+      <Output>
+        <ErrorInfo>
+          <Message>System.InvalidOperationException : A configuration source is not registered. Please register one before setting a value.</Message>
+          <StackTrace>   at Microsoft.Extensions.Configuration.ConfigurationRoot.SetConfiguration(IList`1 providers, String key, String value)&#xD;
+   at Microsoft.Extensions.Configuration.ConfigurationManager.set_Item(String key, String value)&#xD;
+   at Microsoft.AspNetCore.Builder.ConfigureWebHostBuilder.UseSetting(String key, String value)&#xD;
+   at SIGECDC.Tests.EntregableImplantacion.Soporte.WebAcademica.IniciarAsync(EntornoAcademico entorno) in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\Soporte\WebAcademica.cs:line 31&#xD;
+   at SIGECDC.Tests.EntregableImplantacion.IdentidadAcademicoTests.Auth002_RechazarCredencialesInvalidas() in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\IdentidadAcademicoTests.cs:line 30&#xD;
+   at SIGECDC.Tests.EntregableImplantacion.IdentidadAcademicoTests.Auth002_RechazarCredencialesInvalidas() in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\IdentidadAcademicoTests.cs:line 35&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="a2d6ba34-8d78-423b-b228-2807c9161d08" testId="2392ec89-4fd2-3978-5a57-bf7c42843e86" testName="RH-001 — Registrar y consultar colaborador" computerName="JARVIS" duration="00:00:07.8258528" startTime="2026-10-04T23:01:17.7777894-06:00" endTime="2026-10-04T23:01:17.7777896-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a2d6ba34-8d78-423b-b228-2807c9161d08" />
+    <UnitTestResult executionId="4b7583ea-4f00-4142-9aa1-e4c57d3256c1" testId="7a0c9701-85d6-8243-dd17-527533ff54ad" testName="PLA-001 — Registrar incidencias de planilla" computerName="JARVIS" duration="00:00:11.2178515" startTime="2026-10-04T22:59:14.7879730-06:00" endTime="2026-10-04T22:59:14.7879732-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="4b7583ea-4f00-4142-9aa1-e4c57d3256c1" />
+    <UnitTestResult executionId="c14a0965-b8b3-41e4-8ed0-5a3269e23871" testId="35877acb-fadd-d042-8aa5-0f4b5553ae97" testName="FOR-005 — Guardar, recuperar y comparar escenarios" computerName="JARVIS" duration="00:00:10.3801319" startTime="2026-10-04T22:57:02.3516284-06:00" endTime="2026-10-04T22:57:02.3516284-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c14a0965-b8b3-41e4-8ed0-5a3269e23871">
+      <Output>
+        <ErrorInfo>
+          <Message>System.ComponentModel.DataAnnotations.ValidationException : El colaborador ACA-01 no es elegible: No posee un contrato activo vigente.</Message>
+          <StackTrace>   at SIGECDC.Persistence.Forecast.ForecastParticipanteService.AplicarComposicion(ForecastEscenario escenario, IReadOnlyList`1 candidatos, IReadOnlyDictionary`2 solicitudes) in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Persistence\Forecast\ForecastParticipanteService.cs:line 174&#xD;
+   at SIGECDC.Persistence.Forecast.ForecastParticipanteService.GuardarComposicionAsync(Int64 idForecastEscenario, SolicitudGuardarParticipantesForecast solicitud, String idUsuarioActual, CancellationToken cancellationToken) in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Persistence\Forecast\ForecastParticipanteService.cs:line 109&#xD;
+   at SIGECDC.Persistence.Forecast.ForecastParticipanteService.GuardarComposicionAsync(Int64 idForecastEscenario, SolicitudGuardarParticipantesForecast solicitud, String idUsuarioActual, CancellationToken cancellationToken) in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Persistence\Forecast\ForecastParticipanteService.cs:line 135&#xD;
+   at SIGECDC.Persistence.Forecast.ForecastParticipanteService.GuardarComposicionAsync(Int64 idForecastEscenario, SolicitudGuardarParticipantesForecast solicitud, String idUsuarioActual, CancellationToken cancellationToken) in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Persistence\Forecast\ForecastParticipanteService.cs:line 136&#xD;
+   at SIGECDC.Tests.EntregableImplantacion.Soporte.DatosFinancierosAcademicos.EscenarioAsync(String nombre, Nullable`1 inicio) in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\Soporte\DatosFinancierosAcademicos.cs:line 118&#xD;
+   at SIGECDC.Tests.EntregableImplantacion.ForecastAcademicoTests.For005_GuardarYCompararEscenariosCompatibles() in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\ForecastAcademicoTests.cs:line 71&#xD;
+   at SIGECDC.Tests.EntregableImplantacion.ForecastAcademicoTests.For005_GuardarYCompararEscenariosCompatibles() in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\ForecastAcademicoTests.cs:line 82&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="90d045b9-e868-4488-b31f-f51f09bd9044" testId="58715c67-170b-2b60-1389-f7dd1655bed5" testName="PUB-005 — Publicación de contenido institucional" computerName="JARVIS" duration="00:00:06.6537585" startTime="2026-10-04T23:00:07.2961438-06:00" endTime="2026-10-04T23:00:07.2961442-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="90d045b9-e868-4488-b31f-f51f09bd9044">
+      <Output>
+        <ErrorInfo>
+          <Message>Microsoft.EntityFrameworkCore.DbUpdateException : Could not save changes. Please configure your entity type accordingly.&#xD;
+---- MySql.Data.MySqlClient.MySqlException : Duplicate entry 'SERVICIOS' for key 'paginacontenido.UX_PaginaContenido_CodigoPagina'</Message>
+          <StackTrace>   at MySql.EntityFrameworkCore.Update.MySQLModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)&#xD;
+   at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)&#xD;
+   at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)&#xD;
+   at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)&#xD;
+   at Microsoft.EntityFrameworkCore.Storage.RelationalDatabase.SaveChangesAsync(IList`1 entries, CancellationToken cancellationToken)&#xD;
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(IList`1 entriesToSave, CancellationToken cancellationToken)&#xD;
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(StateManager stateManager, Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)&#xD;
+   at MySql.EntityFrameworkCore.Storage.Internal.MySQLExecutionStrategy.ExecuteAsync[TState,TResult](TState state, Func`4 operation, Func`4 verifySucceeded, CancellationToken cancellationToken)&#xD;
+   at Microsoft.EntityFrameworkCore.DbContext.SaveChangesAsync(Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)&#xD;
+   at Microsoft.EntityFrameworkCore.DbContext.SaveChangesAsync(Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)&#xD;
+   at SIGECDC.Persistence.Identity.ApplicationDbContext.SaveChangesAsync(Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken) in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Persistence\Identity\ApplicationDbContext.Snapshot.cs:line 17&#xD;
+   at SIGECDC.Persistence.SitioPublico.PaginaContenidoService.GuardarPaginaAsync(SolicitudPaginaContenido solicitud, CancellationToken cancellationToken) in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Persistence\SitioPublico\PaginaContenidoService.cs:line 108&#xD;
+   at SIGECDC.Tests.EntregableImplantacion.PublicoAcademicoTests.Pub005_CrearActualizarYPublicarContenido() in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\PublicoAcademicoTests.cs:line 73&#xD;
+   at SIGECDC.Tests.EntregableImplantacion.PublicoAcademicoTests.Pub005_CrearActualizarYPublicarContenido() in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\PublicoAcademicoTests.cs:line 81&#xD;
+--- End of stack trace from previous location ---&#xD;
+----- Inner Stack Trace -----&#xD;
+   at MySql.Data.MySqlClient.MySqlStream.CheckForServerError()&#xD;
+   at MySql.Data.MySqlClient.MySqlStream.ReadPacketAsync()&#xD;
+   at MySql.Data.MySqlClient.NativeDriver.GetResultAsync(Int32 affectedRow, Int64 insertedId)&#xD;
+   at MySql.Data.MySqlClient.Driver.GetResultAsync(Int32 statementId, Int32 affectedRows, Int64 insertedId)&#xD;
+   at MySql.Data.MySqlClient.Driver.NextResultAsync(Int32 statementId, Boolean force)&#xD;
+   at MySql.Data.MySqlClient.MySqlDataReader.NextResultInternalAsync(CancellationToken cancellationToken)&#xD;
+   at MySql.Data.MySqlClient.MySqlDataReader.NextResultInternalAsync(CancellationToken cancellationToken)&#xD;
+   at MySql.Data.MySqlClient.MySqlCommand.ExecuteReaderInternalAsync(CommandBehavior behavior, CancellationToken cancellationToken)&#xD;
+   at MySql.Data.MySqlClient.MySqlCommand.ExecuteReaderInternalAsync(CommandBehavior behavior, CancellationToken cancellationToken)&#xD;
+   at MySql.Data.MySqlClient.MySqlCommand.ExecuteReaderInternalAsync(CommandBehavior behavior, CancellationToken cancellationToken)&#xD;
+   at MySql.Data.MySqlClient.MySqlCommand.ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)&#xD;
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)&#xD;
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)&#xD;
+   at Microsoft.EntityFrameworkCore.Update.ReaderModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="ac9c0b2f-3fdb-4b49-b68e-546f95b8cf8e" testId="689500a0-26a1-cdc2-03b5-77a374cad6c0" testName="PLA-002 — Calcular planilla válida" computerName="JARVIS" duration="00:00:11.7049974" startTime="2026-10-04T22:59:26.4937448-06:00" endTime="2026-10-04T22:59:26.4937452-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="ac9c0b2f-3fdb-4b49-b68e-546f95b8cf8e" />
+    <UnitTestResult executionId="802667a2-df2f-4cb1-bf88-11742c4ec977" testId="4c9bb534-a597-4371-2bf2-7f3e3e423299" testName="RH-006 — Rechazar documento con contenido inválido" computerName="JARVIS" duration="00:00:09.4761561" startTime="2026-10-04T23:01:02.1757330-06:00" endTime="2026-10-04T23:01:02.1757336-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="802667a2-df2f-4cb1-bf88-11742c4ec977">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Throws() Failure: Exception type was not an exact match&#xD;
+Expected: typeof(System.InvalidOperationException)&#xD;
+Actual:   typeof(System.ArgumentException)&#xD;
+---- System.ArgumentException : El contenido del archivo no coincide con su formato.</Message>
+          <StackTrace>   at SIGECDC.Tests.EntregableImplantacion.RecursosHumanosAcademicoTests.Rh006_RechazarArchivoQueNoEsPdf() in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\RecursosHumanosAcademicoTests.cs:line 82&#xD;
+   at SIGECDC.Tests.EntregableImplantacion.RecursosHumanosAcademicoTests.Rh006_RechazarArchivoQueNoEsPdf() in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\RecursosHumanosAcademicoTests.cs:line 84&#xD;
+--- End of stack trace from previous location ---&#xD;
+----- Inner Stack Trace -----&#xD;
+   at SIGECDC.Infrastructure.Archivos.AlmacenamientoArchivosLocal.CopiarYValidarContenidoAsync(Stream origen, String rutaCompleta, String extension, Int64 tamanoInformado, CancellationToken cancellationToken) in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Infrastructure\Archivos\AlmacenamientoArchivosLocal.cs:line 221&#xD;
+   at SIGECDC.Infrastructure.Archivos.AlmacenamientoArchivosLocal.CopiarYValidarContenidoAsync(Stream origen, String rutaCompleta, String extension, Int64 tamanoInformado, CancellationToken cancellationToken) in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Infrastructure\Archivos\AlmacenamientoArchivosLocal.cs:line 221&#xD;
+   at SIGECDC.Infrastructure.Archivos.AlmacenamientoArchivosLocal.GuardarAsync(Stream contenido, String nombreOriginal, String mimeType, Int64 tamanoBytes, String carpetaRelativa, CancellationToken cancellationToken) in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Infrastructure\Archivos\AlmacenamientoArchivosLocal.cs:line 72&#xD;
+   at SIGECDC.Persistence.RecursosHumanos.ContratoDocumentoService.PrepararDocumentoAsync(SolicitudArchivoDocumento solicitud, String idUsuarioActual, CancellationToken cancellationToken) in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Persistence\RecursosHumanos\ContratoDocumentoService.cs:line 217&#xD;
+   at SIGECDC.Persistence.RecursosHumanos.ContratoDocumentoService.AdjuntarDocumentoAsync(SolicitudArchivoDocumento solicitud, String idUsuarioActual, CancellationToken cancellationToken) in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Persistence\RecursosHumanos\ContratoDocumentoService.cs:line 193</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="a1a47394-bd4e-4097-a9f9-e03617196993" testId="5956a6b3-27c7-8547-7225-f616ac71a756" testName="AUD-003 — Bitácora de operaciones" computerName="JARVIS" duration="00:00:07.7270119" startTime="2026-10-04T22:56:20.1021077-06:00" endTime="2026-10-04T22:56:20.1021079-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a1a47394-bd4e-4097-a9f9-e03617196993">
+      <Output>
+        <ErrorInfo>
+          <Message>System.InvalidOperationException : A configuration source is not registered. Please register one before setting a value.</Message>
+          <StackTrace>   at Microsoft.Extensions.Configuration.ConfigurationRoot.SetConfiguration(IList`1 providers, String key, String value)&#xD;
+   at Microsoft.Extensions.Configuration.ConfigurationManager.set_Item(String key, String value)&#xD;
+   at Microsoft.AspNetCore.Builder.ConfigureWebHostBuilder.UseSetting(String key, String value)&#xD;
+   at SIGECDC.Tests.EntregableImplantacion.Soporte.WebAcademica.IniciarAsync(EntornoAcademico entorno) in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\Soporte\WebAcademica.cs:line 31&#xD;
+   at SIGECDC.Tests.EntregableImplantacion.AuditoriaAcademicoTests.ComprobarVistaAsync(EntornoAcademico e, String evidencia) in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\AuditoriaAcademicoTests.cs:line 64&#xD;
+   at SIGECDC.Tests.EntregableImplantacion.AuditoriaAcademicoTests.Aud003_ConsultarTrazabilidadDeActivosProyectosYAsignaciones() in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\AuditoriaAcademicoTests.cs:line 59&#xD;
+   at SIGECDC.Tests.EntregableImplantacion.AuditoriaAcademicoTests.Aud003_ConsultarTrazabilidadDeActivosProyectosYAsignaciones() in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\AuditoriaAcademicoTests.cs:line 59&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="a71cf3bd-54ff-4147-936b-7b71a63ba5fd" testId="93c14abb-76eb-bb6d-7fb5-5093b824147d" testName="PLA-003 — Bloquear cálculo sin condición laboral" computerName="JARVIS" duration="00:00:10.9904981" startTime="2026-10-04T22:58:18.0046704-06:00" endTime="2026-10-04T22:58:18.0046706-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a71cf3bd-54ff-4147-936b-7b71a63ba5fd">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Contains() Failure: Sub-string not found&#xD;
+String:    "HISTORIA_NO_DEMOSTRABLE;HISTORIA_SALARIAL"···&#xD;
+Not found: "CONDICION"</Message>
+          <StackTrace>   at SIGECDC.Tests.EntregableImplantacion.PlanillaAcademicoTests.Pla003_RechazarCalculoIncompletoSinPersistenciaParcial() in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\PlanillaAcademicoTests.cs:line 48&#xD;
+   at SIGECDC.Tests.EntregableImplantacion.PlanillaAcademicoTests.Pla003_RechazarCalculoIncompletoSinPersistenciaParcial() in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\PlanillaAcademicoTests.cs:line 51&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="79f71b99-25d3-4902-8615-5ead095b9327" testId="361615f6-a1a5-d598-a75b-9a37bd379d78" testName="AUD-002 — Trazabilidad de RRHH y planilla" computerName="JARVIS" duration="00:00:15.0861361" startTime="2026-10-04T22:56:41.7661568-06:00" endTime="2026-10-04T22:56:41.7661569-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="79f71b99-25d3-4902-8615-5ead095b9327">
+      <Output>
+        <ErrorInfo>
+          <Message>System.InvalidOperationException : A configuration source is not registered. Please register one before setting a value.</Message>
+          <StackTrace>   at Microsoft.Extensions.Configuration.ConfigurationRoot.SetConfiguration(IList`1 providers, String key, String value)&#xD;
+   at Microsoft.Extensions.Configuration.ConfigurationManager.set_Item(String key, String value)&#xD;
+   at Microsoft.AspNetCore.Builder.ConfigureWebHostBuilder.UseSetting(String key, String value)&#xD;
+   at SIGECDC.Tests.EntregableImplantacion.Soporte.WebAcademica.IniciarAsync(EntornoAcademico entorno) in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\Soporte\WebAcademica.cs:line 31&#xD;
+   at SIGECDC.Tests.EntregableImplantacion.AuditoriaAcademicoTests.ComprobarVistaAsync(EntornoAcademico e, String evidencia) in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\AuditoriaAcademicoTests.cs:line 64&#xD;
+   at SIGECDC.Tests.EntregableImplantacion.AuditoriaAcademicoTests.Aud002_ConsultarTrazabilidadDeRecursosHumanosYPlanilla() in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\AuditoriaAcademicoTests.cs:line 42&#xD;
+   at SIGECDC.Tests.EntregableImplantacion.AuditoriaAcademicoTests.Aud002_ConsultarTrazabilidadDeRecursosHumanosYPlanilla() in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\AuditoriaAcademicoTests.cs:line 42&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="8019b285-3cd4-4fbe-831b-fafa6269a374" testId="781a44c3-9a07-ef2a-b0a4-aebe07b21af4" testName="ACT-005 — Asignar activo libre" computerName="JARVIS" duration="00:00:11.4510969" startTime="2026-10-04T22:55:05.3125808-06:00" endTime="2026-10-04T22:55:05.3126674-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="8019b285-3cd4-4fbe-831b-fafa6269a374" />
+    <UnitTestResult executionId="18e4cab7-10a2-4403-9033-70a50205d68e" testId="866bde4a-9637-e14a-7797-b1f1a33a42a5" testName="FOR-004 — Excluir y reincorporar participante al recalcular" computerName="JARVIS" duration="00:00:10.2027834" startTime="2026-10-04T22:56:51.9709009-06:00" endTime="2026-10-04T22:56:51.9709009-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="18e4cab7-10a2-4403-9033-70a50205d68e">
+      <Output>
+        <ErrorInfo>
+          <Message>System.ComponentModel.DataAnnotations.ValidationException : El colaborador ACA-01 no es elegible: No posee un contrato activo vigente.</Message>
+          <StackTrace>   at SIGECDC.Persistence.Forecast.ForecastParticipanteService.AplicarComposicion(ForecastEscenario escenario, IReadOnlyList`1 candidatos, IReadOnlyDictionary`2 solicitudes) in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Persistence\Forecast\ForecastParticipanteService.cs:line 174&#xD;
+   at SIGECDC.Persistence.Forecast.ForecastParticipanteService.GuardarComposicionAsync(Int64 idForecastEscenario, SolicitudGuardarParticipantesForecast solicitud, String idUsuarioActual, CancellationToken cancellationToken) in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Persistence\Forecast\ForecastParticipanteService.cs:line 109&#xD;
+   at SIGECDC.Persistence.Forecast.ForecastParticipanteService.GuardarComposicionAsync(Int64 idForecastEscenario, SolicitudGuardarParticipantesForecast solicitud, String idUsuarioActual, CancellationToken cancellationToken) in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Persistence\Forecast\ForecastParticipanteService.cs:line 135&#xD;
+   at SIGECDC.Persistence.Forecast.ForecastParticipanteService.GuardarComposicionAsync(Int64 idForecastEscenario, SolicitudGuardarParticipantesForecast solicitud, String idUsuarioActual, CancellationToken cancellationToken) in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Persistence\Forecast\ForecastParticipanteService.cs:line 136&#xD;
+   at SIGECDC.Tests.EntregableImplantacion.Soporte.DatosFinancierosAcademicos.EscenarioAsync(String nombre, Nullable`1 inicio) in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\Soporte\DatosFinancierosAcademicos.cs:line 118&#xD;
+   at SIGECDC.Tests.EntregableImplantacion.ForecastAcademicoTests.For004_ActualizarTotalesAlExcluirYReincorporarColaborador() in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\ForecastAcademicoTests.cs:line 57&#xD;
+   at SIGECDC.Tests.EntregableImplantacion.ForecastAcademicoTests.For004_ActualizarTotalesAlExcluirYReincorporarColaborador() in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\ForecastAcademicoTests.cs:line 64&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="9527fb0e-099b-43df-9873-00d149c8eed6" testId="01a2a229-21e7-cfaf-29da-dec9c631eb83" testName="RH-002 — Actualizar colaborador" computerName="JARVIS" duration="00:00:12.0029739" startTime="2026-10-04T23:00:34.2832748-06:00" endTime="2026-10-04T23:00:34.2832750-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="9527fb0e-099b-43df-9873-00d149c8eed6" />
+    <UnitTestResult executionId="70f03db8-0d73-48af-833e-6c413b0f80ac" testId="975ba498-a32d-8693-5967-999f1db8ec8a" testName="ACT-006 — Rechazar asignación solapada" computerName="JARVIS" duration="00:00:09.1067821" startTime="2026-10-04T22:55:31.1473463-06:00" endTime="2026-10-04T22:55:31.1473466-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="70f03db8-0d73-48af-833e-6c413b0f80ac" />
+    <UnitTestResult executionId="4eca2627-8320-4b26-983c-eafc2187546e" testId="bf2e126f-e682-3da2-7ffd-edd6c37213a7" testName="PUB-002 — Filtro y detalle del portafolio" computerName="JARVIS" duration="00:00:07.3425773" startTime="2026-10-04T23:00:14.6386781-06:00" endTime="2026-10-04T23:00:14.6386784-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="4eca2627-8320-4b26-983c-eafc2187546e" />
+    <UnitTestResult executionId="baa8310d-6d77-4b1d-860b-a87c404e7b27" testId="068bf6de-d27d-0e87-5f9d-3f9b637c23fa" testName="AUTH-003 — Cierre de sesión efectivo" computerName="JARVIS" duration="00:00:07.1414007" startTime="2026-10-04T22:58:07.0108566-06:00" endTime="2026-10-04T22:58:07.0108568-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="baa8310d-6d77-4b1d-860b-a87c404e7b27">
+      <Output>
+        <ErrorInfo>
+          <Message>System.InvalidOperationException : A configuration source is not registered. Please register one before setting a value.</Message>
+          <StackTrace>   at Microsoft.Extensions.Configuration.ConfigurationRoot.SetConfiguration(IList`1 providers, String key, String value)&#xD;
+   at Microsoft.Extensions.Configuration.ConfigurationManager.set_Item(String key, String value)&#xD;
+   at Microsoft.AspNetCore.Builder.ConfigureWebHostBuilder.UseSetting(String key, String value)&#xD;
+   at SIGECDC.Tests.EntregableImplantacion.Soporte.WebAcademica.IniciarAsync(EntornoAcademico entorno) in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\Soporte\WebAcademica.cs:line 31&#xD;
+   at SIGECDC.Tests.EntregableImplantacion.IdentidadAcademicoTests.Auth003_CerrarSesionYBloquearReingresoDirecto() in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\IdentidadAcademicoTests.cs:line 41&#xD;
+   at SIGECDC.Tests.EntregableImplantacion.IdentidadAcademicoTests.Auth003_CerrarSesionYBloquearReingresoDirecto() in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\IdentidadAcademicoTests.cs:line 46&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="6d11a374-9b1e-4c2d-9f0f-ae1749b21d60" testId="514e014c-50e6-fc35-d731-929901c227fd" testName="FOR-001 — Generar proyección desde histórico autorizado" computerName="JARVIS" duration="00:00:07.8866847" startTime="2026-10-04T22:57:10.2395273-06:00" endTime="2026-10-04T22:57:10.2395274-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="6d11a374-9b1e-4c2d-9f0f-ae1749b21d60">
+      <Output>
+        <ErrorInfo>
+          <Message>System.ComponentModel.DataAnnotations.ValidationException : El colaborador ACA-01 no es elegible: No posee un contrato activo vigente.</Message>
+          <StackTrace>   at SIGECDC.Persistence.Forecast.ForecastParticipanteService.AplicarComposicion(ForecastEscenario escenario, IReadOnlyList`1 candidatos, IReadOnlyDictionary`2 solicitudes) in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Persistence\Forecast\ForecastParticipanteService.cs:line 174&#xD;
+   at SIGECDC.Persistence.Forecast.ForecastParticipanteService.GuardarComposicionAsync(Int64 idForecastEscenario, SolicitudGuardarParticipantesForecast solicitud, String idUsuarioActual, CancellationToken cancellationToken) in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Persistence\Forecast\ForecastParticipanteService.cs:line 109&#xD;
+   at SIGECDC.Persistence.Forecast.ForecastParticipanteService.GuardarComposicionAsync(Int64 idForecastEscenario, SolicitudGuardarParticipantesForecast solicitud, String idUsuarioActual, CancellationToken cancellationToken) in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Persistence\Forecast\ForecastParticipanteService.cs:line 135&#xD;
+   at SIGECDC.Persistence.Forecast.ForecastParticipanteService.GuardarComposicionAsync(Int64 idForecastEscenario, SolicitudGuardarParticipantesForecast solicitud, String idUsuarioActual, CancellationToken cancellationToken) in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Persistence\Forecast\ForecastParticipanteService.cs:line 136&#xD;
+   at SIGECDC.Tests.EntregableImplantacion.Soporte.DatosFinancierosAcademicos.EscenarioAsync(String nombre, Nullable`1 inicio) in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\Soporte\DatosFinancierosAcademicos.cs:line 118&#xD;
+   at SIGECDC.Tests.EntregableImplantacion.ForecastAcademicoTests.For001_GenerarProyeccionFuturaConHistoricoAutorizado() in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\ForecastAcademicoTests.cs:line 17&#xD;
+   at SIGECDC.Tests.EntregableImplantacion.ForecastAcademicoTests.For001_GenerarProyeccionFuturaConHistoricoAutorizado() in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\ForecastAcademicoTests.cs:line 23&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="83b46b48-6dd6-48bb-90d0-f0474a350ecd" testId="0f535992-2a51-481b-421e-bfdbfb353c13" testName="PLA-005 — Consultar y descargar colilla propia" computerName="JARVIS" duration="00:00:11.5986983" startTime="2026-10-04T22:58:42.2906967-06:00" endTime="2026-10-04T22:58:42.2906971-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="83b46b48-6dd6-48bb-90d0-f0474a350ecd">
+      <Output>
+        <ErrorInfo>
+          <Message>System.InvalidOperationException : A configuration source is not registered. Please register one before setting a value.</Message>
+          <StackTrace>   at Microsoft.Extensions.Configuration.ConfigurationRoot.SetConfiguration(IList`1 providers, String key, String value)&#xD;
+   at Microsoft.Extensions.Configuration.ConfigurationManager.set_Item(String key, String value)&#xD;
+   at Microsoft.AspNetCore.Builder.ConfigureWebHostBuilder.UseSetting(String key, String value)&#xD;
+   at SIGECDC.Tests.EntregableImplantacion.Soporte.WebAcademica.IniciarAsync(EntornoAcademico entorno) in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\Soporte\WebAcademica.cs:line 31&#xD;
+   at SIGECDC.Tests.EntregableImplantacion.PlanillaAcademicoTests.Pla005_ConsultarYDescargarColillaPropia() in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\PlanillaAcademicoTests.cs:line 80&#xD;
+   at SIGECDC.Tests.EntregableImplantacion.PlanillaAcademicoTests.Pla005_ConsultarYDescargarColillaPropia() in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\PlanillaAcademicoTests.cs:line 86&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="566e57f5-2283-44be-a43f-5580500a43fb" testId="93c56f62-90d2-a55a-3981-2d8bc45a2863" testName="AUD-001 — Historial de acceso y contacto de solo lectura" computerName="JARVIS" duration="00:00:06.5820922" startTime="2026-10-04T22:56:26.6810571-06:00" endTime="2026-10-04T22:56:26.6810573-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="566e57f5-2283-44be-a43f-5580500a43fb">
+      <Output>
+        <ErrorInfo>
+          <Message>System.InvalidOperationException : A configuration source is not registered. Please register one before setting a value.</Message>
+          <StackTrace>   at Microsoft.Extensions.Configuration.ConfigurationRoot.SetConfiguration(IList`1 providers, String key, String value)&#xD;
+   at Microsoft.Extensions.Configuration.ConfigurationManager.set_Item(String key, String value)&#xD;
+   at Microsoft.AspNetCore.Builder.ConfigureWebHostBuilder.UseSetting(String key, String value)&#xD;
+   at SIGECDC.Tests.EntregableImplantacion.Soporte.WebAcademica.IniciarAsync(EntornoAcademico entorno) in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\Soporte\WebAcademica.cs:line 31&#xD;
+   at SIGECDC.Tests.EntregableImplantacion.AuditoriaAcademicoTests.Aud001_ConsultarHistorialAccesosYContactoSinEdicion() in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\AuditoriaAcademicoTests.cs:line 20&#xD;
+   at SIGECDC.Tests.EntregableImplantacion.AuditoriaAcademicoTests.Aud001_ConsultarHistorialAccesosYContactoSinEdicion() in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\AuditoriaAcademicoTests.cs:line 27&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="5fdf18cd-2eb3-4afb-beb2-5f01c6de4328" testId="3e57162d-ae33-0bb5-5ec3-a3f0e8d4f40d" testName="PLA-006 — Proteger colilla de otro empleado" computerName="JARVIS" duration="00:00:11.0791254" startTime="2026-10-04T22:59:37.5748695-06:00" endTime="2026-10-04T22:59:37.5748696-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="5fdf18cd-2eb3-4afb-beb2-5f01c6de4328">
+      <Output>
+        <ErrorInfo>
+          <Message>System.InvalidOperationException : A configuration source is not registered. Please register one before setting a value.</Message>
+          <StackTrace>   at Microsoft.Extensions.Configuration.ConfigurationRoot.SetConfiguration(IList`1 providers, String key, String value)&#xD;
+   at Microsoft.Extensions.Configuration.ConfigurationManager.set_Item(String key, String value)&#xD;
+   at Microsoft.AspNetCore.Builder.ConfigureWebHostBuilder.UseSetting(String key, String value)&#xD;
+   at SIGECDC.Tests.EntregableImplantacion.Soporte.WebAcademica.IniciarAsync(EntornoAcademico entorno) in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\Soporte\WebAcademica.cs:line 31&#xD;
+   at SIGECDC.Tests.EntregableImplantacion.PlanillaAcademicoTests.Pla006_DenegarColillaAjenaPorAccesoDirecto() in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\PlanillaAcademicoTests.cs:line 97&#xD;
+   at SIGECDC.Tests.EntregableImplantacion.PlanillaAcademicoTests.Pla006_DenegarColillaAjenaPorAccesoDirecto() in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\PlanillaAcademicoTests.cs:line 101&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="015997d9-869e-4b6e-9f83-7f5407bbbc5f" testId="577eb8d3-e498-18bc-b870-691043df1515" testName="RH-005 — Adjuntar y recuperar documento válido" computerName="JARVIS" duration="00:00:08.4779924" startTime="2026-10-04T23:00:52.6924886-06:00" endTime="2026-10-04T23:00:52.6924888-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="015997d9-869e-4b6e-9f83-7f5407bbbc5f" />
+    <UnitTestResult executionId="eafdd294-e40c-4436-89f2-6aa2aa0b52bc" testId="8842766e-c1eb-6c79-4a79-6f36da2a84a3" testName="ACT-007 — Programar mantenimiento preventivo" computerName="JARVIS" duration="00:00:09.1241948" startTime="2026-10-04T22:55:22.0397607-06:00" endTime="2026-10-04T22:55:22.0397608-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="eafdd294-e40c-4436-89f2-6aa2aa0b52bc" />
+    <UnitTestResult executionId="6e930a2b-3487-44eb-a8c5-26f2e7b075b7" testId="58e115ce-89c6-6a06-d75f-370d0cc01184" testName="PUB-003 — Envío válido de contacto" computerName="JARVIS" duration="00:00:08.4942510" startTime="2026-10-04T23:00:00.6354821-06:00" endTime="2026-10-04T23:00:00.6354824-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="6e930a2b-3487-44eb-a8c5-26f2e7b075b7">
+      <Output>
+        <ErrorInfo>
+          <Message>System.InvalidOperationException : Cannot provide a value for property 'Navigation' on type 'SIGECDC.Web.Components.ContenidoPublicado'. There is no registered service of type 'Microsoft.AspNetCore.Components.NavigationManager'.</Message>
+          <StackTrace>   at Microsoft.AspNetCore.Components.ComponentFactory.&lt;&gt;c__DisplayClass11_0.&lt;CreatePropertyInjector&gt;g__Initialize|1(IServiceProvider serviceProvider, IComponent component)&#xD;
+   at Microsoft.AspNetCore.Components.ComponentFactory.InstantiateComponent(IServiceProvider serviceProvider, Type componentType, IComponentRenderMode callerSpecifiedRenderMode, Nullable`1 parentComponentId)&#xD;
+   at Microsoft.AspNetCore.Components.RenderTree.Renderer.InstantiateChildComponentOnFrame(RenderTreeFrame[] frames, Int32 frameIndex, Int32 parentComponentId)&#xD;
+   at Microsoft.AspNetCore.Components.RenderTree.RenderTreeDiffBuilder.InitializeNewComponentFrame(DiffContext&amp; diffContext, Int32 frameIndex)&#xD;
+   at Microsoft.AspNetCore.Components.RenderTree.RenderTreeDiffBuilder.InitializeNewSubtree(DiffContext&amp; diffContext, Int32 frameIndex)&#xD;
+   at Microsoft.AspNetCore.Components.RenderTree.RenderTreeDiffBuilder.InsertNewFrame(DiffContext&amp; diffContext, Int32 newFrameIndex)&#xD;
+   at Microsoft.AspNetCore.Components.RenderTree.RenderTreeDiffBuilder.AppendDiffEntriesForRange(DiffContext&amp; diffContext, Int32 oldStartIndex, Int32 oldEndIndexExcl, Int32 newStartIndex, Int32 newEndIndexExcl)&#xD;
+   at Microsoft.AspNetCore.Components.RenderTree.RenderTreeDiffBuilder.ComputeDiff(Renderer renderer, RenderBatchBuilder batchBuilder, Int32 componentId, ArrayRange`1 oldTree, ArrayRange`1 newTree)&#xD;
+   at Microsoft.AspNetCore.Components.Rendering.ComponentState.RenderIntoBatch(RenderBatchBuilder batchBuilder, RenderFragment renderFragment, Exception&amp; renderFragmentException)&#xD;
+   at Microsoft.AspNetCore.Components.RenderTree.Renderer.ProcessRenderQueue()&#xD;
+--- End of stack trace from previous location ---&#xD;
+   at SIGECDC.Tests.EntregableImplantacion.Soporte.ComponenteAcademico.HandleException(Exception exception) in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\Soporte\ComponenteAcademico.cs:line 15&#xD;
+   at Microsoft.AspNetCore.Components.RenderTree.Renderer.ProcessRenderQueue()&#xD;
+   at Microsoft.AspNetCore.Components.RenderTree.Renderer.AddToRenderQueue(Int32 componentId, RenderFragment renderFragment)&#xD;
+   at Microsoft.AspNetCore.Components.ComponentBase.StateHasChanged()&#xD;
+   at Microsoft.AspNetCore.Components.ComponentBase.CallOnParametersSetAsync()&#xD;
+   at Microsoft.AspNetCore.Components.ComponentBase.RunInitAndSetParametersAsync()&#xD;
+   at SIGECDC.Tests.EntregableImplantacion.Soporte.ComponenteAcademico.HandleException(Exception exception) in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\Soporte\ComponenteAcademico.cs:line 15&#xD;
+   at Microsoft.AspNetCore.Components.Rendering.ComponentState.SetDirectParameters(ParameterView parameters)&#xD;
+   at Microsoft.AspNetCore.Components.RenderTree.Renderer.RenderRootComponentAsync(Int32 componentId, ParameterView initialParameters)&#xD;
+   at SIGECDC.Tests.EntregableImplantacion.Soporte.ComponenteAcademico.&lt;MostrarAsync&gt;b__8_0[T]() in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\Soporte\ComponenteAcademico.cs:line 22&#xD;
+   at Microsoft.AspNetCore.Components.Rendering.RendererSynchronizationContext.&lt;&gt;c.&lt;&lt;InvokeAsync&gt;b__10_0&gt;d.MoveNext()&#xD;
+--- End of stack trace from previous location ---&#xD;
+   at SIGECDC.Tests.EntregableImplantacion.PublicoAcademicoTests.Pub003_EnviarConsultaContactoValida() in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\PublicoAcademicoTests.cs:line 48&#xD;
+   at SIGECDC.Tests.EntregableImplantacion.PublicoAcademicoTests.Pub003_EnviarConsultaContactoValida() in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\PublicoAcademicoTests.cs:line 56&#xD;
+   at SIGECDC.Tests.EntregableImplantacion.PublicoAcademicoTests.Pub003_EnviarConsultaContactoValida() in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\PublicoAcademicoTests.cs:line 56&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="318beeef-ebda-4973-aaee-a041c53b5ddd" testId="09d07841-0a38-6329-8cae-8352d25916d2" testName="AUTH-001 — Acceso válido con los cuatro roles" computerName="JARVIS" duration="00:00:07.0821023" startTime="2026-10-04T22:57:59.8662718-06:00" endTime="2026-10-04T22:57:59.8662719-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="318beeef-ebda-4973-aaee-a041c53b5ddd">
+      <Output>
+        <ErrorInfo>
+          <Message>System.InvalidOperationException : A configuration source is not registered. Please register one before setting a value.</Message>
+          <StackTrace>   at Microsoft.Extensions.Configuration.ConfigurationRoot.SetConfiguration(IList`1 providers, String key, String value)&#xD;
+   at Microsoft.Extensions.Configuration.ConfigurationManager.set_Item(String key, String value)&#xD;
+   at Microsoft.AspNetCore.Builder.ConfigureWebHostBuilder.UseSetting(String key, String value)&#xD;
+   at SIGECDC.Tests.EntregableImplantacion.Soporte.WebAcademica.IniciarAsync(EntornoAcademico entorno) in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\Soporte\WebAcademica.cs:line 31&#xD;
+   at SIGECDC.Tests.EntregableImplantacion.IdentidadAcademicoTests.Auth001_IniciarSesionConCredencialesValidas() in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\IdentidadAcademicoTests.cs:line 16&#xD;
+   at SIGECDC.Tests.EntregableImplantacion.IdentidadAcademicoTests.Auth001_IniciarSesionConCredencialesValidas() in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\IdentidadAcademicoTests.cs:line 24&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="76c06fcb-49ba-498a-8251-9b7590df3d3a" testId="cc35a465-1463-0c4e-b969-f00620755677" testName="ACT-009 — Acumular uso y consultar inactividad" computerName="JARVIS" duration="00:00:07.9624109" startTime="2026-10-04T22:56:04.5947684-06:00" endTime="2026-10-04T22:56:04.5947686-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="76c06fcb-49ba-498a-8251-9b7590df3d3a" />
+    <UnitTestResult executionId="17999b54-617c-4815-b0aa-aedc89f312bc" testId="49bb6eb0-0e7b-e8ed-e4ae-d9e3c065ee12" testName="RH-003 — Desactivar conservando historial" computerName="JARVIS" duration="00:00:07.7755813" startTime="2026-10-04T23:01:09.9527194-06:00" endTime="2026-10-04T23:01:09.9527197-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="17999b54-617c-4815-b0aa-aedc89f312bc">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Strings differ&#xD;
+           ↓ (pos 0)&#xD;
+Expected: "Inactivo"&#xD;
+Actual:   "Activo"&#xD;
+           ↑ (pos 0)</Message>
+          <StackTrace>   at SIGECDC.Tests.EntregableImplantacion.RecursosHumanosAcademicoTests.Rh003_DesactivarColaboradorSinEliminarHistorial() in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\RecursosHumanosAcademicoTests.cs:line 40&#xD;
+   at SIGECDC.Tests.EntregableImplantacion.RecursosHumanosAcademicoTests.Rh003_DesactivarColaboradorSinEliminarHistorial() in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\RecursosHumanosAcademicoTests.cs:line 42&#xD;
+   at SIGECDC.Tests.EntregableImplantacion.RecursosHumanosAcademicoTests.Rh003_DesactivarColaboradorSinEliminarHistorial() in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\RecursosHumanosAcademicoTests.cs:line 42&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="39261cea-43fb-41ec-8d63-eca715ff445a" testId="d1a9c04d-ae44-73b6-600f-4641d95691fe" testName="PUB-006 — Mostrar y ocultar tarjeta pública" computerName="JARVIS" duration="00:00:07.6388179" startTime="2026-10-04T23:00:22.2788041-06:00" endTime="2026-10-04T23:00:22.2788045-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="39261cea-43fb-41ec-8d63-eca715ff445a" />
+    <UnitTestResult executionId="6073325e-5f48-4230-a063-ebbfb7e3b28a" testId="0a62ba94-683b-1ff9-3e4f-0a6c882de8ef" testName="ACT-003 — Disponibilidad según fechas y estado" computerName="JARVIS" duration="00:00:09.3973022" startTime="2026-10-04T22:55:40.5464766-06:00" endTime="2026-10-04T22:55:40.5464769-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="6073325e-5f48-4230-a063-ebbfb7e3b28a" />
+    <UnitTestResult executionId="1da923c1-6840-485a-9931-6ea47862d055" testId="741c82a0-022b-7f4c-ac69-374853f7f8c0" testName="RH-004 — Catálogos y asignación organizativa" computerName="JARVIS" duration="00:00:09.9300616" startTime="2026-10-04T23:00:44.2139342-06:00" endTime="2026-10-04T23:00:44.2139343-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="1da923c1-6840-485a-9931-6ea47862d055" />
+    <UnitTestResult executionId="be438912-f79d-4940-88d0-268b0385e008" testId="1b087b86-b60e-2fdc-ef98-8de354553e3b" testName="PUB-004 — Contacto vacío rechazado" computerName="JARVIS" duration="00:00:07.0598542" startTime="2026-10-04T22:59:44.6381729-06:00" endTime="2026-10-04T22:59:44.6381736-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="be438912-f79d-4940-88d0-268b0385e008">
+      <Output>
+        <ErrorInfo>
+          <Message>System.InvalidOperationException : Cannot provide a value for property 'Navigation' on type 'SIGECDC.Web.Components.ContenidoPublicado'. There is no registered service of type 'Microsoft.AspNetCore.Components.NavigationManager'.</Message>
+          <StackTrace>   at Microsoft.AspNetCore.Components.ComponentFactory.&lt;&gt;c__DisplayClass11_0.&lt;CreatePropertyInjector&gt;g__Initialize|1(IServiceProvider serviceProvider, IComponent component)&#xD;
+   at Microsoft.AspNetCore.Components.ComponentFactory.InstantiateComponent(IServiceProvider serviceProvider, Type componentType, IComponentRenderMode callerSpecifiedRenderMode, Nullable`1 parentComponentId)&#xD;
+   at Microsoft.AspNetCore.Components.RenderTree.Renderer.InstantiateChildComponentOnFrame(RenderTreeFrame[] frames, Int32 frameIndex, Int32 parentComponentId)&#xD;
+   at Microsoft.AspNetCore.Components.RenderTree.RenderTreeDiffBuilder.InitializeNewComponentFrame(DiffContext&amp; diffContext, Int32 frameIndex)&#xD;
+   at Microsoft.AspNetCore.Components.RenderTree.RenderTreeDiffBuilder.InitializeNewSubtree(DiffContext&amp; diffContext, Int32 frameIndex)&#xD;
+   at Microsoft.AspNetCore.Components.RenderTree.RenderTreeDiffBuilder.InsertNewFrame(DiffContext&amp; diffContext, Int32 newFrameIndex)&#xD;
+   at Microsoft.AspNetCore.Components.RenderTree.RenderTreeDiffBuilder.AppendDiffEntriesForRange(DiffContext&amp; diffContext, Int32 oldStartIndex, Int32 oldEndIndexExcl, Int32 newStartIndex, Int32 newEndIndexExcl)&#xD;
+   at Microsoft.AspNetCore.Components.RenderTree.RenderTreeDiffBuilder.ComputeDiff(Renderer renderer, RenderBatchBuilder batchBuilder, Int32 componentId, ArrayRange`1 oldTree, ArrayRange`1 newTree)&#xD;
+   at Microsoft.AspNetCore.Components.Rendering.ComponentState.RenderIntoBatch(RenderBatchBuilder batchBuilder, RenderFragment renderFragment, Exception&amp; renderFragmentException)&#xD;
+   at Microsoft.AspNetCore.Components.RenderTree.Renderer.ProcessRenderQueue()&#xD;
+--- End of stack trace from previous location ---&#xD;
+   at SIGECDC.Tests.EntregableImplantacion.Soporte.ComponenteAcademico.HandleException(Exception exception) in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\Soporte\ComponenteAcademico.cs:line 15&#xD;
+   at Microsoft.AspNetCore.Components.RenderTree.Renderer.ProcessRenderQueue()&#xD;
+   at Microsoft.AspNetCore.Components.RenderTree.Renderer.AddToRenderQueue(Int32 componentId, RenderFragment renderFragment)&#xD;
+   at Microsoft.AspNetCore.Components.ComponentBase.StateHasChanged()&#xD;
+   at Microsoft.AspNetCore.Components.ComponentBase.CallOnParametersSetAsync()&#xD;
+   at Microsoft.AspNetCore.Components.ComponentBase.RunInitAndSetParametersAsync()&#xD;
+   at SIGECDC.Tests.EntregableImplantacion.Soporte.ComponenteAcademico.HandleException(Exception exception) in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\Soporte\ComponenteAcademico.cs:line 15&#xD;
+   at Microsoft.AspNetCore.Components.Rendering.ComponentState.SetDirectParameters(ParameterView parameters)&#xD;
+   at Microsoft.AspNetCore.Components.RenderTree.Renderer.RenderRootComponentAsync(Int32 componentId, ParameterView initialParameters)&#xD;
+   at SIGECDC.Tests.EntregableImplantacion.Soporte.ComponenteAcademico.&lt;MostrarAsync&gt;b__8_0[T]() in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\Soporte\ComponenteAcademico.cs:line 22&#xD;
+   at Microsoft.AspNetCore.Components.Rendering.RendererSynchronizationContext.&lt;&gt;c.&lt;&lt;InvokeAsync&gt;b__10_0&gt;d.MoveNext()&#xD;
+--- End of stack trace from previous location ---&#xD;
+   at SIGECDC.Tests.EntregableImplantacion.PublicoAcademicoTests.Pub004_RechazarContactoConObligatoriosVacios() in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\PublicoAcademicoTests.cs:line 63&#xD;
+   at SIGECDC.Tests.EntregableImplantacion.PublicoAcademicoTests.Pub004_RechazarContactoConObligatoriosVacios() in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\PublicoAcademicoTests.cs:line 66&#xD;
+   at SIGECDC.Tests.EntregableImplantacion.PublicoAcademicoTests.Pub004_RechazarContactoConObligatoriosVacios() in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\PublicoAcademicoTests.cs:line 66&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="34a2158b-7f99-421e-8dbf-119d1b0cd850" testId="5da9ed6b-82e4-490b-b635-099ff158b4da" testName="FOR-006 — Comparar Forecast y planilla real autorizada" computerName="JARVIS" duration="00:00:08.9490227" startTime="2026-10-04T22:57:19.1897762-06:00" endTime="2026-10-04T22:57:19.1897763-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="34a2158b-7f99-421e-8dbf-119d1b0cd850">
+      <Output>
+        <ErrorInfo>
+          <Message>System.ComponentModel.DataAnnotations.ValidationException : El colaborador ACA-01 no es elegible: No posee un contrato activo vigente.</Message>
+          <StackTrace>   at SIGECDC.Persistence.Forecast.ForecastParticipanteService.AplicarComposicion(ForecastEscenario escenario, IReadOnlyList`1 candidatos, IReadOnlyDictionary`2 solicitudes) in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Persistence\Forecast\ForecastParticipanteService.cs:line 174&#xD;
+   at SIGECDC.Persistence.Forecast.ForecastParticipanteService.GuardarComposicionAsync(Int64 idForecastEscenario, SolicitudGuardarParticipantesForecast solicitud, String idUsuarioActual, CancellationToken cancellationToken) in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Persistence\Forecast\ForecastParticipanteService.cs:line 109&#xD;
+   at SIGECDC.Persistence.Forecast.ForecastParticipanteService.GuardarComposicionAsync(Int64 idForecastEscenario, SolicitudGuardarParticipantesForecast solicitud, String idUsuarioActual, CancellationToken cancellationToken) in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Persistence\Forecast\ForecastParticipanteService.cs:line 135&#xD;
+   at SIGECDC.Persistence.Forecast.ForecastParticipanteService.GuardarComposicionAsync(Int64 idForecastEscenario, SolicitudGuardarParticipantesForecast solicitud, String idUsuarioActual, CancellationToken cancellationToken) in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Persistence\Forecast\ForecastParticipanteService.cs:line 136&#xD;
+   at SIGECDC.Tests.EntregableImplantacion.Soporte.DatosFinancierosAcademicos.EscenarioAsync(String nombre, Nullable`1 inicio) in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\Soporte\DatosFinancierosAcademicos.cs:line 118&#xD;
+   at SIGECDC.Tests.EntregableImplantacion.ForecastAcademicoTests.For006_CompararProyeccionConPlanillaRealCompatible() in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\ForecastAcademicoTests.cs:line 89&#xD;
+   at SIGECDC.Tests.EntregableImplantacion.ForecastAcademicoTests.For006_CompararProyeccionConPlanillaRealCompatible() in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\ForecastAcademicoTests.cs:line 100&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="98d7a6db-0f7e-4d05-9ea1-2b9572ea9ff1" testId="ed0fc8dd-47ef-a7b7-2f0b-202c1d504031" testName="ACT-004 — Crear y actualizar proyecto" computerName="JARVIS" duration="00:00:07.7531372" startTime="2026-10-04T22:56:12.3494188-06:00" endTime="2026-10-04T22:56:12.3494190-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="98d7a6db-0f7e-4d05-9ea1-2b9572ea9ff1" />
+    <UnitTestResult executionId="a5794b03-f68b-4621-b6c8-bd6ec130731e" testId="365ffe69-bc19-63cb-666d-5d4c02c036c0" testName="PLA-004 — Parámetro aplicado al colaborador correspondiente" computerName="JARVIS" duration="00:00:11.2320363" startTime="2026-10-04T22:59:03.5693700-06:00" endTime="2026-10-04T22:59:03.5693700-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a5794b03-f68b-4621-b6c8-bd6ec130731e" />
+    <UnitTestResult executionId="6b9e691e-f3e8-464c-9eb9-eea9c7ea9b8f" testId="cd8fc91c-6fa9-8847-68b2-654ff58b481c" testName="AUTH-004 — Separación representativa de permisos" computerName="JARVIS" duration="00:00:06.8982027" startTime="2026-10-04T22:57:45.4298379-06:00" endTime="2026-10-04T22:57:45.4298380-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="6b9e691e-f3e8-464c-9eb9-eea9c7ea9b8f">
+      <Output>
+        <ErrorInfo>
+          <Message>System.InvalidOperationException : A configuration source is not registered. Please register one before setting a value.</Message>
+          <StackTrace>   at Microsoft.Extensions.Configuration.ConfigurationRoot.SetConfiguration(IList`1 providers, String key, String value)&#xD;
+   at Microsoft.Extensions.Configuration.ConfigurationManager.set_Item(String key, String value)&#xD;
+   at Microsoft.AspNetCore.Builder.ConfigureWebHostBuilder.UseSetting(String key, String value)&#xD;
+   at SIGECDC.Tests.EntregableImplantacion.Soporte.WebAcademica.IniciarAsync(EntornoAcademico entorno) in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\Soporte\WebAcademica.cs:line 31&#xD;
+   at SIGECDC.Tests.EntregableImplantacion.IdentidadAcademicoTests.Auth004_AutorizarFuncionesPropiasYDenegarOtroRol() in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\IdentidadAcademicoTests.cs:line 52&#xD;
+   at SIGECDC.Tests.EntregableImplantacion.IdentidadAcademicoTests.Auth004_AutorizarFuncionesPropiasYDenegarOtroRol() in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\IdentidadAcademicoTests.cs:line 53&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="fc2b1235-d229-4e39-bfec-0c23b756448d" testId="9e5e75e7-938f-3847-0200-bb47f8c15ad0" testName="ACT-002 — Estado, ubicación y trazabilidad" computerName="JARVIS" duration="00:00:08.1279047" startTime="2026-10-04T22:55:56.6315774-06:00" endTime="2026-10-04T22:55:56.6315775-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="fc2b1235-d229-4e39-bfec-0c23b756448d" />
+    <UnitTestResult executionId="877c8131-dc38-45c0-b369-084ae533c677" testId="74ec3c34-ce3d-be99-0c41-dcc4a7252948" testName="ACT-001 — Registrar y clasificar activo" computerName="JARVIS" duration="00:00:07.9557919" startTime="2026-10-04T22:55:48.5029665-06:00" endTime="2026-10-04T22:55:48.5029668-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="877c8131-dc38-45c0-b369-084ae533c677" />
+    <UnitTestResult executionId="ef2bb0cb-2749-4015-a7e4-09161018f149" testId="3bd5b570-76c6-dc8f-6de8-9a0cc92915f1" testName="PLA-007 — Bloqueo de planilla aprobada y cerrada" computerName="JARVIS" duration="00:00:12.6856861" startTime="2026-10-04T22:58:30.6890262-06:00" endTime="2026-10-04T22:58:30.6890268-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="ef2bb0cb-2749-4015-a7e4-09161018f149" />
+    <UnitTestResult executionId="09383ad6-7465-48a9-a05f-9a3bff81109e" testId="f46b9d02-9e60-95e5-263c-0c0d4985ff3f" testName="FOR-002 — Rechazar histórico no aprobado" computerName="JARVIS" duration="00:00:10.2417160" startTime="2026-10-04T22:57:29.4327427-06:00" endTime="2026-10-04T22:57:29.4327429-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="09383ad6-7465-48a9-a05f-9a3bff81109e" />
+    <UnitTestResult executionId="6551b7c0-4c96-4cc4-ac41-3c96d5b7c093" testId="d2065e7d-0a7e-fefd-a03a-9130fd2b2e62" testName="FOR-003 — Parámetro proyectado y preservación del histórico" computerName="JARVIS" duration="00:00:09.0950608" startTime="2026-10-04T22:57:38.5305014-06:00" endTime="2026-10-04T22:57:38.5305015-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="6551b7c0-4c96-4cc4-ac41-3c96d5b7c093">
+      <Output>
+        <ErrorInfo>
+          <Message>System.ComponentModel.DataAnnotations.ValidationException : El colaborador ACA-01 no es elegible: No posee un contrato activo vigente.</Message>
+          <StackTrace>   at SIGECDC.Persistence.Forecast.ForecastParticipanteService.AplicarComposicion(ForecastEscenario escenario, IReadOnlyList`1 candidatos, IReadOnlyDictionary`2 solicitudes) in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Persistence\Forecast\ForecastParticipanteService.cs:line 174&#xD;
+   at SIGECDC.Persistence.Forecast.ForecastParticipanteService.GuardarComposicionAsync(Int64 idForecastEscenario, SolicitudGuardarParticipantesForecast solicitud, String idUsuarioActual, CancellationToken cancellationToken) in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Persistence\Forecast\ForecastParticipanteService.cs:line 109&#xD;
+   at SIGECDC.Persistence.Forecast.ForecastParticipanteService.GuardarComposicionAsync(Int64 idForecastEscenario, SolicitudGuardarParticipantesForecast solicitud, String idUsuarioActual, CancellationToken cancellationToken) in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Persistence\Forecast\ForecastParticipanteService.cs:line 135&#xD;
+   at SIGECDC.Persistence.Forecast.ForecastParticipanteService.GuardarComposicionAsync(Int64 idForecastEscenario, SolicitudGuardarParticipantesForecast solicitud, String idUsuarioActual, CancellationToken cancellationToken) in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Persistence\Forecast\ForecastParticipanteService.cs:line 136&#xD;
+   at SIGECDC.Tests.EntregableImplantacion.Soporte.DatosFinancierosAcademicos.EscenarioAsync(String nombre, Nullable`1 inicio) in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\Soporte\DatosFinancierosAcademicos.cs:line 118&#xD;
+   at SIGECDC.Tests.EntregableImplantacion.ForecastAcademicoTests.For003_AplicarParametroSinModificarHistorico() in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\ForecastAcademicoTests.cs:line 44&#xD;
+   at SIGECDC.Tests.EntregableImplantacion.ForecastAcademicoTests.For003_AplicarParametroSinModificarHistorico() in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\ForecastAcademicoTests.cs:line 50&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="46566416-2f10-4c17-bb5e-f8efb27468d3" testId="6981801a-17ed-114d-daa7-f8e459c4f629" testName="PLA-008 — Reportes de planilla en PDF y Excel" computerName="JARVIS" duration="00:00:10.0447545" startTime="2026-10-04T22:58:52.3382448-06:00" endTime="2026-10-04T22:58:52.3382449-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="46566416-2f10-4c17-bb5e-f8efb27468d3">
+      <Output>
+        <ErrorInfo>
+          <Message>System.InvalidOperationException : A configuration source is not registered. Please register one before setting a value.</Message>
+          <StackTrace>   at Microsoft.Extensions.Configuration.ConfigurationRoot.SetConfiguration(IList`1 providers, String key, String value)&#xD;
+   at Microsoft.Extensions.Configuration.ConfigurationManager.set_Item(String key, String value)&#xD;
+   at Microsoft.AspNetCore.Builder.ConfigureWebHostBuilder.UseSetting(String key, String value)&#xD;
+   at SIGECDC.Tests.EntregableImplantacion.Soporte.WebAcademica.IniciarAsync(EntornoAcademico entorno) in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\Soporte\WebAcademica.cs:line 31&#xD;
+   at SIGECDC.Tests.EntregableImplantacion.PlanillaAcademicoTests.Pla008_ExportarReporteConPeriodoYTotalesCorrectos() in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\PlanillaAcademicoTests.cs:line 124&#xD;
+   at SIGECDC.Tests.EntregableImplantacion.PlanillaAcademicoTests.Pla008_ExportarReporteConPeriodoYTotalesCorrectos() in C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\PlanillaAcademicoTests.cs:line 136&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="9a6faf06-764d-4ffd-ba94-a7424ef6533b" testId="62902f86-3c26-051a-1ca8-da12d64c5daa" testName="ACT-008 — Completar mantenimiento correctivo" computerName="JARVIS" duration="00:00:07.5988577" startTime="2026-10-04T22:55:12.9148028-06:00" endTime="2026-10-04T22:55:12.9148031-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="9a6faf06-764d-4ffd-ba94-a7424ef6533b" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="RH-003 — Desactivar conservando historial" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="49bb6eb0-0e7b-e8ed-e4ae-d9e3c065ee12">
+      <Execution id="17999b54-617c-4815-b0aa-aedc89f312bc" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.RecursosHumanosAcademicoTests" name="Rh003_DesactivarColaboradorSinEliminarHistorial" />
+    </UnitTest>
+    <UnitTest name="PUB-004 — Contacto vacío rechazado" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="1b087b86-b60e-2fdc-ef98-8de354553e3b">
+      <Execution id="be438912-f79d-4940-88d0-268b0385e008" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.PublicoAcademicoTests" name="Pub004_RechazarContactoConObligatoriosVacios" />
+    </UnitTest>
+    <UnitTest name="ACT-008 — Completar mantenimiento correctivo" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="62902f86-3c26-051a-1ca8-da12d64c5daa">
+      <Execution id="9a6faf06-764d-4ffd-ba94-a7424ef6533b" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.ActivosAcademicoTests" name="Act008_CompletarOrdenCorrectivaConEvidencia" />
+    </UnitTest>
+    <UnitTest name="AUTH-001 — Acceso válido con los cuatro roles" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="09d07841-0a38-6329-8cae-8352d25916d2">
+      <Execution id="318beeef-ebda-4973-aaee-a041c53b5ddd" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.IdentidadAcademicoTests" name="Auth001_IniciarSesionConCredencialesValidas" />
+    </UnitTest>
+    <UnitTest name="PLA-008 — Reportes de planilla en PDF y Excel" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="6981801a-17ed-114d-daa7-f8e459c4f629">
+      <Execution id="46566416-2f10-4c17-bb5e-f8efb27468d3" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.PlanillaAcademicoTests" name="Pla008_ExportarReporteConPeriodoYTotalesCorrectos" />
+    </UnitTest>
+    <UnitTest name="PLA-001 — Registrar incidencias de planilla" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="7a0c9701-85d6-8243-dd17-527533ff54ad">
+      <Execution id="4b7583ea-4f00-4142-9aa1-e4c57d3256c1" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.PlanillaAcademicoTests" name="Pla001_RegistrarHorasExtraAusenciaYBono" />
+    </UnitTest>
+    <UnitTest name="PLA-006 — Proteger colilla de otro empleado" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="3e57162d-ae33-0bb5-5ec3-a3f0e8d4f40d">
+      <Execution id="5fdf18cd-2eb3-4afb-beb2-5f01c6de4328" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.PlanillaAcademicoTests" name="Pla006_DenegarColillaAjenaPorAccesoDirecto" />
+    </UnitTest>
+    <UnitTest name="PUB-002 — Filtro y detalle del portafolio" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="bf2e126f-e682-3da2-7ffd-edd6c37213a7">
+      <Execution id="4eca2627-8320-4b26-983c-eafc2187546e" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.PublicoAcademicoTests" name="Pub002_FiltrarPortafolioYConsultarDetalle" />
+    </UnitTest>
+    <UnitTest name="RH-002 — Actualizar colaborador" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="01a2a229-21e7-cfaf-29da-dec9c631eb83">
+      <Execution id="9527fb0e-099b-43df-9873-00d149c8eed6" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.RecursosHumanosAcademicoTests" name="Rh002_ActualizarDatosDeColaborador" />
+    </UnitTest>
+    <UnitTest name="PLA-004 — Parámetro aplicado al colaborador correspondiente" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="365ffe69-bc19-63cb-666d-5d4c02c036c0">
+      <Execution id="a5794b03-f68b-4621-b6c8-bd6ec130731e" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.PlanillaAcademicoTests" name="Pla004_ConfigurarYAsignarConceptoAUnColaborador" />
+    </UnitTest>
+    <UnitTest name="PLA-005 — Consultar y descargar colilla propia" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="0f535992-2a51-481b-421e-bfdbfb353c13">
+      <Execution id="83b46b48-6dd6-48bb-90d0-f0474a350ecd" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.PlanillaAcademicoTests" name="Pla005_ConsultarYDescargarColillaPropia" />
+    </UnitTest>
+    <UnitTest name="PLA-007 — Bloqueo de planilla aprobada y cerrada" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="3bd5b570-76c6-dc8f-6de8-9a0cc92915f1">
+      <Execution id="ef2bb0cb-2749-4015-a7e4-09161018f149" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.PlanillaAcademicoTests" name="Pla007_AprobarCerrarYRechazarCambios" />
+    </UnitTest>
+    <UnitTest name="PUB-005 — Publicación de contenido institucional" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="58715c67-170b-2b60-1389-f7dd1655bed5">
+      <Execution id="90d045b9-e868-4488-b31f-f51f09bd9044" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.PublicoAcademicoTests" name="Pub005_CrearActualizarYPublicarContenido" />
+    </UnitTest>
+    <UnitTest name="RH-006 — Rechazar documento con contenido inválido" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="4c9bb534-a597-4371-2bf2-7f3e3e423299">
+      <Execution id="802667a2-df2f-4cb1-bf88-11742c4ec977" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.RecursosHumanosAcademicoTests" name="Rh006_RechazarArchivoQueNoEsPdf" />
+    </UnitTest>
+    <UnitTest name="FOR-001 — Generar proyección desde histórico autorizado" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="514e014c-50e6-fc35-d731-929901c227fd">
+      <Execution id="6d11a374-9b1e-4c2d-9f0f-ae1749b21d60" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.ForecastAcademicoTests" name="For001_GenerarProyeccionFuturaConHistoricoAutorizado" />
+    </UnitTest>
+    <UnitTest name="FOR-004 — Excluir y reincorporar participante al recalcular" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="866bde4a-9637-e14a-7797-b1f1a33a42a5">
+      <Execution id="18e4cab7-10a2-4403-9033-70a50205d68e" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.ForecastAcademicoTests" name="For004_ActualizarTotalesAlExcluirYReincorporarColaborador" />
+    </UnitTest>
+    <UnitTest name="PUB-001 — Páginas institucionales anónimas" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="92b5195d-5974-af72-3b9b-241f27bb39c9">
+      <Execution id="a3aa9b81-3855-436c-8b34-fd885f41bc46" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.PublicoAcademicoTests" name="Pub001_ConsultarPaginasInstitucionalesSinSesion" />
+    </UnitTest>
+    <UnitTest name="RH-005 — Adjuntar y recuperar documento válido" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="577eb8d3-e498-18bc-b870-691043df1515">
+      <Execution id="015997d9-869e-4b6e-9f83-7f5407bbbc5f" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.RecursosHumanosAcademicoTests" name="Rh005_AdjuntarDocumentoAlExpedienteCorrecto" />
+    </UnitTest>
+    <UnitTest name="AUTH-003 — Cierre de sesión efectivo" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="068bf6de-d27d-0e87-5f9d-3f9b637c23fa">
+      <Execution id="baa8310d-6d77-4b1d-860b-a87c404e7b27" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.IdentidadAcademicoTests" name="Auth003_CerrarSesionYBloquearReingresoDirecto" />
+    </UnitTest>
+    <UnitTest name="AUD-002 — Trazabilidad de RRHH y planilla" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="361615f6-a1a5-d598-a75b-9a37bd379d78">
+      <Execution id="79f71b99-25d3-4902-8615-5ead095b9327" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.AuditoriaAcademicoTests" name="Aud002_ConsultarTrazabilidadDeRecursosHumanosYPlanilla" />
+    </UnitTest>
+    <UnitTest name="FOR-006 — Comparar Forecast y planilla real autorizada" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="5da9ed6b-82e4-490b-b635-099ff158b4da">
+      <Execution id="34a2158b-7f99-421e-8dbf-119d1b0cd850" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.ForecastAcademicoTests" name="For006_CompararProyeccionConPlanillaRealCompatible" />
+    </UnitTest>
+    <UnitTest name="PLA-003 — Bloquear cálculo sin condición laboral" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="93c14abb-76eb-bb6d-7fb5-5093b824147d">
+      <Execution id="a71cf3bd-54ff-4147-936b-7b71a63ba5fd" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.PlanillaAcademicoTests" name="Pla003_RechazarCalculoIncompletoSinPersistenciaParcial" />
+    </UnitTest>
+    <UnitTest name="ACT-004 — Crear y actualizar proyecto" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="ed0fc8dd-47ef-a7b7-2f0b-202c1d504031">
+      <Execution id="98d7a6db-0f7e-4d05-9ea1-2b9572ea9ff1" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.ActivosAcademicoTests" name="Act004_CrearYActualizarProyecto" />
+    </UnitTest>
+    <UnitTest name="PLA-002 — Calcular planilla válida" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="689500a0-26a1-cdc2-03b5-77a374cad6c0">
+      <Execution id="ac9c0b2f-3fdb-4b49-b68e-546f95b8cf8e" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.PlanillaAcademicoTests" name="Pla002_CalcularPlanillaConTotalesEsperados" />
+    </UnitTest>
+    <UnitTest name="AUD-001 — Historial de acceso y contacto de solo lectura" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="93c56f62-90d2-a55a-3981-2d8bc45a2863">
+      <Execution id="566e57f5-2283-44be-a43f-5580500a43fb" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.AuditoriaAcademicoTests" name="Aud001_ConsultarHistorialAccesosYContactoSinEdicion" />
+    </UnitTest>
+    <UnitTest name="AUD-003 — Bitácora de operaciones" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="5956a6b3-27c7-8547-7225-f616ac71a756">
+      <Execution id="a1a47394-bd4e-4097-a9f9-e03617196993" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.AuditoriaAcademicoTests" name="Aud003_ConsultarTrazabilidadDeActivosProyectosYAsignaciones" />
+    </UnitTest>
+    <UnitTest name="ACT-006 — Rechazar asignación solapada" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="975ba498-a32d-8693-5967-999f1db8ec8a">
+      <Execution id="70f03db8-0d73-48af-833e-6c413b0f80ac" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.ActivosAcademicoTests" name="Act006_RechazarAsignacionSolapada" />
+    </UnitTest>
+    <UnitTest name="ACT-002 — Estado, ubicación y trazabilidad" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="9e5e75e7-938f-3847-0200-bb47f8c15ad0">
+      <Execution id="fc2b1235-d229-4e39-bfec-0c23b756448d" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.ActivosAcademicoTests" name="Act002_ActualizarEstadoYUbicacion" />
+    </UnitTest>
+    <UnitTest name="ACT-005 — Asignar activo libre" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="781a44c3-9a07-ef2a-b0a4-aebe07b21af4">
+      <Execution id="8019b285-3cd4-4fbe-831b-fafa6269a374" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.ActivosAcademicoTests" name="Act005_AsignarActivoDisponibleAProyecto" />
+    </UnitTest>
+    <UnitTest name="ACT-009 — Acumular uso y consultar inactividad" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="cc35a465-1463-0c4e-b969-f00620755677">
+      <Execution id="76c06fcb-49ba-498a-8251-9b7590df3d3a" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.ActivosAcademicoTests" name="Act009_AcumularLecturasYConsultarTiempoFueraServicio" />
+    </UnitTest>
+    <UnitTest name="FOR-005 — Guardar, recuperar y comparar escenarios" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="35877acb-fadd-d042-8aa5-0f4b5553ae97">
+      <Execution id="c14a0965-b8b3-41e4-8ed0-5a3269e23871" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.ForecastAcademicoTests" name="For005_GuardarYCompararEscenariosCompatibles" />
+    </UnitTest>
+    <UnitTest name="FOR-002 — Rechazar histórico no aprobado" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="f46b9d02-9e60-95e5-263c-0c0d4985ff3f">
+      <Execution id="09383ad6-7465-48a9-a05f-9a3bff81109e" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.ForecastAcademicoTests" name="For002_RechazarFuenteHistoricaNoAprobada" />
+    </UnitTest>
+    <UnitTest name="AUTH-002 — Contraseña inválida rechazada" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="63976883-a9b0-31c0-b8a5-f04a0a44fd2d">
+      <Execution id="e12829ad-478f-4dc0-8d8d-0862ce12e160" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.IdentidadAcademicoTests" name="Auth002_RechazarCredencialesInvalidas" />
+    </UnitTest>
+    <UnitTest name="ACT-001 — Registrar y clasificar activo" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="74ec3c34-ce3d-be99-0c41-dcc4a7252948">
+      <Execution id="877c8131-dc38-45c0-b369-084ae533c677" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.ActivosAcademicoTests" name="Act001_RegistrarActivoDisponible" />
+    </UnitTest>
+    <UnitTest name="PUB-006 — Mostrar y ocultar tarjeta pública" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="d1a9c04d-ae44-73b6-600f-4641d95691fe">
+      <Execution id="39261cea-43fb-41ec-8d63-eca715ff445a" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.PublicoAcademicoTests" name="Pub006_PublicarYOcultarProyecto" />
+    </UnitTest>
+    <UnitTest name="ACT-003 — Disponibilidad según fechas y estado" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="0a62ba94-683b-1ff9-3e4f-0a6c882de8ef">
+      <Execution id="6073325e-5f48-4230-a063-ebbfb7e3b28a" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.ActivosAcademicoTests" name="Act003_ConsultarDisponibilidadPorFechasYEstado" />
+    </UnitTest>
+    <UnitTest name="FOR-003 — Parámetro proyectado y preservación del histórico" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="d2065e7d-0a7e-fefd-a03a-9130fd2b2e62">
+      <Execution id="6551b7c0-4c96-4cc4-ac41-3c96d5b7c093" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.ForecastAcademicoTests" name="For003_AplicarParametroSinModificarHistorico" />
+    </UnitTest>
+    <UnitTest name="RH-004 — Catálogos y asignación organizativa" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="741c82a0-022b-7f4c-ac69-374853f7f8c0">
+      <Execution id="1da923c1-6840-485a-9931-6ea47862d055" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.RecursosHumanosAcademicoTests" name="Rh004_CrearPuestoDepartamentoYAsignarColaborador" />
+    </UnitTest>
+    <UnitTest name="PUB-003 — Envío válido de contacto" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="58e115ce-89c6-6a06-d75f-370d0cc01184">
+      <Execution id="6e930a2b-3487-44eb-a8c5-26f2e7b075b7" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.PublicoAcademicoTests" name="Pub003_EnviarConsultaContactoValida" />
+    </UnitTest>
+    <UnitTest name="RH-001 — Registrar y consultar colaborador" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="2392ec89-4fd2-3978-5a57-bf7c42843e86">
+      <Execution id="a2d6ba34-8d78-423b-b228-2807c9161d08" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.RecursosHumanosAcademicoTests" name="Rh001_RegistrarYConsultarColaborador" />
+    </UnitTest>
+    <UnitTest name="ACT-007 — Programar mantenimiento preventivo" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="8842766e-c1eb-6c79-4a79-6f36da2a84a3">
+      <Execution id="eafdd294-e40c-4436-89f2-6aa2aa0b52bc" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.ActivosAcademicoTests" name="Act007_DefinirMantenimientoPreventivo" />
+    </UnitTest>
+    <UnitTest name="AUTH-004 — Separación representativa de permisos" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="cd8fc91c-6fa9-8847-68b2-654ff58b481c">
+      <Execution id="6b9e691e-f3e8-464c-9eb9-eea9c7ea9b8f" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.IdentidadAcademicoTests" name="Auth004_AutorizarFuncionesPropiasYDenegarOtroRol" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="92b5195d-5974-af72-3b9b-241f27bb39c9" executionId="a3aa9b81-3855-436c-8b34-fd885f41bc46" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="63976883-a9b0-31c0-b8a5-f04a0a44fd2d" executionId="e12829ad-478f-4dc0-8d8d-0862ce12e160" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="2392ec89-4fd2-3978-5a57-bf7c42843e86" executionId="a2d6ba34-8d78-423b-b228-2807c9161d08" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="7a0c9701-85d6-8243-dd17-527533ff54ad" executionId="4b7583ea-4f00-4142-9aa1-e4c57d3256c1" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="35877acb-fadd-d042-8aa5-0f4b5553ae97" executionId="c14a0965-b8b3-41e4-8ed0-5a3269e23871" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="58715c67-170b-2b60-1389-f7dd1655bed5" executionId="90d045b9-e868-4488-b31f-f51f09bd9044" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="689500a0-26a1-cdc2-03b5-77a374cad6c0" executionId="ac9c0b2f-3fdb-4b49-b68e-546f95b8cf8e" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="4c9bb534-a597-4371-2bf2-7f3e3e423299" executionId="802667a2-df2f-4cb1-bf88-11742c4ec977" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="5956a6b3-27c7-8547-7225-f616ac71a756" executionId="a1a47394-bd4e-4097-a9f9-e03617196993" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="93c14abb-76eb-bb6d-7fb5-5093b824147d" executionId="a71cf3bd-54ff-4147-936b-7b71a63ba5fd" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="361615f6-a1a5-d598-a75b-9a37bd379d78" executionId="79f71b99-25d3-4902-8615-5ead095b9327" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="781a44c3-9a07-ef2a-b0a4-aebe07b21af4" executionId="8019b285-3cd4-4fbe-831b-fafa6269a374" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="866bde4a-9637-e14a-7797-b1f1a33a42a5" executionId="18e4cab7-10a2-4403-9033-70a50205d68e" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="01a2a229-21e7-cfaf-29da-dec9c631eb83" executionId="9527fb0e-099b-43df-9873-00d149c8eed6" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="975ba498-a32d-8693-5967-999f1db8ec8a" executionId="70f03db8-0d73-48af-833e-6c413b0f80ac" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="bf2e126f-e682-3da2-7ffd-edd6c37213a7" executionId="4eca2627-8320-4b26-983c-eafc2187546e" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="068bf6de-d27d-0e87-5f9d-3f9b637c23fa" executionId="baa8310d-6d77-4b1d-860b-a87c404e7b27" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="514e014c-50e6-fc35-d731-929901c227fd" executionId="6d11a374-9b1e-4c2d-9f0f-ae1749b21d60" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="0f535992-2a51-481b-421e-bfdbfb353c13" executionId="83b46b48-6dd6-48bb-90d0-f0474a350ecd" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="93c56f62-90d2-a55a-3981-2d8bc45a2863" executionId="566e57f5-2283-44be-a43f-5580500a43fb" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="3e57162d-ae33-0bb5-5ec3-a3f0e8d4f40d" executionId="5fdf18cd-2eb3-4afb-beb2-5f01c6de4328" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="577eb8d3-e498-18bc-b870-691043df1515" executionId="015997d9-869e-4b6e-9f83-7f5407bbbc5f" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="8842766e-c1eb-6c79-4a79-6f36da2a84a3" executionId="eafdd294-e40c-4436-89f2-6aa2aa0b52bc" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="58e115ce-89c6-6a06-d75f-370d0cc01184" executionId="6e930a2b-3487-44eb-a8c5-26f2e7b075b7" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="09d07841-0a38-6329-8cae-8352d25916d2" executionId="318beeef-ebda-4973-aaee-a041c53b5ddd" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="cc35a465-1463-0c4e-b969-f00620755677" executionId="76c06fcb-49ba-498a-8251-9b7590df3d3a" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="49bb6eb0-0e7b-e8ed-e4ae-d9e3c065ee12" executionId="17999b54-617c-4815-b0aa-aedc89f312bc" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="d1a9c04d-ae44-73b6-600f-4641d95691fe" executionId="39261cea-43fb-41ec-8d63-eca715ff445a" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="0a62ba94-683b-1ff9-3e4f-0a6c882de8ef" executionId="6073325e-5f48-4230-a063-ebbfb7e3b28a" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="741c82a0-022b-7f4c-ac69-374853f7f8c0" executionId="1da923c1-6840-485a-9931-6ea47862d055" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1b087b86-b60e-2fdc-ef98-8de354553e3b" executionId="be438912-f79d-4940-88d0-268b0385e008" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="5da9ed6b-82e4-490b-b635-099ff158b4da" executionId="34a2158b-7f99-421e-8dbf-119d1b0cd850" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="ed0fc8dd-47ef-a7b7-2f0b-202c1d504031" executionId="98d7a6db-0f7e-4d05-9ea1-2b9572ea9ff1" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="365ffe69-bc19-63cb-666d-5d4c02c036c0" executionId="a5794b03-f68b-4621-b6c8-bd6ec130731e" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="cd8fc91c-6fa9-8847-68b2-654ff58b481c" executionId="6b9e691e-f3e8-464c-9eb9-eea9c7ea9b8f" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="9e5e75e7-938f-3847-0200-bb47f8c15ad0" executionId="fc2b1235-d229-4e39-bfec-0c23b756448d" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="74ec3c34-ce3d-be99-0c41-dcc4a7252948" executionId="877c8131-dc38-45c0-b369-084ae533c677" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="3bd5b570-76c6-dc8f-6de8-9a0cc92915f1" executionId="ef2bb0cb-2749-4015-a7e4-09161018f149" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="f46b9d02-9e60-95e5-263c-0c0d4985ff3f" executionId="09383ad6-7465-48a9-a05f-9a3bff81109e" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="d2065e7d-0a7e-fefd-a03a-9130fd2b2e62" executionId="6551b7c0-4c96-4cc4-ac41-3c96d5b7c093" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="6981801a-17ed-114d-daa7-f8e459c4f629" executionId="46566416-2f10-4c17-bb5e-f8efb27468d3" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="62902f86-3c26-051a-1ca8-da12d64c5daa" executionId="9a6faf06-764d-4ffd-ba94-a7424ef6533b" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Resultados sin formato de lista" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="Todos los resultados cargados" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="42" executed="42" passed="20" failed="22" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.8.2+699d445a1a (64-bit .NET 10.0.12)&#xD;
+[xUnit.net 00:00:00.52]   Discovering: SIGECDC.Tests&#xD;
+[xUnit.net 00:00:00.89]   Discovered:  SIGECDC.Tests&#xD;
+[xUnit.net 00:00:00.90]   Starting:    SIGECDC.Tests&#xD;
+[xUnit.net 00:01:36.03]       System.InvalidOperationException : A configuration source is not registered. Please register one before setting a value.&#xD;
+[xUnit.net 00:01:36.04]       Stack Trace:&#xD;
+[xUnit.net 00:01:36.04]            at Microsoft.Extensions.Configuration.ConfigurationRoot.SetConfiguration(IList`1 providers, String key, String value)&#xD;
+[xUnit.net 00:01:36.04]            at Microsoft.Extensions.Configuration.ConfigurationManager.set_Item(String key, String value)&#xD;
+[xUnit.net 00:01:36.04]            at Microsoft.AspNetCore.Builder.ConfigureWebHostBuilder.UseSetting(String key, String value)&#xD;
+[xUnit.net 00:01:36.04]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\Soporte\WebAcademica.cs(31,0): at SIGECDC.Tests.EntregableImplantacion.Soporte.WebAcademica.IniciarAsync(EntornoAcademico entorno)&#xD;
+[xUnit.net 00:01:36.04]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\AuditoriaAcademicoTests.cs(64,0): at SIGECDC.Tests.EntregableImplantacion.AuditoriaAcademicoTests.ComprobarVistaAsync(EntornoAcademico e, String evidencia)&#xD;
+[xUnit.net 00:01:36.04]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\AuditoriaAcademicoTests.cs(59,0): at SIGECDC.Tests.EntregableImplantacion.AuditoriaAcademicoTests.Aud003_ConsultarTrazabilidadDeActivosProyectosYAsignaciones()&#xD;
+[xUnit.net 00:01:36.04]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\AuditoriaAcademicoTests.cs(59,0): at SIGECDC.Tests.EntregableImplantacion.AuditoriaAcademicoTests.Aud003_ConsultarTrazabilidadDeActivosProyectosYAsignaciones()&#xD;
+[xUnit.net 00:01:36.04]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:01:42.61]       System.InvalidOperationException : A configuration source is not registered. Please register one before setting a value.&#xD;
+[xUnit.net 00:01:42.61]       Stack Trace:&#xD;
+[xUnit.net 00:01:42.61]            at Microsoft.Extensions.Configuration.ConfigurationRoot.SetConfiguration(IList`1 providers, String key, String value)&#xD;
+[xUnit.net 00:01:42.62]            at Microsoft.Extensions.Configuration.ConfigurationManager.set_Item(String key, String value)&#xD;
+[xUnit.net 00:01:42.62]            at Microsoft.AspNetCore.Builder.ConfigureWebHostBuilder.UseSetting(String key, String value)&#xD;
+[xUnit.net 00:01:42.62]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\Soporte\WebAcademica.cs(31,0): at SIGECDC.Tests.EntregableImplantacion.Soporte.WebAcademica.IniciarAsync(EntornoAcademico entorno)&#xD;
+[xUnit.net 00:01:42.62]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\AuditoriaAcademicoTests.cs(20,0): at SIGECDC.Tests.EntregableImplantacion.AuditoriaAcademicoTests.Aud001_ConsultarHistorialAccesosYContactoSinEdicion()&#xD;
+[xUnit.net 00:01:42.62]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\AuditoriaAcademicoTests.cs(27,0): at SIGECDC.Tests.EntregableImplantacion.AuditoriaAcademicoTests.Aud001_ConsultarHistorialAccesosYContactoSinEdicion()&#xD;
+[xUnit.net 00:01:42.62]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:01:57.70]       System.InvalidOperationException : A configuration source is not registered. Please register one before setting a value.&#xD;
+[xUnit.net 00:01:57.70]       Stack Trace:&#xD;
+[xUnit.net 00:01:57.70]            at Microsoft.Extensions.Configuration.ConfigurationRoot.SetConfiguration(IList`1 providers, String key, String value)&#xD;
+[xUnit.net 00:01:57.70]            at Microsoft.Extensions.Configuration.ConfigurationManager.set_Item(String key, String value)&#xD;
+[xUnit.net 00:01:57.70]            at Microsoft.AspNetCore.Builder.ConfigureWebHostBuilder.UseSetting(String key, String value)&#xD;
+[xUnit.net 00:01:57.70]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\Soporte\WebAcademica.cs(31,0): at SIGECDC.Tests.EntregableImplantacion.Soporte.WebAcademica.IniciarAsync(EntornoAcademico entorno)&#xD;
+[xUnit.net 00:01:57.70]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\AuditoriaAcademicoTests.cs(64,0): at SIGECDC.Tests.EntregableImplantacion.AuditoriaAcademicoTests.ComprobarVistaAsync(EntornoAcademico e, String evidencia)&#xD;
+[xUnit.net 00:01:57.70]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\AuditoriaAcademicoTests.cs(42,0): at SIGECDC.Tests.EntregableImplantacion.AuditoriaAcademicoTests.Aud002_ConsultarTrazabilidadDeRecursosHumanosYPlanilla()&#xD;
+[xUnit.net 00:01:57.70]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\AuditoriaAcademicoTests.cs(42,0): at SIGECDC.Tests.EntregableImplantacion.AuditoriaAcademicoTests.Aud002_ConsultarTrazabilidadDeRecursosHumanosYPlanilla()&#xD;
+[xUnit.net 00:01:57.70]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:02:07.91]       System.ComponentModel.DataAnnotations.ValidationException : El colaborador ACA-01 no es elegible: No posee un contrato activo vigente.&#xD;
+[xUnit.net 00:02:07.91]       Stack Trace:&#xD;
+[xUnit.net 00:02:07.91]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Persistence\Forecast\ForecastParticipanteService.cs(174,0): at SIGECDC.Persistence.Forecast.ForecastParticipanteService.AplicarComposicion(ForecastEscenario escenario, IReadOnlyList`1 candidatos, IReadOnlyDictionary`2 solicitudes)&#xD;
+[xUnit.net 00:02:07.91]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Persistence\Forecast\ForecastParticipanteService.cs(109,0): at SIGECDC.Persistence.Forecast.ForecastParticipanteService.GuardarComposicionAsync(Int64 idForecastEscenario, SolicitudGuardarParticipantesForecast solicitud, String idUsuarioActual, CancellationToken cancellationToken)&#xD;
+[xUnit.net 00:02:07.91]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Persistence\Forecast\ForecastParticipanteService.cs(135,0): at SIGECDC.Persistence.Forecast.ForecastParticipanteService.GuardarComposicionAsync(Int64 idForecastEscenario, SolicitudGuardarParticipantesForecast solicitud, String idUsuarioActual, CancellationToken cancellationToken)&#xD;
+[xUnit.net 00:02:07.91]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Persistence\Forecast\ForecastParticipanteService.cs(136,0): at SIGECDC.Persistence.Forecast.ForecastParticipanteService.GuardarComposicionAsync(Int64 idForecastEscenario, SolicitudGuardarParticipantesForecast solicitud, String idUsuarioActual, CancellationToken cancellationToken)&#xD;
+[xUnit.net 00:02:07.91]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\Soporte\DatosFinancierosAcademicos.cs(118,0): at SIGECDC.Tests.EntregableImplantacion.Soporte.DatosFinancierosAcademicos.EscenarioAsync(String nombre, Nullable`1 inicio)&#xD;
+[xUnit.net 00:02:07.91]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\ForecastAcademicoTests.cs(57,0): at SIGECDC.Tests.EntregableImplantacion.ForecastAcademicoTests.For004_ActualizarTotalesAlExcluirYReincorporarColaborador()&#xD;
+[xUnit.net 00:02:07.91]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\ForecastAcademicoTests.cs(64,0): at SIGECDC.Tests.EntregableImplantacion.ForecastAcademicoTests.For004_ActualizarTotalesAlExcluirYReincorporarColaborador()&#xD;
+[xUnit.net 00:02:07.91]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:02:18.29]       System.ComponentModel.DataAnnotations.ValidationException : El colaborador ACA-01 no es elegible: No posee un contrato activo vigente.&#xD;
+[xUnit.net 00:02:18.29]       Stack Trace:&#xD;
+[xUnit.net 00:02:18.29]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Persistence\Forecast\ForecastParticipanteService.cs(174,0): at SIGECDC.Persistence.Forecast.ForecastParticipanteService.AplicarComposicion(ForecastEscenario escenario, IReadOnlyList`1 candidatos, IReadOnlyDictionary`2 solicitudes)&#xD;
+[xUnit.net 00:02:18.29]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Persistence\Forecast\ForecastParticipanteService.cs(109,0): at SIGECDC.Persistence.Forecast.ForecastParticipanteService.GuardarComposicionAsync(Int64 idForecastEscenario, SolicitudGuardarParticipantesForecast solicitud, String idUsuarioActual, CancellationToken cancellationToken)&#xD;
+[xUnit.net 00:02:18.29]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Persistence\Forecast\ForecastParticipanteService.cs(135,0): at SIGECDC.Persistence.Forecast.ForecastParticipanteService.GuardarComposicionAsync(Int64 idForecastEscenario, SolicitudGuardarParticipantesForecast solicitud, String idUsuarioActual, CancellationToken cancellationToken)&#xD;
+[xUnit.net 00:02:18.29]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Persistence\Forecast\ForecastParticipanteService.cs(136,0): at SIGECDC.Persistence.Forecast.ForecastParticipanteService.GuardarComposicionAsync(Int64 idForecastEscenario, SolicitudGuardarParticipantesForecast solicitud, String idUsuarioActual, CancellationToken cancellationToken)&#xD;
+[xUnit.net 00:02:18.29]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\Soporte\DatosFinancierosAcademicos.cs(118,0): at SIGECDC.Tests.EntregableImplantacion.Soporte.DatosFinancierosAcademicos.EscenarioAsync(String nombre, Nullable`1 inicio)&#xD;
+[xUnit.net 00:02:18.29]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\ForecastAcademicoTests.cs(71,0): at SIGECDC.Tests.EntregableImplantacion.ForecastAcademicoTests.For005_GuardarYCompararEscenariosCompatibles()&#xD;
+[xUnit.net 00:02:18.29]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\ForecastAcademicoTests.cs(82,0): at SIGECDC.Tests.EntregableImplantacion.ForecastAcademicoTests.For005_GuardarYCompararEscenariosCompatibles()&#xD;
+[xUnit.net 00:02:18.29]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:02:26.17]       System.ComponentModel.DataAnnotations.ValidationException : El colaborador ACA-01 no es elegible: No posee un contrato activo vigente.&#xD;
+[xUnit.net 00:02:26.17]       Stack Trace:&#xD;
+[xUnit.net 00:02:26.17]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Persistence\Forecast\ForecastParticipanteService.cs(174,0): at SIGECDC.Persistence.Forecast.ForecastParticipanteService.AplicarComposicion(ForecastEscenario escenario, IReadOnlyList`1 candidatos, IReadOnlyDictionary`2 solicitudes)&#xD;
+[xUnit.net 00:02:26.17]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Persistence\Forecast\ForecastParticipanteService.cs(109,0): at SIGECDC.Persistence.Forecast.ForecastParticipanteService.GuardarComposicionAsync(Int64 idForecastEscenario, SolicitudGuardarParticipantesForecast solicitud, String idUsuarioActual, CancellationToken cancellationToken)&#xD;
+[xUnit.net 00:02:26.17]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Persistence\Forecast\ForecastParticipanteService.cs(135,0): at SIGECDC.Persistence.Forecast.ForecastParticipanteService.GuardarComposicionAsync(Int64 idForecastEscenario, SolicitudGuardarParticipantesForecast solicitud, String idUsuarioActual, CancellationToken cancellationToken)&#xD;
+[xUnit.net 00:02:26.17]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Persistence\Forecast\ForecastParticipanteService.cs(136,0): at SIGECDC.Persistence.Forecast.ForecastParticipanteService.GuardarComposicionAsync(Int64 idForecastEscenario, SolicitudGuardarParticipantesForecast solicitud, String idUsuarioActual, CancellationToken cancellationToken)&#xD;
+[xUnit.net 00:02:26.17]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\Soporte\DatosFinancierosAcademicos.cs(118,0): at SIGECDC.Tests.EntregableImplantacion.Soporte.DatosFinancierosAcademicos.EscenarioAsync(String nombre, Nullable`1 inicio)&#xD;
+[xUnit.net 00:02:26.17]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\ForecastAcademicoTests.cs(17,0): at SIGECDC.Tests.EntregableImplantacion.ForecastAcademicoTests.For001_GenerarProyeccionFuturaConHistoricoAutorizado()&#xD;
+[xUnit.net 00:02:26.17]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\ForecastAcademicoTests.cs(23,0): at SIGECDC.Tests.EntregableImplantacion.ForecastAcademicoTests.For001_GenerarProyeccionFuturaConHistoricoAutorizado()&#xD;
+[xUnit.net 00:02:26.17]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:02:35.12]       System.ComponentModel.DataAnnotations.ValidationException : El colaborador ACA-01 no es elegible: No posee un contrato activo vigente.&#xD;
+[xUnit.net 00:02:35.12]       Stack Trace:&#xD;
+[xUnit.net 00:02:35.12]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Persistence\Forecast\ForecastParticipanteService.cs(174,0): at SIGECDC.Persistence.Forecast.ForecastParticipanteService.AplicarComposicion(ForecastEscenario escenario, IReadOnlyList`1 candidatos, IReadOnlyDictionary`2 solicitudes)&#xD;
+[xUnit.net 00:02:35.12]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Persistence\Forecast\ForecastParticipanteService.cs(109,0): at SIGECDC.Persistence.Forecast.ForecastParticipanteService.GuardarComposicionAsync(Int64 idForecastEscenario, SolicitudGuardarParticipantesForecast solicitud, String idUsuarioActual, CancellationToken cancellationToken)&#xD;
+[xUnit.net 00:02:35.12]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Persistence\Forecast\ForecastParticipanteService.cs(135,0): at SIGECDC.Persistence.Forecast.ForecastParticipanteService.GuardarComposicionAsync(Int64 idForecastEscenario, SolicitudGuardarParticipantesForecast solicitud, String idUsuarioActual, CancellationToken cancellationToken)&#xD;
+[xUnit.net 00:02:35.13]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Persistence\Forecast\ForecastParticipanteService.cs(136,0): at SIGECDC.Persistence.Forecast.ForecastParticipanteService.GuardarComposicionAsync(Int64 idForecastEscenario, SolicitudGuardarParticipantesForecast solicitud, String idUsuarioActual, CancellationToken cancellationToken)&#xD;
+[xUnit.net 00:02:35.13]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\Soporte\DatosFinancierosAcademicos.cs(118,0): at SIGECDC.Tests.EntregableImplantacion.Soporte.DatosFinancierosAcademicos.EscenarioAsync(String nombre, Nullable`1 inicio)&#xD;
+[xUnit.net 00:02:35.13]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\ForecastAcademicoTests.cs(89,0): at SIGECDC.Tests.EntregableImplantacion.ForecastAcademicoTests.For006_CompararProyeccionConPlanillaRealCompatible()&#xD;
+[xUnit.net 00:02:35.13]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\ForecastAcademicoTests.cs(100,0): at SIGECDC.Tests.EntregableImplantacion.ForecastAcademicoTests.For006_CompararProyeccionConPlanillaRealCompatible()&#xD;
+[xUnit.net 00:02:35.13]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:02:54.46]       System.ComponentModel.DataAnnotations.ValidationException : El colaborador ACA-01 no es elegible: No posee un contrato activo vigente.&#xD;
+[xUnit.net 00:02:54.47]       Stack Trace:&#xD;
+[xUnit.net 00:02:54.47]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Persistence\Forecast\ForecastParticipanteService.cs(174,0): at SIGECDC.Persistence.Forecast.ForecastParticipanteService.AplicarComposicion(ForecastEscenario escenario, IReadOnlyList`1 candidatos, IReadOnlyDictionary`2 solicitudes)&#xD;
+[xUnit.net 00:02:54.47]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Persistence\Forecast\ForecastParticipanteService.cs(109,0): at SIGECDC.Persistence.Forecast.ForecastParticipanteService.GuardarComposicionAsync(Int64 idForecastEscenario, SolicitudGuardarParticipantesForecast solicitud, String idUsuarioActual, CancellationToken cancellationToken)&#xD;
+[xUnit.net 00:02:54.47]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Persistence\Forecast\ForecastParticipanteService.cs(135,0): at SIGECDC.Persistence.Forecast.ForecastParticipanteService.GuardarComposicionAsync(Int64 idForecastEscenario, SolicitudGuardarParticipantesForecast solicitud, String idUsuarioActual, CancellationToken cancellationToken)&#xD;
+[xUnit.net 00:02:54.47]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Persistence\Forecast\ForecastParticipanteService.cs(136,0): at SIGECDC.Persistence.Forecast.ForecastParticipanteService.GuardarComposicionAsync(Int64 idForecastEscenario, SolicitudGuardarParticipantesForecast solicitud, String idUsuarioActual, CancellationToken cancellationToken)&#xD;
+[xUnit.net 00:02:54.47]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\Soporte\DatosFinancierosAcademicos.cs(118,0): at SIGECDC.Tests.EntregableImplantacion.Soporte.DatosFinancierosAcademicos.EscenarioAsync(String nombre, Nullable`1 inicio)&#xD;
+[xUnit.net 00:02:54.47]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\ForecastAcademicoTests.cs(44,0): at SIGECDC.Tests.EntregableImplantacion.ForecastAcademicoTests.For003_AplicarParametroSinModificarHistorico()&#xD;
+[xUnit.net 00:02:54.47]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\ForecastAcademicoTests.cs(50,0): at SIGECDC.Tests.EntregableImplantacion.ForecastAcademicoTests.For003_AplicarParametroSinModificarHistorico()&#xD;
+[xUnit.net 00:02:54.47]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:03:01.36]       System.InvalidOperationException : A configuration source is not registered. Please register one before setting a value.&#xD;
+[xUnit.net 00:03:01.36]       Stack Trace:&#xD;
+[xUnit.net 00:03:01.36]            at Microsoft.Extensions.Configuration.ConfigurationRoot.SetConfiguration(IList`1 providers, String key, String value)&#xD;
+[xUnit.net 00:03:01.36]            at Microsoft.Extensions.Configuration.ConfigurationManager.set_Item(String key, String value)&#xD;
+[xUnit.net 00:03:01.36]            at Microsoft.AspNetCore.Builder.ConfigureWebHostBuilder.UseSetting(String key, String value)&#xD;
+[xUnit.net 00:03:01.37]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\Soporte\WebAcademica.cs(31,0): at SIGECDC.Tests.EntregableImplantacion.Soporte.WebAcademica.IniciarAsync(EntornoAcademico entorno)&#xD;
+[xUnit.net 00:03:01.37]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\IdentidadAcademicoTests.cs(52,0): at SIGECDC.Tests.EntregableImplantacion.IdentidadAcademicoTests.Auth004_AutorizarFuncionesPropiasYDenegarOtroRol()&#xD;
+[xUnit.net 00:03:01.37]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\IdentidadAcademicoTests.cs(53,0): at SIGECDC.Tests.EntregableImplantacion.IdentidadAcademicoTests.Auth004_AutorizarFuncionesPropiasYDenegarOtroRol()&#xD;
+[xUnit.net 00:03:01.37]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:03:08.72]       System.InvalidOperationException : A configuration source is not registered. Please register one before setting a value.&#xD;
+[xUnit.net 00:03:08.72]       Stack Trace:&#xD;
+[xUnit.net 00:03:08.72]            at Microsoft.Extensions.Configuration.ConfigurationRoot.SetConfiguration(IList`1 providers, String key, String value)&#xD;
+[xUnit.net 00:03:08.72]            at Microsoft.Extensions.Configuration.ConfigurationManager.set_Item(String key, String value)&#xD;
+[xUnit.net 00:03:08.72]            at Microsoft.AspNetCore.Builder.ConfigureWebHostBuilder.UseSetting(String key, String value)&#xD;
+[xUnit.net 00:03:08.72]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\Soporte\WebAcademica.cs(31,0): at SIGECDC.Tests.EntregableImplantacion.Soporte.WebAcademica.IniciarAsync(EntornoAcademico entorno)&#xD;
+[xUnit.net 00:03:08.72]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\IdentidadAcademicoTests.cs(30,0): at SIGECDC.Tests.EntregableImplantacion.IdentidadAcademicoTests.Auth002_RechazarCredencialesInvalidas()&#xD;
+[xUnit.net 00:03:08.72]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\IdentidadAcademicoTests.cs(35,0): at SIGECDC.Tests.EntregableImplantacion.IdentidadAcademicoTests.Auth002_RechazarCredencialesInvalidas()&#xD;
+[xUnit.net 00:03:08.72]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:03:15.80]       System.InvalidOperationException : A configuration source is not registered. Please register one before setting a value.&#xD;
+[xUnit.net 00:03:15.80]       Stack Trace:&#xD;
+[xUnit.net 00:03:15.80]            at Microsoft.Extensions.Configuration.ConfigurationRoot.SetConfiguration(IList`1 providers, String key, String value)&#xD;
+[xUnit.net 00:03:15.80]            at Microsoft.Extensions.Configuration.ConfigurationManager.set_Item(String key, String value)&#xD;
+[xUnit.net 00:03:15.80]            at Microsoft.AspNetCore.Builder.ConfigureWebHostBuilder.UseSetting(String key, String value)&#xD;
+[xUnit.net 00:03:15.80]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\Soporte\WebAcademica.cs(31,0): at SIGECDC.Tests.EntregableImplantacion.Soporte.WebAcademica.IniciarAsync(EntornoAcademico entorno)&#xD;
+[xUnit.net 00:03:15.80]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\IdentidadAcademicoTests.cs(16,0): at SIGECDC.Tests.EntregableImplantacion.IdentidadAcademicoTests.Auth001_IniciarSesionConCredencialesValidas()&#xD;
+[xUnit.net 00:03:15.80]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\IdentidadAcademicoTests.cs(24,0): at SIGECDC.Tests.EntregableImplantacion.IdentidadAcademicoTests.Auth001_IniciarSesionConCredencialesValidas()&#xD;
+[xUnit.net 00:03:15.80]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:03:22.94]       System.InvalidOperationException : A configuration source is not registered. Please register one before setting a value.&#xD;
+[xUnit.net 00:03:22.95]       Stack Trace:&#xD;
+[xUnit.net 00:03:22.95]            at Microsoft.Extensions.Configuration.ConfigurationRoot.SetConfiguration(IList`1 providers, String key, String value)&#xD;
+[xUnit.net 00:03:22.95]            at Microsoft.Extensions.Configuration.ConfigurationManager.set_Item(String key, String value)&#xD;
+[xUnit.net 00:03:22.95]            at Microsoft.AspNetCore.Builder.ConfigureWebHostBuilder.UseSetting(String key, String value)&#xD;
+[xUnit.net 00:03:22.95]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\Soporte\WebAcademica.cs(31,0): at SIGECDC.Tests.EntregableImplantacion.Soporte.WebAcademica.IniciarAsync(EntornoAcademico entorno)&#xD;
+[xUnit.net 00:03:22.95]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\IdentidadAcademicoTests.cs(41,0): at SIGECDC.Tests.EntregableImplantacion.IdentidadAcademicoTests.Auth003_CerrarSesionYBloquearReingresoDirecto()&#xD;
+[xUnit.net 00:03:22.95]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\IdentidadAcademicoTests.cs(46,0): at SIGECDC.Tests.EntregableImplantacion.IdentidadAcademicoTests.Auth003_CerrarSesionYBloquearReingresoDirecto()&#xD;
+[xUnit.net 00:03:22.95]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:03:33.94]       Assert.Contains() Failure: Sub-string not found&#xD;
+[xUnit.net 00:03:33.94]       String:    "HISTORIA_NO_DEMOSTRABLE;HISTORIA_SALARIAL"···&#xD;
+[xUnit.net 00:03:33.94]       Not found: "CONDICION"&#xD;
+[xUnit.net 00:03:33.94]       Stack Trace:&#xD;
+[xUnit.net 00:03:33.94]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\PlanillaAcademicoTests.cs(48,0): at SIGECDC.Tests.EntregableImplantacion.PlanillaAcademicoTests.Pla003_RechazarCalculoIncompletoSinPersistenciaParcial()&#xD;
+[xUnit.net 00:03:33.94]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\PlanillaAcademicoTests.cs(51,0): at SIGECDC.Tests.EntregableImplantacion.PlanillaAcademicoTests.Pla003_RechazarCalculoIncompletoSinPersistenciaParcial()&#xD;
+[xUnit.net 00:03:33.94]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:03:58.23]       System.InvalidOperationException : A configuration source is not registered. Please register one before setting a value.&#xD;
+[xUnit.net 00:03:58.23]       Stack Trace:&#xD;
+[xUnit.net 00:03:58.23]            at Microsoft.Extensions.Configuration.ConfigurationRoot.SetConfiguration(IList`1 providers, String key, String value)&#xD;
+[xUnit.net 00:03:58.23]            at Microsoft.Extensions.Configuration.ConfigurationManager.set_Item(String key, String value)&#xD;
+[xUnit.net 00:03:58.23]            at Microsoft.AspNetCore.Builder.ConfigureWebHostBuilder.UseSetting(String key, String value)&#xD;
+[xUnit.net 00:03:58.23]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\Soporte\WebAcademica.cs(31,0): at SIGECDC.Tests.EntregableImplantacion.Soporte.WebAcademica.IniciarAsync(EntornoAcademico entorno)&#xD;
+[xUnit.net 00:03:58.23]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\PlanillaAcademicoTests.cs(80,0): at SIGECDC.Tests.EntregableImplantacion.PlanillaAcademicoTests.Pla005_ConsultarYDescargarColillaPropia()&#xD;
+[xUnit.net 00:03:58.23]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\PlanillaAcademicoTests.cs(86,0): at SIGECDC.Tests.EntregableImplantacion.PlanillaAcademicoTests.Pla005_ConsultarYDescargarColillaPropia()&#xD;
+[xUnit.net 00:03:58.23]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:04:08.27]       System.InvalidOperationException : A configuration source is not registered. Please register one before setting a value.&#xD;
+[xUnit.net 00:04:08.27]       Stack Trace:&#xD;
+[xUnit.net 00:04:08.27]            at Microsoft.Extensions.Configuration.ConfigurationRoot.SetConfiguration(IList`1 providers, String key, String value)&#xD;
+[xUnit.net 00:04:08.27]            at Microsoft.Extensions.Configuration.ConfigurationManager.set_Item(String key, String value)&#xD;
+[xUnit.net 00:04:08.27]            at Microsoft.AspNetCore.Builder.ConfigureWebHostBuilder.UseSetting(String key, String value)&#xD;
+[xUnit.net 00:04:08.27]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\Soporte\WebAcademica.cs(31,0): at SIGECDC.Tests.EntregableImplantacion.Soporte.WebAcademica.IniciarAsync(EntornoAcademico entorno)&#xD;
+[xUnit.net 00:04:08.27]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\PlanillaAcademicoTests.cs(124,0): at SIGECDC.Tests.EntregableImplantacion.PlanillaAcademicoTests.Pla008_ExportarReporteConPeriodoYTotalesCorrectos()&#xD;
+[xUnit.net 00:04:08.27]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\PlanillaAcademicoTests.cs(136,0): at SIGECDC.Tests.EntregableImplantacion.PlanillaAcademicoTests.Pla008_ExportarReporteConPeriodoYTotalesCorrectos()&#xD;
+[xUnit.net 00:04:08.27]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:04:53.51]       System.InvalidOperationException : A configuration source is not registered. Please register one before setting a value.&#xD;
+[xUnit.net 00:04:53.51]       Stack Trace:&#xD;
+[xUnit.net 00:04:53.51]            at Microsoft.Extensions.Configuration.ConfigurationRoot.SetConfiguration(IList`1 providers, String key, String value)&#xD;
+[xUnit.net 00:04:53.51]            at Microsoft.Extensions.Configuration.ConfigurationManager.set_Item(String key, String value)&#xD;
+[xUnit.net 00:04:53.51]            at Microsoft.AspNetCore.Builder.ConfigureWebHostBuilder.UseSetting(String key, String value)&#xD;
+[xUnit.net 00:04:53.51]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\Soporte\WebAcademica.cs(31,0): at SIGECDC.Tests.EntregableImplantacion.Soporte.WebAcademica.IniciarAsync(EntornoAcademico entorno)&#xD;
+[xUnit.net 00:04:53.51]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\PlanillaAcademicoTests.cs(97,0): at SIGECDC.Tests.EntregableImplantacion.PlanillaAcademicoTests.Pla006_DenegarColillaAjenaPorAccesoDirecto()&#xD;
+[xUnit.net 00:04:53.51]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\PlanillaAcademicoTests.cs(101,0): at SIGECDC.Tests.EntregableImplantacion.PlanillaAcademicoTests.Pla006_DenegarColillaAjenaPorAccesoDirecto()&#xD;
+[xUnit.net 00:04:53.51]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:05:00.57]       System.InvalidOperationException : Cannot provide a value for property 'Navigation' on type 'SIGECDC.Web.Components.ContenidoPublicado'. There is no registered service of type 'Microsoft.AspNetCore.Components.NavigationManager'.&#xD;
+[xUnit.net 00:05:00.57]       Stack Trace:&#xD;
+[xUnit.net 00:05:00.57]            at Microsoft.AspNetCore.Components.ComponentFactory.&lt;&gt;c__DisplayClass11_0.&lt;CreatePropertyInjector&gt;g__Initialize|1(IServiceProvider serviceProvider, IComponent component)&#xD;
+[xUnit.net 00:05:00.57]            at Microsoft.AspNetCore.Components.ComponentFactory.InstantiateComponent(IServiceProvider serviceProvider, Type componentType, IComponentRenderMode callerSpecifiedRenderMode, Nullable`1 parentComponentId)&#xD;
+[xUnit.net 00:05:00.57]            at Microsoft.AspNetCore.Components.RenderTree.Renderer.InstantiateChildComponentOnFrame(RenderTreeFrame[] frames, Int32 frameIndex, Int32 parentComponentId)&#xD;
+[xUnit.net 00:05:00.57]            at Microsoft.AspNetCore.Components.RenderTree.RenderTreeDiffBuilder.InitializeNewComponentFrame(DiffContext&amp; diffContext, Int32 frameIndex)&#xD;
+[xUnit.net 00:05:00.57]            at Microsoft.AspNetCore.Components.RenderTree.RenderTreeDiffBuilder.InitializeNewSubtree(DiffContext&amp; diffContext, Int32 frameIndex)&#xD;
+[xUnit.net 00:05:00.57]            at Microsoft.AspNetCore.Components.RenderTree.RenderTreeDiffBuilder.InsertNewFrame(DiffContext&amp; diffContext, Int32 newFrameIndex)&#xD;
+[xUnit.net 00:05:00.57]            at Microsoft.AspNetCore.Components.RenderTree.RenderTreeDiffBuilder.AppendDiffEntriesForRange(DiffContext&amp; diffContext, Int32 oldStartIndex, Int32 oldEndIndexExcl, Int32 newStartIndex, Int32 newEndIndexExcl)&#xD;
+[xUnit.net 00:05:00.57]            at Microsoft.AspNetCore.Components.RenderTree.RenderTreeDiffBuilder.ComputeDiff(Renderer renderer, RenderBatchBuilder batchBuilder, Int32 componentId, ArrayRange`1 oldTree, ArrayRange`1 newTree)&#xD;
+[xUnit.net 00:05:00.57]            at Microsoft.AspNetCore.Components.Rendering.ComponentState.RenderIntoBatch(RenderBatchBuilder batchBuilder, RenderFragment renderFragment, Exception&amp; renderFragmentException)&#xD;
+[xUnit.net 00:05:00.57]            at Microsoft.AspNetCore.Components.RenderTree.Renderer.ProcessRenderQueue()&#xD;
+[xUnit.net 00:05:00.57]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:05:00.57]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\Soporte\ComponenteAcademico.cs(15,0): at SIGECDC.Tests.EntregableImplantacion.Soporte.ComponenteAcademico.HandleException(Exception exception)&#xD;
+[xUnit.net 00:05:00.57]            at Microsoft.AspNetCore.Components.RenderTree.Renderer.ProcessRenderQueue()&#xD;
+[xUnit.net 00:05:00.57]            at Microsoft.AspNetCore.Components.RenderTree.Renderer.AddToRenderQueue(Int32 componentId, RenderFragment renderFragment)&#xD;
+[xUnit.net 00:05:00.57]            at Microsoft.AspNetCore.Components.ComponentBase.StateHasChanged()&#xD;
+[xUnit.net 00:05:00.57]            at Microsoft.AspNetCore.Components.ComponentBase.CallOnParametersSetAsync()&#xD;
+[xUnit.net 00:05:00.57]            at Microsoft.AspNetCore.Components.ComponentBase.RunInitAndSetParametersAsync()&#xD;
+[xUnit.net 00:05:00.57]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\Soporte\ComponenteAcademico.cs(15,0): at SIGECDC.Tests.EntregableImplantacion.Soporte.ComponenteAcademico.HandleException(Exception exception)&#xD;
+[xUnit.net 00:05:00.57]            at Microsoft.AspNetCore.Components.Rendering.ComponentState.SetDirectParameters(ParameterView parameters)&#xD;
+[xUnit.net 00:05:00.57]            at Microsoft.AspNetCore.Components.RenderTree.Renderer.RenderRootComponentAsync(Int32 componentId, ParameterView initialParameters)&#xD;
+[xUnit.net 00:05:00.57]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\Soporte\ComponenteAcademico.cs(22,0): at SIGECDC.Tests.EntregableImplantacion.Soporte.ComponenteAcademico.&lt;MostrarAsync&gt;b__8_0[T]()&#xD;
+[xUnit.net 00:05:00.57]            at Microsoft.AspNetCore.Components.Rendering.RendererSynchronizationContext.&lt;&gt;c.&lt;&lt;InvokeAsync&gt;b__10_0&gt;d.MoveNext()&#xD;
+[xUnit.net 00:05:00.57]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:05:00.57]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\PublicoAcademicoTests.cs(63,0): at SIGECDC.Tests.EntregableImplantacion.PublicoAcademicoTests.Pub004_RechazarContactoConObligatoriosVacios()&#xD;
+[xUnit.net 00:05:00.57]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\PublicoAcademicoTests.cs(66,0): at SIGECDC.Tests.EntregableImplantacion.PublicoAcademicoTests.Pub004_RechazarContactoConObligatoriosVacios()&#xD;
+[xUnit.net 00:05:00.57]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\PublicoAcademicoTests.cs(66,0): at SIGECDC.Tests.EntregableImplantacion.PublicoAcademicoTests.Pub004_RechazarContactoConObligatoriosVacios()&#xD;
+[xUnit.net 00:05:00.57]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:05:08.07]       System.InvalidOperationException : A configuration source is not registered. Please register one before setting a value.&#xD;
+[xUnit.net 00:05:08.07]       Stack Trace:&#xD;
+[xUnit.net 00:05:08.07]            at Microsoft.Extensions.Configuration.ConfigurationRoot.SetConfiguration(IList`1 providers, String key, String value)&#xD;
+[xUnit.net 00:05:08.07]            at Microsoft.Extensions.Configuration.ConfigurationManager.set_Item(String key, String value)&#xD;
+[xUnit.net 00:05:08.07]            at Microsoft.AspNetCore.Builder.ConfigureWebHostBuilder.UseSetting(String key, String value)&#xD;
+[xUnit.net 00:05:08.07]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\Soporte\WebAcademica.cs(31,0): at SIGECDC.Tests.EntregableImplantacion.Soporte.WebAcademica.IniciarAsync(EntornoAcademico entorno)&#xD;
+[xUnit.net 00:05:08.07]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\PublicoAcademicoTests.cs(17,0): at SIGECDC.Tests.EntregableImplantacion.PublicoAcademicoTests.Pub001_ConsultarPaginasInstitucionalesSinSesion()&#xD;
+[xUnit.net 00:05:08.07]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\PublicoAcademicoTests.cs(19,0): at SIGECDC.Tests.EntregableImplantacion.PublicoAcademicoTests.Pub001_ConsultarPaginasInstitucionalesSinSesion()&#xD;
+[xUnit.net 00:05:08.07]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:05:16.57]       System.InvalidOperationException : Cannot provide a value for property 'Navigation' on type 'SIGECDC.Web.Components.ContenidoPublicado'. There is no registered service of type 'Microsoft.AspNetCore.Components.NavigationManager'.&#xD;
+[xUnit.net 00:05:16.57]       Stack Trace:&#xD;
+[xUnit.net 00:05:16.57]            at Microsoft.AspNetCore.Components.ComponentFactory.&lt;&gt;c__DisplayClass11_0.&lt;CreatePropertyInjector&gt;g__Initialize|1(IServiceProvider serviceProvider, IComponent component)&#xD;
+[xUnit.net 00:05:16.57]            at Microsoft.AspNetCore.Components.ComponentFactory.InstantiateComponent(IServiceProvider serviceProvider, Type componentType, IComponentRenderMode callerSpecifiedRenderMode, Nullable`1 parentComponentId)&#xD;
+[xUnit.net 00:05:16.57]            at Microsoft.AspNetCore.Components.RenderTree.Renderer.InstantiateChildComponentOnFrame(RenderTreeFrame[] frames, Int32 frameIndex, Int32 parentComponentId)&#xD;
+[xUnit.net 00:05:16.57]            at Microsoft.AspNetCore.Components.RenderTree.RenderTreeDiffBuilder.InitializeNewComponentFrame(DiffContext&amp; diffContext, Int32 frameIndex)&#xD;
+[xUnit.net 00:05:16.57]            at Microsoft.AspNetCore.Components.RenderTree.RenderTreeDiffBuilder.InitializeNewSubtree(DiffContext&amp; diffContext, Int32 frameIndex)&#xD;
+[xUnit.net 00:05:16.57]            at Microsoft.AspNetCore.Components.RenderTree.RenderTreeDiffBuilder.InsertNewFrame(DiffContext&amp; diffContext, Int32 newFrameIndex)&#xD;
+[xUnit.net 00:05:16.57]            at Microsoft.AspNetCore.Components.RenderTree.RenderTreeDiffBuilder.AppendDiffEntriesForRange(DiffContext&amp; diffContext, Int32 oldStartIndex, Int32 oldEndIndexExcl, Int32 newStartIndex, Int32 newEndIndexExcl)&#xD;
+[xUnit.net 00:05:16.57]            at Microsoft.AspNetCore.Components.RenderTree.RenderTreeDiffBuilder.ComputeDiff(Renderer renderer, RenderBatchBuilder batchBuilder, Int32 componentId, ArrayRange`1 oldTree, ArrayRange`1 newTree)&#xD;
+[xUnit.net 00:05:16.57]            at Microsoft.AspNetCore.Components.Rendering.ComponentState.RenderIntoBatch(RenderBatchBuilder batchBuilder, RenderFragment renderFragment, Exception&amp; renderFragmentException)&#xD;
+[xUnit.net 00:05:16.57]            at Microsoft.AspNetCore.Components.RenderTree.Renderer.ProcessRenderQueue()&#xD;
+[xUnit.net 00:05:16.57]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:05:16.57]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\Soporte\ComponenteAcademico.cs(15,0): at SIGECDC.Tests.EntregableImplantacion.Soporte.ComponenteAcademico.HandleException(Exception exception)&#xD;
+[xUnit.net 00:05:16.57]            at Microsoft.AspNetCore.Components.RenderTree.Renderer.ProcessRenderQueue()&#xD;
+[xUnit.net 00:05:16.57]            at Microsoft.AspNetCore.Components.RenderTree.Renderer.AddToRenderQueue(Int32 componentId, RenderFragment renderFragment)&#xD;
+[xUnit.net 00:05:16.57]            at Microsoft.AspNetCore.Components.ComponentBase.StateHasChanged()&#xD;
+[xUnit.net 00:05:16.57]            at Microsoft.AspNetCore.Components.ComponentBase.CallOnParametersSetAsync()&#xD;
+[xUnit.net 00:05:16.57]            at Microsoft.AspNetCore.Components.ComponentBase.RunInitAndSetParametersAsync()&#xD;
+[xUnit.net 00:05:16.57]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\Soporte\ComponenteAcademico.cs(15,0): at SIGECDC.Tests.EntregableImplantacion.Soporte.ComponenteAcademico.HandleException(Exception exception)&#xD;
+[xUnit.net 00:05:16.57]            at Microsoft.AspNetCore.Components.Rendering.ComponentState.SetDirectParameters(ParameterView parameters)&#xD;
+[xUnit.net 00:05:16.57]            at Microsoft.AspNetCore.Components.RenderTree.Renderer.RenderRootComponentAsync(Int32 componentId, ParameterView initialParameters)&#xD;
+[xUnit.net 00:05:16.57]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\Soporte\ComponenteAcademico.cs(22,0): at SIGECDC.Tests.EntregableImplantacion.Soporte.ComponenteAcademico.&lt;MostrarAsync&gt;b__8_0[T]()&#xD;
+[xUnit.net 00:05:16.57]            at Microsoft.AspNetCore.Components.Rendering.RendererSynchronizationContext.&lt;&gt;c.&lt;&lt;InvokeAsync&gt;b__10_0&gt;d.MoveNext()&#xD;
+[xUnit.net 00:05:16.57]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:05:16.57]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\PublicoAcademicoTests.cs(48,0): at SIGECDC.Tests.EntregableImplantacion.PublicoAcademicoTests.Pub003_EnviarConsultaContactoValida()&#xD;
+[xUnit.net 00:05:16.57]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\PublicoAcademicoTests.cs(56,0): at SIGECDC.Tests.EntregableImplantacion.PublicoAcademicoTests.Pub003_EnviarConsultaContactoValida()&#xD;
+[xUnit.net 00:05:16.57]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\PublicoAcademicoTests.cs(56,0): at SIGECDC.Tests.EntregableImplantacion.PublicoAcademicoTests.Pub003_EnviarConsultaContactoValida()&#xD;
+[xUnit.net 00:05:16.57]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:05:23.23]       Microsoft.EntityFrameworkCore.DbUpdateException : Could not save changes. Please configure your entity type accordingly.&#xD;
+[xUnit.net 00:05:23.23]       ---- MySql.Data.MySqlClient.MySqlException : Duplicate entry 'SERVICIOS' for key 'paginacontenido.UX_PaginaContenido_CodigoPagina'&#xD;
+[xUnit.net 00:05:23.23]       Stack Trace:&#xD;
+[xUnit.net 00:05:23.23]            at MySql.EntityFrameworkCore.Update.MySQLModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)&#xD;
+[xUnit.net 00:05:23.23]            at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)&#xD;
+[xUnit.net 00:05:23.23]            at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)&#xD;
+[xUnit.net 00:05:23.23]            at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)&#xD;
+[xUnit.net 00:05:23.23]            at Microsoft.EntityFrameworkCore.Storage.RelationalDatabase.SaveChangesAsync(IList`1 entries, CancellationToken cancellationToken)&#xD;
+[xUnit.net 00:05:23.23]            at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(IList`1 entriesToSave, CancellationToken cancellationToken)&#xD;
+[xUnit.net 00:05:23.23]            at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(StateManager stateManager, Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)&#xD;
+[xUnit.net 00:05:23.23]            at MySql.EntityFrameworkCore.Storage.Internal.MySQLExecutionStrategy.ExecuteAsync[TState,TResult](TState state, Func`4 operation, Func`4 verifySucceeded, CancellationToken cancellationToken)&#xD;
+[xUnit.net 00:05:23.23]            at Microsoft.EntityFrameworkCore.DbContext.SaveChangesAsync(Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)&#xD;
+[xUnit.net 00:05:23.23]            at Microsoft.EntityFrameworkCore.DbContext.SaveChangesAsync(Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)&#xD;
+[xUnit.net 00:05:23.23]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Persistence\Identity\ApplicationDbContext.Snapshot.cs(17,0): at SIGECDC.Persistence.Identity.ApplicationDbContext.SaveChangesAsync(Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)&#xD;
+[xUnit.net 00:05:23.23]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Persistence\SitioPublico\PaginaContenidoService.cs(108,0): at SIGECDC.Persistence.SitioPublico.PaginaContenidoService.GuardarPaginaAsync(SolicitudPaginaContenido solicitud, CancellationToken cancellationToken)&#xD;
+[xUnit.net 00:05:23.23]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\PublicoAcademicoTests.cs(73,0): at SIGECDC.Tests.EntregableImplantacion.PublicoAcademicoTests.Pub005_CrearActualizarYPublicarContenido()&#xD;
+[xUnit.net 00:05:23.23]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\PublicoAcademicoTests.cs(81,0): at SIGECDC.Tests.EntregableImplantacion.PublicoAcademicoTests.Pub005_CrearActualizarYPublicarContenido()&#xD;
+[xUnit.net 00:05:23.23]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:05:23.23]         ----- Inner Stack Trace -----&#xD;
+[xUnit.net 00:05:23.23]            at MySql.Data.MySqlClient.MySqlStream.CheckForServerError()&#xD;
+[xUnit.net 00:05:23.23]            at MySql.Data.MySqlClient.MySqlStream.ReadPacketAsync()&#xD;
+[xUnit.net 00:05:23.23]            at MySql.Data.MySqlClient.NativeDriver.GetResultAsync(Int32 affectedRow, Int64 insertedId)&#xD;
+[xUnit.net 00:05:23.23]            at MySql.Data.MySqlClient.Driver.GetResultAsync(Int32 statementId, Int32 affectedRows, Int64 insertedId)&#xD;
+[xUnit.net 00:05:23.23]            at MySql.Data.MySqlClient.Driver.NextResultAsync(Int32 statementId, Boolean force)&#xD;
+[xUnit.net 00:05:23.23]            at MySql.Data.MySqlClient.MySqlDataReader.NextResultInternalAsync(CancellationToken cancellationToken)&#xD;
+[xUnit.net 00:05:23.23]            at MySql.Data.MySqlClient.MySqlDataReader.NextResultInternalAsync(CancellationToken cancellationToken)&#xD;
+[xUnit.net 00:05:23.23]            at MySql.Data.MySqlClient.MySqlCommand.ExecuteReaderInternalAsync(CommandBehavior behavior, CancellationToken cancellationToken)&#xD;
+[xUnit.net 00:05:23.23]            at MySql.Data.MySqlClient.MySqlCommand.ExecuteReaderInternalAsync(CommandBehavior behavior, CancellationToken cancellationToken)&#xD;
+[xUnit.net 00:05:23.23]            at MySql.Data.MySqlClient.MySqlCommand.ExecuteReaderInternalAsync(CommandBehavior behavior, CancellationToken cancellationToken)&#xD;
+[xUnit.net 00:05:23.23]            at MySql.Data.MySqlClient.MySqlCommand.ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)&#xD;
+[xUnit.net 00:05:23.23]            at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)&#xD;
+[xUnit.net 00:05:23.23]            at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)&#xD;
+[xUnit.net 00:05:23.23]            at Microsoft.EntityFrameworkCore.Update.ReaderModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)&#xD;
+[xUnit.net 00:06:18.11]       Assert.Throws() Failure: Exception type was not an exact match&#xD;
+[xUnit.net 00:06:18.11]       Expected: typeof(System.InvalidOperationException)&#xD;
+[xUnit.net 00:06:18.11]       Actual:   typeof(System.ArgumentException)&#xD;
+[xUnit.net 00:06:18.11]       ---- System.ArgumentException : El contenido del archivo no coincide con su formato.&#xD;
+[xUnit.net 00:06:18.11]       Stack Trace:&#xD;
+[xUnit.net 00:06:18.11]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\RecursosHumanosAcademicoTests.cs(82,0): at SIGECDC.Tests.EntregableImplantacion.RecursosHumanosAcademicoTests.Rh006_RechazarArchivoQueNoEsPdf()&#xD;
+[xUnit.net 00:06:18.11]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\RecursosHumanosAcademicoTests.cs(84,0): at SIGECDC.Tests.EntregableImplantacion.RecursosHumanosAcademicoTests.Rh006_RechazarArchivoQueNoEsPdf()&#xD;
+[xUnit.net 00:06:18.11]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:06:18.11]         ----- Inner Stack Trace -----&#xD;
+[xUnit.net 00:06:18.11]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Infrastructure\Archivos\AlmacenamientoArchivosLocal.cs(221,0): at SIGECDC.Infrastructure.Archivos.AlmacenamientoArchivosLocal.CopiarYValidarContenidoAsync(Stream origen, String rutaCompleta, String extension, Int64 tamanoInformado, CancellationToken cancellationToken)&#xD;
+[xUnit.net 00:06:18.11]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Infrastructure\Archivos\AlmacenamientoArchivosLocal.cs(221,0): at SIGECDC.Infrastructure.Archivos.AlmacenamientoArchivosLocal.CopiarYValidarContenidoAsync(Stream origen, String rutaCompleta, String extension, Int64 tamanoInformado, CancellationToken cancellationToken)&#xD;
+[xUnit.net 00:06:18.11]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Infrastructure\Archivos\AlmacenamientoArchivosLocal.cs(72,0): at SIGECDC.Infrastructure.Archivos.AlmacenamientoArchivosLocal.GuardarAsync(Stream contenido, String nombreOriginal, String mimeType, Int64 tamanoBytes, String carpetaRelativa, CancellationToken cancellationToken)&#xD;
+[xUnit.net 00:06:18.11]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Persistence\RecursosHumanos\ContratoDocumentoService.cs(217,0): at SIGECDC.Persistence.RecursosHumanos.ContratoDocumentoService.PrepararDocumentoAsync(SolicitudArchivoDocumento solicitud, String idUsuarioActual, CancellationToken cancellationToken)&#xD;
+[xUnit.net 00:06:18.11]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Persistence\RecursosHumanos\ContratoDocumentoService.cs(193,0): at SIGECDC.Persistence.RecursosHumanos.ContratoDocumentoService.AdjuntarDocumentoAsync(SolicitudArchivoDocumento solicitud, String idUsuarioActual, CancellationToken cancellationToken)&#xD;
+[xUnit.net 00:06:25.89]       Assert.Equal() Failure: Strings differ&#xD;
+[xUnit.net 00:06:25.89]                  ↓ (pos 0)&#xD;
+[xUnit.net 00:06:25.89]       Expected: "Inactivo"&#xD;
+[xUnit.net 00:06:25.89]       Actual:   "Activo"&#xD;
+[xUnit.net 00:06:25.89]                  ↑ (pos 0)&#xD;
+[xUnit.net 00:06:25.89]       Stack Trace:&#xD;
+[xUnit.net 00:06:25.89]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\RecursosHumanosAcademicoTests.cs(40,0): at SIGECDC.Tests.EntregableImplantacion.RecursosHumanosAcademicoTests.Rh003_DesactivarColaboradorSinEliminarHistorial()&#xD;
+[xUnit.net 00:06:25.89]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\RecursosHumanosAcademicoTests.cs(42,0): at SIGECDC.Tests.EntregableImplantacion.RecursosHumanosAcademicoTests.Rh003_DesactivarColaboradorSinEliminarHistorial()&#xD;
+[xUnit.net 00:06:25.89]         C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\EntregableImplantacion\RecursosHumanosAcademicoTests.cs(42,0): at SIGECDC.Tests.EntregableImplantacion.RecursosHumanosAcademicoTests.Rh003_DesactivarColaboradorSinEliminarHistorial()&#xD;
+[xUnit.net 00:06:25.89]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:06:37.21]   Finished:    SIGECDC.Tests&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="JARVIS" outcome="Error" timestamp="2026-10-04T22:56:20.0991509-06:00">
+        <Text>[xUnit.net 00:01:36.03]     AUD-003 — Bitácora de operaciones [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="JARVIS" outcome="Error" timestamp="2026-10-04T22:56:26.6788836-06:00">
+        <Text>[xUnit.net 00:01:42.61]     AUD-001 — Historial de acceso y contacto de solo lectura [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="JARVIS" outcome="Error" timestamp="2026-10-04T22:56:41.7655339-06:00">
+        <Text>[xUnit.net 00:01:57.70]     AUD-002 — Trazabilidad de RRHH y planilla [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="JARVIS" outcome="Error" timestamp="2026-10-04T22:56:51.9703931-06:00">
+        <Text>[xUnit.net 00:02:07.91]     FOR-004 — Excluir y reincorporar participante al recalcular [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="JARVIS" outcome="Error" timestamp="2026-10-04T22:57:02.3515144-06:00">
+        <Text>[xUnit.net 00:02:18.29]     FOR-005 — Guardar, recuperar y comparar escenarios [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="JARVIS" outcome="Error" timestamp="2026-10-04T22:57:10.2386737-06:00">
+        <Text>[xUnit.net 00:02:26.17]     FOR-001 — Generar proyección desde histórico autorizado [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="JARVIS" outcome="Error" timestamp="2026-10-04T22:57:19.1889252-06:00">
+        <Text>[xUnit.net 00:02:35.12]     FOR-006 — Comparar Forecast y planilla real autorizada [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="JARVIS" outcome="Error" timestamp="2026-10-04T22:57:38.5294889-06:00">
+        <Text>[xUnit.net 00:02:54.46]     FOR-003 — Parámetro proyectado y preservación del histórico [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="JARVIS" outcome="Error" timestamp="2026-10-04T22:57:45.4288853-06:00">
+        <Text>[xUnit.net 00:03:01.36]     AUTH-004 — Separación representativa de permisos [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="JARVIS" outcome="Error" timestamp="2026-10-04T22:57:52.7823244-06:00">
+        <Text>[xUnit.net 00:03:08.72]     AUTH-002 — Contraseña inválida rechazada [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="JARVIS" outcome="Error" timestamp="2026-10-04T22:57:59.8659040-06:00">
+        <Text>[xUnit.net 00:03:15.80]     AUTH-001 — Acceso válido con los cuatro roles [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="JARVIS" outcome="Error" timestamp="2026-10-04T22:58:07.0084311-06:00">
+        <Text>[xUnit.net 00:03:22.94]     AUTH-003 — Cierre de sesión efectivo [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="JARVIS" outcome="Error" timestamp="2026-10-04T22:58:18.0026687-06:00">
+        <Text>[xUnit.net 00:03:33.94]     PLA-003 — Bloquear cálculo sin condición laboral [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="JARVIS" outcome="Error" timestamp="2026-10-04T22:58:42.2900397-06:00">
+        <Text>[xUnit.net 00:03:58.23]     PLA-005 — Consultar y descargar colilla propia [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="JARVIS" outcome="Error" timestamp="2026-10-04T22:58:52.3370671-06:00">
+        <Text>[xUnit.net 00:04:08.27]     PLA-008 — Reportes de planilla en PDF y Excel [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="JARVIS" outcome="Error" timestamp="2026-10-04T22:59:37.5741057-06:00">
+        <Text>[xUnit.net 00:04:53.51]     PLA-006 — Proteger colilla de otro empleado [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="JARVIS" outcome="Error" timestamp="2026-10-04T22:59:44.6373217-06:00">
+        <Text>[xUnit.net 00:05:00.57]     PUB-004 — Contacto vacío rechazado [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="JARVIS" outcome="Error" timestamp="2026-10-04T22:59:52.1383663-06:00">
+        <Text>[xUnit.net 00:05:08.07]     PUB-001 — Páginas institucionales anónimas [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="JARVIS" outcome="Error" timestamp="2026-10-04T23:00:00.6342871-06:00">
+        <Text>[xUnit.net 00:05:16.57]     PUB-003 — Envío válido de contacto [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="JARVIS" outcome="Error" timestamp="2026-10-04T23:00:07.2946887-06:00">
+        <Text>[xUnit.net 00:05:23.23]     PUB-005 — Publicación de contenido institucional [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="JARVIS" outcome="Error" timestamp="2026-10-04T23:01:02.1756776-06:00">
+        <Text>[xUnit.net 00:06:18.11]     RH-006 — Rechazar documento con contenido inválido [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="JARVIS" outcome="Error" timestamp="2026-10-04T23:01:09.9516669-06:00">
+        <Text>[xUnit.net 00:06:25.89]     RH-003 — Desactivar conservando historial [FAIL]</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

@@ -1,0 +1,2293 @@
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
+using SIGECDC.Domain.Activos;
+using SIGECDC.Domain.Auditoria;
+using SIGECDC.Domain.Forecast;
+using SIGECDC.Domain.Operaciones;
+using SIGECDC.Domain.Planillas;
+using SIGECDC.Domain.RecursosHumanos;
+using SIGECDC.Domain.SitioPublico;
+using SIGECDC.Persistence.Forecast;
+using SIGECDC.Persistence.Planillas;
+using SIGECDC.Persistence.RecursosHumanos;
+
+namespace SIGECDC.Persistence.Identity;
+
+public partial class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
+    : IdentityDbContext<ApplicationUser, IdentityRole, string>(options)
+{
+    public DbSet<ConsultaContacto> ConsultasContacto => Set<ConsultaContacto>();
+    public DbSet<FAQ> FAQs => Set<FAQ>();
+    public DbSet<Noticia> Noticias => Set<Noticia>();
+    public DbSet<Galeria> Galerias => Set<Galeria>();
+    public DbSet<ImagenGaleria> ImagenesGaleria => Set<ImagenGaleria>();
+    public DbSet<EstadoLaboral> EstadosLaborales => Set<EstadoLaboral>();
+    public DbSet<Departamento> Departamentos => Set<Departamento>();
+    public DbSet<Puesto> Puestos => Set<Puesto>();
+    public DbSet<Colaborador> Colaboradores => Set<Colaborador>();
+    public DbSet<Contrato> Contratos => Set<Contrato>();
+    public DbSet<CondicionLaboralVersion> CondicionesLaboralesVersion => Set<CondicionLaboralVersion>();
+    public DbSet<IncidenciaPlanillaConfirmacion> ConfirmacionesIncidencias => Set<IncidenciaPlanillaConfirmacion>();
+    public DbSet<JornadaLaboral> JornadasLaborales => Set<JornadaLaboral>();
+    public DbSet<OcupacionSalarioMinimo> OcupacionesSalarioMinimo => Set<OcupacionSalarioMinimo>();
+    public DbSet<SalarioMinimoVersion> SalariosMinimosVersion => Set<SalarioMinimoVersion>();
+    public DbSet<TipoDocumento> TiposDocumento => Set<TipoDocumento>();
+    public DbSet<DocumentoArchivo> DocumentosArchivo => Set<DocumentoArchivo>();
+    public DbSet<ParametroPlanilla> ParametrosPlanilla => Set<ParametroPlanilla>();
+    public DbSet<ParametroPlanillaColaborador> ParametrosPlanillaColaborador => Set<ParametroPlanillaColaborador>();
+    public DbSet<ParametroPlanillaPeriodo> ParametrosPlanillaPeriodo => Set<ParametroPlanillaPeriodo>();
+    public DbSet<EstadoPlanilla> EstadosPlanilla => Set<EstadoPlanilla>();
+    public DbSet<TipoIncidenciaPlanilla> TiposIncidenciaPlanilla => Set<TipoIncidenciaPlanilla>();
+    public DbSet<PeriodoPlanilla> PeriodosPlanilla => Set<PeriodoPlanilla>();
+    public DbSet<Planilla> Planillas => Set<Planilla>();
+    public DbSet<DetallePlanilla> DetallesPlanilla => Set<DetallePlanilla>();
+    public DbSet<ColillaPago> ColillasPago => Set<ColillaPago>();
+    public DbSet<IncidenciaPlanilla> IncidenciasPlanilla => Set<IncidenciaPlanilla>();
+    public DbSet<ConceptoPlanilla> ConceptosPlanilla => Set<ConceptoPlanilla>();
+    public DbSet<ConceptoPlanillaVersion> ConceptosPlanillaVersion => Set<ConceptoPlanillaVersion>();
+    public DbSet<VersionNormativa> VersionesNormativas => Set<VersionNormativa>();
+    public DbSet<ParametroNormativo> ParametrosNormativos => Set<ParametroNormativo>();
+    public DbSet<ValorParametroNormativo> ValoresParametrosNormativos => Set<ValorParametroNormativo>();
+    public DbSet<TramoImpuestoSalario> TramosImpuestoSalario => Set<TramoImpuestoSalario>();
+    public DbSet<CreditoFiscalNormativo> CreditosFiscalesNormativos => Set<CreditoFiscalNormativo>();
+    public DbSet<CreditoFiscalColaborador> CreditosFiscalesColaborador => Set<CreditoFiscalColaborador>();
+    public DbSet<ConfiguracionRiesgoTrabajo> ConfiguracionesRiesgoTrabajo => Set<ConfiguracionRiesgoTrabajo>();
+    public DbSet<EjecucionPlanilla> EjecucionesPlanilla => Set<EjecucionPlanilla>();
+    public DbSet<SegmentoCalculoPlanilla> SegmentosCalculoPlanilla => Set<SegmentoCalculoPlanilla>();
+    public DbSet<ConceptoDetallePlanilla> ConceptosDetallePlanilla => Set<ConceptoDetallePlanilla>();
+    public DbSet<AplicacionNormativaDetallePlanilla> AplicacionesNormativasDetallePlanilla => Set<AplicacionNormativaDetallePlanilla>();
+    public DbSet<DetallePlanillaDistribucionProyecto> DistribucionesProyectoDetallePlanilla => Set<DetallePlanillaDistribucionProyecto>();
+    public DbSet<BitacoraAuditoria> BitacoraAuditoria => Set<BitacoraAuditoria>();
+
+    public DbSet<ForecastEscenario> ForecastEscenarios => Set<ForecastEscenario>();
+    public DbSet<ForecastComparacionReal> ForecastComparacionesReales => Set<ForecastComparacionReal>();
+    public DbSet<ForecastComparacionResultado> ForecastComparacionResultados => Set<ForecastComparacionResultado>();
+    public DbSet<ForecastComparacionResultadoFuente> ForecastComparacionFuentes => Set<ForecastComparacionResultadoFuente>();
+
+    public DbSet<ForecastPeriodo> ForecastPeriodos => Set<ForecastPeriodo>();
+
+    public DbSet<ForecastFuenteHistorica> ForecastFuentesHistoricas => Set<ForecastFuenteHistorica>();
+
+    public DbSet<ForecastParametro> ForecastParametros => Set<ForecastParametro>();
+
+    public DbSet<ForecastParticipante> ForecastParticipantes => Set<ForecastParticipante>();
+
+    public DbSet<ForecastAsignacionProyecto> ForecastAsignacionesProyecto => Set<ForecastAsignacionProyecto>();
+
+    public DbSet<ForecastDetalle> ForecastDetalles => Set<ForecastDetalle>();
+
+    public DbSet<ForecastObservacionHistorica> ForecastObservacionesHistoricas => Set<ForecastObservacionHistorica>();
+    public DbSet<ForecastSegmentoProyectado> ForecastSegmentosProyectados => Set<ForecastSegmentoProyectado>();
+    public DbSet<ForecastAplicacionFinanciera> ForecastAplicacionesFinancieras => Set<ForecastAplicacionFinanciera>();
+
+    public DbSet<EstadoActivo> EstadosActivo => Set<EstadoActivo>();
+
+    public DbSet<TipoActivo> TiposActivo => Set<TipoActivo>();
+
+    public DbSet<CategoriaActivo> CategoriasActivo => Set<CategoriaActivo>();
+
+    public DbSet<Activo> Activos => Set<Activo>();
+
+    public DbSet<TipoMedicionUso> TiposMedicionUso => Set<TipoMedicionUso>();
+
+    public DbSet<AsignacionActivoProyecto> AsignacionesActivoProyecto => Set<AsignacionActivoProyecto>();
+
+    public DbSet<RegistroUsoActivo> RegistrosUsoActivo => Set<RegistroUsoActivo>();
+
+	public DbSet<EstadoMantenimiento> EstadosMantenimiento => Set<EstadoMantenimiento>();
+
+	public DbSet<Mantenimiento> Mantenimientos => Set<Mantenimiento>();
+
+	public DbSet<PaginaContenido> PaginasContenido => Set<PaginaContenido>();
+
+    public DbSet<EstadoProyecto> EstadosProyecto => Set<EstadoProyecto>();
+
+    public DbSet<Proyecto> Proyectos => Set<Proyecto>();
+
+    public DbSet<ProyectoPublicado> ProyectosPublicados => Set<ProyectoPublicado>();
+
+	protected override void OnModelCreating(ModelBuilder builder)
+	{
+		base.OnModelCreating(builder);
+
+        builder.ApplyConfiguration(new ForecastEscenarioConfiguracion());
+        builder.ApplyConfiguration(new ForecastPeriodoConfiguracion());
+        builder.ApplyConfiguration(new ForecastFuenteHistoricaConfiguracion());
+        builder.ApplyConfiguration(new ForecastParametroConfiguracion());
+        builder.ApplyConfiguration(new ForecastParticipanteConfiguracion());
+        builder.ApplyConfiguration(new ForecastAsignacionProyectoConfiguracion());
+        builder.ApplyConfiguration(new ForecastDetalleConfiguracion());
+        builder.ApplyConfiguration(new ForecastObservacionHistoricaConfiguracion());
+        builder.ApplyConfiguration(new ForecastSegmentoProyectadoConfiguracion());
+        builder.ApplyConfiguration(new ForecastAplicacionFinancieraConfiguracion());
+        builder.ApplyConfiguration(new ConceptoPlanillaConfiguracion());
+        builder.ApplyConfiguration(new ConceptoPlanillaVersionConfiguracion());
+        builder.ApplyConfiguration(new VersionNormativaConfiguracion());
+        builder.ApplyConfiguration(new ParametroNormativoConfiguracion());
+        builder.ApplyConfiguration(new ValorParametroNormativoConfiguracion());
+        builder.ApplyConfiguration(new TramoImpuestoSalarioConfiguracion());
+        builder.ApplyConfiguration(new CreditoFiscalNormativoConfiguracion());
+        builder.ApplyConfiguration(new CreditoFiscalColaboradorConfiguracion());
+        builder.ApplyConfiguration(new ConfiguracionRiesgoTrabajoConfiguracion());
+        builder.ApplyConfiguration(new JornadaLaboralConfiguracion());
+        builder.ApplyConfiguration(new CondicionLaboralVersionConfiguracion());
+        builder.ApplyConfiguration(new IncidenciaPlanillaConfirmacionConfiguracion());
+        builder.ApplyConfiguration(new OcupacionSalarioMinimoConfiguracion());
+        builder.ApplyConfiguration(new SalarioMinimoVersionConfiguracion());
+        builder.ApplyConfiguration(new EjecucionPlanillaConfiguracion());
+        builder.ApplyConfiguration(new SegmentoCalculoPlanillaConfiguracion());
+        builder.ApplyConfiguration(new ConceptoDetallePlanillaConfiguracion());
+        builder.ApplyConfiguration(new AplicacionNormativaDetalleConfiguracion());
+        builder.ApplyConfiguration(new DetallePlanillaDistribucionProyectoConfiguracion());
+        builder.ApplyConfiguration(new ForecastComparacionRealConfiguracion());
+        builder.ApplyConfiguration(new ForecastComparacionResultadoConfiguracion());
+        builder.ApplyConfiguration(new ForecastComparacionResultadoFuenteConfiguracion());
+
+		builder.Entity<ApplicationUser>(entidad =>
+		{
+			entidad.Property(usuario => usuario.EstadoRegistro)
+				.HasColumnType("enum('Activo','Inactivo')")
+				.HasDefaultValue(EstadosRegistro.Activo)
+				.IsRequired();
+
+			entidad.Property(usuario => usuario.FechaCreacion)
+				.HasDefaultValueSql("CURRENT_TIMESTAMP")
+				.IsRequired();
+		});
+
+		builder.Entity<Mantenimiento>(entidad =>
+		{
+			entidad.ToTable("Mantenimiento");
+
+			entidad.HasKey(mantenimiento => mantenimiento.IdMantenimiento);
+
+			entidad.Property(mantenimiento => mantenimiento.IdMantenimiento)
+				.ValueGeneratedOnAdd();
+
+			entidad.Property(mantenimiento => mantenimiento.TipoMantenimiento)
+				.HasColumnType("enum('Preventivo','Correctivo')")
+				.IsRequired();
+
+			entidad.Property(mantenimiento => mantenimiento.FechaProgramada)
+				.HasColumnType("date")
+				.IsRequired();
+
+			entidad.Property(mantenimiento => mantenimiento.FechaInicio);
+
+			entidad.Property(mantenimiento => mantenimiento.FechaFin);
+
+			entidad.Property(mantenimiento => mantenimiento.Descripcion)
+				.HasMaxLength(500);
+
+			entidad.Property(mantenimiento => mantenimiento.CostoEstimado)
+				.HasPrecision(18, 2);
+
+			entidad.Property(mantenimiento => mantenimiento.CostoReal)
+				.HasPrecision(18, 2);
+
+			entidad.Property(mantenimiento => mantenimiento.TiempoFueraServicioHoras)
+				.HasPrecision(18, 2);
+
+			entidad.Property(mantenimiento => mantenimiento.Resultado)
+				.HasMaxLength(500);
+
+			entidad.Property(mantenimiento => mantenimiento.Responsable)
+				.HasMaxLength(150);
+
+			entidad.Property(mantenimiento => mantenimiento.FechaCreacion)
+				.HasDefaultValueSql("CURRENT_TIMESTAMP")
+				.IsRequired();
+
+			entidad.Property(mantenimiento => mantenimiento.CreadoPor)
+				.HasMaxLength(255);
+
+			entidad.Property(mantenimiento => mantenimiento.FechaModificacion);
+
+			entidad.Property(mantenimiento => mantenimiento.ModificadoPor)
+				.HasMaxLength(255);
+
+			entidad.Property(mantenimiento => mantenimiento.EstadoRegistro)
+				.HasColumnType("enum('Activo','Inactivo')")
+				.HasDefaultValue(EstadosRegistro.Activo)
+				.IsRequired();
+
+			entidad.HasIndex(mantenimiento => mantenimiento.IdActivo)
+				.HasDatabaseName("IX_Mantenimiento_IdActivo");
+
+			entidad.HasIndex(mantenimiento => mantenimiento.IdProyecto)
+				.HasDatabaseName("IX_Mantenimiento_IdProyecto");
+
+			entidad.HasIndex(mantenimiento => mantenimiento.IdEstadoMantenimiento)
+				.HasDatabaseName("IX_Mantenimiento_IdEstadoMantenimiento");
+
+			entidad.HasIndex(mantenimiento => mantenimiento.FechaProgramada)
+				.HasDatabaseName("IX_Mantenimiento_FechaProgramada");
+
+			entidad.HasOne(mantenimiento => mantenimiento.Activo)
+				.WithMany()
+				.HasForeignKey(mantenimiento => mantenimiento.IdActivo)
+				.OnDelete(DeleteBehavior.Restrict)
+				.HasConstraintName("FK_Mantenimiento_Activo");
+
+			entidad.HasOne(mantenimiento => mantenimiento.Proyecto)
+				.WithMany()
+				.HasForeignKey(mantenimiento => mantenimiento.IdProyecto)
+				.OnDelete(DeleteBehavior.SetNull)
+				.HasConstraintName("FK_Mantenimiento_Proyecto");
+
+			entidad.HasOne(mantenimiento => mantenimiento.EstadoMantenimiento)
+				.WithMany()
+				.HasForeignKey(mantenimiento => mantenimiento.IdEstadoMantenimiento)
+				.OnDelete(DeleteBehavior.Restrict)
+				.HasConstraintName("FK_Mantenimiento_EstadoMantenimiento");
+
+			entidad.HasOne<ApplicationUser>()
+				.WithMany()
+				.HasForeignKey(mantenimiento => mantenimiento.CreadoPor)
+				.OnDelete(DeleteBehavior.SetNull)
+				.HasConstraintName("FK_Mantenimiento_CreadoPor");
+
+			entidad.HasOne<ApplicationUser>()
+				.WithMany()
+				.HasForeignKey(mantenimiento => mantenimiento.ModificadoPor)
+				.OnDelete(DeleteBehavior.SetNull)
+				.HasConstraintName("FK_Mantenimiento_ModificadoPor");
+		});
+
+
+		builder.Entity<ConsultaContacto>(entidad =>
+        {
+            entidad.ToTable("ConsultaContacto");
+
+            entidad.HasKey(consulta => consulta.IdConsultaContacto);
+
+            entidad.Property(consulta => consulta.IdConsultaContacto)
+                .ValueGeneratedOnAdd();
+
+            entidad.Property(consulta => consulta.Nombre)
+                .HasMaxLength(150)
+                .IsRequired();
+
+            entidad.Property(consulta => consulta.CorreoElectronico)
+                .HasMaxLength(150)
+                .IsRequired();
+
+            entidad.Property(consulta => consulta.Telefono)
+                .HasMaxLength(30);
+
+            entidad.Property(consulta => consulta.Asunto)
+                .HasMaxLength(200);
+
+            entidad.Property(consulta => consulta.Mensaje)
+                .HasColumnType("text")
+                .IsRequired();
+
+            entidad.Property(consulta => consulta.FechaEnvio)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .IsRequired();
+
+            entidad.Property(consulta => consulta.EstadoConsulta)
+                .HasColumnType("enum('Nueva','EnRevision','Atendida','Descartada')")
+                .HasDefaultValue(EstadosConsultaContacto.Nueva)
+                .IsRequired();
+
+            entidad.Property(consulta => consulta.ObservacionesInternas)
+                .HasMaxLength(500);
+
+            entidad.Property(consulta => consulta.EstadoRegistro)
+                .HasColumnType("enum('Activo','Inactivo')")
+                .HasDefaultValue(EstadosRegistro.Activo)
+                .IsRequired();
+
+            entidad.HasIndex(consulta => consulta.FechaEnvio)
+                .HasDatabaseName("IX_ConsultaContacto_FechaEnvio");
+
+            entidad.HasIndex(consulta => consulta.EstadoConsulta)
+                .HasDatabaseName("IX_ConsultaContacto_EstadoConsulta");
+
+            entidad.HasIndex(consulta => consulta.CorreoElectronico)
+                .HasDatabaseName("IX_ConsultaContacto_CorreoElectronico");
+        });
+
+        builder.Entity<FAQ>(entidad =>
+        {
+            entidad.ToTable("FAQ");
+
+            entidad.HasKey(faq => faq.IdFAQ);
+
+            entidad.Property(faq => faq.IdFAQ)
+                .ValueGeneratedOnAdd();
+
+            entidad.Property(faq => faq.Pregunta)
+                .HasMaxLength(300)
+                .IsRequired();
+
+            entidad.Property(faq => faq.Respuesta)
+                .HasColumnType("text")
+                .IsRequired();
+
+            entidad.Property(faq => faq.Orden)
+                .HasDefaultValue(0)
+                .IsRequired();
+
+            entidad.Property(faq => faq.EstaPublicado)
+                .HasDefaultValue(false)
+                .IsRequired();
+
+            entidad.Property(faq => faq.FechaCreacion)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .IsRequired();
+
+            entidad.Property(faq => faq.CreadoPor)
+                .HasMaxLength(255);
+
+            entidad.Property(faq => faq.ModificadoPor)
+                .HasMaxLength(255);
+
+            entidad.Property(faq => faq.EstadoRegistro)
+                .HasColumnType("enum('Activo','Inactivo')")
+                .HasDefaultValue(EstadosRegistro.Activo)
+                .IsRequired();
+
+            entidad.HasIndex(faq => faq.EstaPublicado)
+                .HasDatabaseName("IX_FAQ_EstaPublicado");
+
+            entidad.HasIndex(faq => faq.Orden)
+                .HasDatabaseName("IX_FAQ_Orden");
+
+            entidad.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(faq => faq.CreadoPor)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_FAQ_CreadoPor");
+
+            entidad.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(faq => faq.ModificadoPor)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_FAQ_ModificadoPor");
+        });
+
+        builder.Entity<Noticia>(entidad =>
+        {
+            entidad.ToTable("Noticia");
+
+            entidad.HasKey(noticia => noticia.IdNoticia);
+
+            entidad.Property(noticia => noticia.IdNoticia)
+                .ValueGeneratedOnAdd();
+
+            entidad.Property(noticia => noticia.Titulo)
+                .HasMaxLength(200)
+                .IsRequired();
+
+            entidad.Property(noticia => noticia.Resumen)
+                .HasMaxLength(500);
+
+            entidad.Property(noticia => noticia.Contenido)
+                .HasColumnType("mediumtext");
+
+            entidad.Property(noticia => noticia.EstaPublicado)
+                .HasDefaultValue(false)
+                .IsRequired();
+
+            entidad.Property(noticia => noticia.FechaCreacion)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .IsRequired();
+
+            entidad.Property(noticia => noticia.CreadoPor)
+                .HasMaxLength(255);
+
+            entidad.Property(noticia => noticia.ModificadoPor)
+                .HasMaxLength(255);
+
+            entidad.Property(noticia => noticia.EstadoRegistro)
+                .HasColumnType("enum('Activo','Inactivo')")
+                .HasDefaultValue(EstadosRegistro.Activo)
+                .IsRequired();
+
+            entidad.HasIndex(noticia => noticia.EstaPublicado)
+                .HasDatabaseName("IX_Noticia_EstaPublicado");
+
+            entidad.HasIndex(noticia => noticia.FechaPublicacion)
+                .HasDatabaseName("IX_Noticia_FechaPublicacion");
+
+            entidad.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(noticia => noticia.CreadoPor)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_Noticia_CreadoPor");
+
+            entidad.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(noticia => noticia.ModificadoPor)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_Noticia_ModificadoPor");
+        });
+
+        builder.Entity<Galeria>(entidad =>
+        {
+            entidad.ToTable("Galeria");
+
+            entidad.HasKey(galeria => galeria.IdGaleria);
+
+            entidad.Property(galeria => galeria.IdGaleria)
+                .ValueGeneratedOnAdd();
+
+            entidad.Property(galeria => galeria.Nombre)
+                .HasMaxLength(150)
+                .IsRequired();
+
+            entidad.Property(galeria => galeria.Descripcion)
+                .HasMaxLength(500);
+
+            entidad.Property(galeria => galeria.EstaPublicado)
+                .HasDefaultValue(false)
+                .IsRequired();
+
+            entidad.Property(galeria => galeria.FechaCreacion)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .IsRequired();
+
+            entidad.Property(galeria => galeria.CreadoPor)
+                .HasMaxLength(255);
+
+            entidad.Property(galeria => galeria.ModificadoPor)
+                .HasMaxLength(255);
+
+            entidad.Property(galeria => galeria.EstadoRegistro)
+                .HasColumnType("enum('Activo','Inactivo')")
+                .HasDefaultValue(EstadosRegistro.Activo)
+                .IsRequired();
+
+            entidad.HasIndex(galeria => galeria.EstaPublicado)
+                .HasDatabaseName("IX_Galeria_EstaPublicado");
+
+            entidad.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(galeria => galeria.CreadoPor)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_Galeria_CreadoPor");
+
+            entidad.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(galeria => galeria.ModificadoPor)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_Galeria_ModificadoPor");
+        });
+
+        builder.Entity<ImagenGaleria>(entidad =>
+        {
+            entidad.ToTable("ImagenGaleria");
+
+            entidad.HasKey(imagen => imagen.IdImagenGaleria);
+
+            entidad.Property(imagen => imagen.IdImagenGaleria)
+                .ValueGeneratedOnAdd();
+
+            entidad.Property(imagen => imagen.Titulo)
+                .HasMaxLength(150);
+
+            entidad.Property(imagen => imagen.Descripcion)
+                .HasMaxLength(300);
+
+            entidad.Property(imagen => imagen.Orden)
+                .HasDefaultValue(0)
+                .IsRequired();
+
+            entidad.Property(imagen => imagen.EstadoRegistro)
+                .HasColumnType("enum('Activo','Inactivo')")
+                .HasDefaultValue(EstadosRegistro.Activo)
+                .IsRequired();
+
+            entidad.HasIndex(imagen => imagen.IdGaleria)
+                .HasDatabaseName("IX_ImagenGaleria_IdGaleria");
+
+            entidad.HasIndex(imagen => imagen.IdDocumentoArchivo)
+                .HasDatabaseName("IX_ImagenGaleria_IdDocumentoArchivo");
+
+            entidad.HasOne(imagen => imagen.Galeria)
+                .WithMany(galeria => galeria.Imagenes)
+                .HasForeignKey(imagen => imagen.IdGaleria)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_ImagenGaleria_Galeria");
+
+            entidad.HasOne(imagen => imagen.DocumentoArchivo)
+                .WithMany()
+                .HasForeignKey(imagen => imagen.IdDocumentoArchivo)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_ImagenGaleria_DocumentoArchivo");
+        });
+
+        builder.Entity<EstadoLaboral>(entidad =>
+        {
+            entidad.ToTable("EstadoLaboral");
+
+            entidad.HasKey(estado => estado.IdEstadoLaboral);
+
+            entidad.Property(estado => estado.IdEstadoLaboral)
+                .ValueGeneratedOnAdd();
+
+            entidad.Property(estado => estado.Nombre)
+                .HasMaxLength(50)
+                .IsRequired();
+
+            entidad.Property(estado => estado.Descripcion)
+                .HasMaxLength(255);
+
+            entidad.Property(estado => estado.EstadoRegistro)
+                .HasColumnType("enum('Activo','Inactivo')")
+                .HasDefaultValue("Activo")
+                .IsRequired();
+
+            entidad.HasIndex(estado => estado.Nombre)
+                .IsUnique()
+                .HasDatabaseName("UX_EstadoLaboral_Nombre");
+        });
+
+        builder.Entity<Departamento>(entidad =>
+        {
+            entidad.ToTable("Departamento");
+
+            entidad.HasKey(departamento => departamento.IdDepartamento);
+
+            entidad.Property(departamento => departamento.IdDepartamento)
+                .ValueGeneratedOnAdd();
+
+            entidad.Property(departamento => departamento.Nombre)
+                .HasMaxLength(100)
+                .IsRequired();
+
+            entidad.Property(departamento => departamento.Descripcion)
+                .HasMaxLength(255);
+
+            entidad.Property(departamento => departamento.EstadoRegistro)
+                .HasColumnType("enum('Activo','Inactivo')")
+                .HasDefaultValue("Activo")
+                .IsRequired();
+
+            entidad.HasIndex(departamento => departamento.Nombre)
+                .IsUnique()
+                .HasDatabaseName("UX_Departamento_Nombre");
+        });
+
+        builder.Entity<Puesto>(entidad =>
+        {
+            entidad.ToTable("Puesto");
+
+            entidad.HasKey(puesto => puesto.IdPuesto);
+
+            entidad.Property(puesto => puesto.IdPuesto)
+                .ValueGeneratedOnAdd();
+
+            entidad.Property(puesto => puesto.Nombre)
+                .HasMaxLength(100)
+                .IsRequired();
+
+            entidad.Property(puesto => puesto.Descripcion)
+                .HasMaxLength(255);
+
+            entidad.Property(puesto => puesto.EstadoRegistro)
+                .HasColumnType("enum('Activo','Inactivo')")
+                .HasDefaultValue("Activo")
+                .IsRequired();
+
+            entidad.HasIndex(puesto => puesto.Nombre)
+                .IsUnique()
+                .HasDatabaseName("UX_Puesto_Nombre");
+
+            entidad.HasIndex(puesto => puesto.IdDepartamento)
+                .HasDatabaseName("IX_Puesto_IdDepartamento");
+
+            entidad.HasIndex(puesto => puesto.IdOcupacionSalarioMinimo)
+                .HasDatabaseName("IX_Puesto_IdOcupacionSalarioMinimo");
+
+            entidad.HasOne(puesto => puesto.Departamento)
+                .WithMany()
+                .HasForeignKey(puesto => puesto.IdDepartamento)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_Puesto_Departamento");
+
+            entidad.HasOne(puesto => puesto.OcupacionSalarioMinimo)
+                .WithMany()
+                .HasForeignKey(puesto => puesto.IdOcupacionSalarioMinimo)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_Puesto_OcupacionSalarioMinimo");
+        });
+
+        builder.Entity<Colaborador>(entidad =>
+        {
+            entidad.ToTable("Colaborador");
+
+            entidad.HasKey(colaborador => colaborador.IdColaborador);
+
+            entidad.Property(colaborador => colaborador.IdColaborador)
+                .ValueGeneratedOnAdd();
+
+            entidad.Property(colaborador => colaborador.CodigoColaborador)
+                .HasMaxLength(20)
+                .IsRequired();
+
+            entidad.Property(colaborador => colaborador.TipoIdentificacion)
+                .HasMaxLength(30)
+                .IsRequired();
+
+            entidad.Property(colaborador => colaborador.Identificacion)
+                .HasMaxLength(30)
+                .IsRequired();
+
+            entidad.Property(colaborador => colaborador.Nombre)
+                .HasMaxLength(100)
+                .IsRequired();
+
+            entidad.Property(colaborador => colaborador.PrimerApellido)
+                .HasMaxLength(100)
+                .IsRequired();
+
+            entidad.Property(colaborador => colaborador.SegundoApellido)
+                .HasMaxLength(100);
+
+            entidad.Property(colaborador => colaborador.FechaNacimiento)
+                .HasColumnType("date");
+
+            entidad.Property(colaborador => colaborador.CorreoElectronico)
+                .HasMaxLength(150);
+
+            entidad.Property(colaborador => colaborador.Telefono)
+                .HasMaxLength(30);
+
+            entidad.Property(colaborador => colaborador.Direccion)
+                .HasMaxLength(300);
+
+            entidad.Property(colaborador => colaborador.FechaIngreso)
+                .HasColumnType("date")
+                .IsRequired();
+
+            entidad.Property(colaborador => colaborador.FechaSalida)
+                .HasColumnType("date");
+
+            entidad.Property(colaborador => colaborador.IdUsuario)
+                .HasMaxLength(255);
+
+            entidad.Property(colaborador => colaborador.Observaciones)
+                .HasMaxLength(500);
+
+            entidad.Property(colaborador => colaborador.FechaCreacion)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .IsRequired();
+
+            entidad.Property(colaborador => colaborador.CreadoPor)
+                .HasMaxLength(255);
+
+            entidad.Property(colaborador => colaborador.ModificadoPor)
+                .HasMaxLength(255);
+
+            entidad.Property(colaborador => colaborador.EstadoRegistro)
+                .HasColumnType("enum('Activo','Inactivo')")
+                .HasDefaultValue("Activo")
+                .IsRequired();
+
+            entidad.HasIndex(colaborador => colaborador.CodigoColaborador)
+                .IsUnique()
+                .HasDatabaseName("UX_Colaborador_Codigo");
+
+            entidad.HasIndex(colaborador => colaborador.Identificacion)
+                .IsUnique()
+                .HasDatabaseName("UX_Colaborador_Identificacion");
+
+            entidad.HasIndex(colaborador => colaborador.IdUsuario)
+                .IsUnique()
+                .HasDatabaseName("UX_Colaborador_IdUsuario");
+
+            entidad.HasIndex(colaborador => colaborador.IdEstadoLaboral)
+                .HasDatabaseName("IX_Colaborador_IdEstadoLaboral");
+
+            entidad.HasIndex(colaborador => colaborador.IdDepartamento)
+                .HasDatabaseName("IX_Colaborador_IdDepartamento");
+
+            entidad.HasIndex(colaborador => colaborador.IdPuesto)
+                .HasDatabaseName("IX_Colaborador_IdPuesto");
+
+            entidad.HasIndex(colaborador => new
+                {
+                    colaborador.Nombre,
+                    colaborador.PrimerApellido,
+                    colaborador.SegundoApellido
+                })
+                .HasDatabaseName("IX_Colaborador_Nombre");
+
+            entidad.HasOne(colaborador => colaborador.EstadoLaboral)
+                .WithMany()
+                .HasForeignKey(colaborador => colaborador.IdEstadoLaboral)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_Colaborador_EstadoLaboral");
+
+            entidad.HasOne(colaborador => colaborador.Departamento)
+                .WithMany()
+                .HasForeignKey(colaborador => colaborador.IdDepartamento)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_Colaborador_Departamento");
+
+            entidad.HasOne(colaborador => colaborador.Puesto)
+                .WithMany()
+                .HasForeignKey(colaborador => colaborador.IdPuesto)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_Colaborador_Puesto");
+
+            entidad.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(colaborador => colaborador.IdUsuario)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_Colaborador_AspNetUsers");
+
+            entidad.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(colaborador => colaborador.CreadoPor)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_Colaborador_CreadoPor");
+
+            entidad.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(colaborador => colaborador.ModificadoPor)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_Colaborador_ModificadoPor");
+        });
+
+        builder.Entity<Contrato>(entidad =>
+        {
+            entidad.ToTable("Contrato");
+
+            entidad.HasKey(contrato => contrato.IdContrato);
+
+            entidad.Property(contrato => contrato.IdContrato)
+                .ValueGeneratedOnAdd();
+
+            entidad.Property(contrato => contrato.TipoContrato)
+                .HasMaxLength(100)
+                .IsRequired();
+
+            entidad.Property(contrato => contrato.FechaInicio)
+                .HasColumnType("date")
+                .IsRequired();
+
+            entidad.Property(contrato => contrato.FechaFin)
+                .HasColumnType("date");
+
+            entidad.Property(contrato => contrato.SalarioBase)
+                .HasPrecision(18, 2)
+                .HasDefaultValue(0.00m)
+                .IsRequired();
+
+            entidad.Property(contrato => contrato.Jornada)
+                .HasMaxLength(100);
+
+            entidad.Property(contrato => contrato.PeriodicidadPago)
+                .HasColumnType("enum('Mensual','Quincenal')")
+                .HasDefaultValue(PeriodicidadesPago.Quincenal)
+                .IsRequired();
+
+            entidad.Property(contrato => contrato.EstadoContrato)
+                .HasColumnType("enum('Activo','Finalizado','Suspendido','Anulado')")
+                .HasDefaultValue(EstadosContrato.Activo)
+                .IsRequired();
+
+            entidad.Property(contrato => contrato.Observaciones)
+                .HasMaxLength(500);
+
+            entidad.Property(contrato => contrato.FechaCreacion)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .IsRequired();
+
+            entidad.Property(contrato => contrato.CreadoPor)
+                .HasMaxLength(255);
+
+            entidad.Property(contrato => contrato.ModificadoPor)
+                .HasMaxLength(255);
+
+            entidad.Property(contrato => contrato.EstadoRegistro)
+                .HasColumnType("enum('Activo','Inactivo')")
+                .HasDefaultValue("Activo")
+                .IsRequired();
+
+            entidad.HasIndex(contrato => contrato.IdColaborador)
+                .HasDatabaseName("IX_Contrato_IdColaborador");
+
+            entidad.HasIndex(contrato => contrato.FechaInicio)
+                .HasDatabaseName("IX_Contrato_FechaInicio");
+
+            entidad.HasIndex(contrato => contrato.EstadoContrato)
+                .HasDatabaseName("IX_Contrato_EstadoContrato");
+
+            entidad.HasIndex(contrato => contrato.IdJornadaLaboral)
+                .HasDatabaseName("IX_Contrato_IdJornadaLaboral");
+
+            entidad.HasIndex(contrato => contrato.IdConfiguracionRiesgoTrabajo)
+                .HasDatabaseName("IX_Contrato_IdConfiguracionRiesgoTrabajo");
+
+            entidad.HasIndex(contrato => new
+                {
+                    contrato.IdColaborador,
+                    contrato.FechaInicio,
+                    contrato.FechaFin,
+                    contrato.EstadoRegistro
+                })
+                .HasDatabaseName("IX_Contrato_ResolucionTemporal");
+
+            entidad.HasOne(contrato => contrato.Colaborador)
+                .WithMany()
+                .HasForeignKey(contrato => contrato.IdColaborador)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_Contrato_Colaborador");
+
+            entidad.HasOne(contrato => contrato.JornadaLaboral)
+                .WithMany()
+                .HasForeignKey(contrato => contrato.IdJornadaLaboral)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_Contrato_JornadaLaboral");
+
+            entidad.HasOne(contrato => contrato.ConfiguracionRiesgoTrabajo)
+                .WithMany()
+                .HasForeignKey(contrato => contrato.IdConfiguracionRiesgoTrabajo)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_Contrato_RiesgoTrabajo");
+
+            entidad.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(contrato => contrato.CreadoPor)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_Contrato_CreadoPor");
+
+            entidad.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(contrato => contrato.ModificadoPor)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_Contrato_ModificadoPor");
+        });
+
+        builder.Entity<TipoDocumento>(entidad =>
+        {
+            entidad.ToTable("TipoDocumento");
+
+            entidad.HasKey(tipo => tipo.IdTipoDocumento);
+
+            entidad.Property(tipo => tipo.IdTipoDocumento)
+                .ValueGeneratedOnAdd();
+
+            entidad.Property(tipo => tipo.Nombre)
+                .HasMaxLength(100)
+                .IsRequired();
+
+            entidad.Property(tipo => tipo.Descripcion)
+                .HasMaxLength(255);
+
+            entidad.Property(tipo => tipo.EstadoRegistro)
+                .HasColumnType("enum('Activo','Inactivo')")
+                .HasDefaultValue("Activo")
+                .IsRequired();
+
+            entidad.HasIndex(tipo => tipo.Nombre)
+                .IsUnique()
+                .HasDatabaseName("UX_TipoDocumento_Nombre");
+        });
+
+        builder.Entity<DocumentoArchivo>(entidad =>
+        {
+            entidad.ToTable("DocumentoArchivo");
+
+            entidad.HasKey(documento => documento.IdDocumentoArchivo);
+
+            entidad.Property(documento => documento.IdDocumentoArchivo)
+                .ValueGeneratedOnAdd();
+
+            entidad.Property(documento => documento.EntidadRelacionada)
+                .HasMaxLength(100)
+                .IsRequired();
+
+            entidad.Property(documento => documento.NombreOriginal)
+                .HasMaxLength(255)
+                .IsRequired();
+
+            entidad.Property(documento => documento.NombreAlmacenado)
+                .HasMaxLength(255)
+                .IsRequired();
+
+            entidad.Property(documento => documento.RutaRelativa)
+                .HasMaxLength(500)
+                .IsRequired();
+
+            entidad.Property(documento => documento.MimeType)
+                .HasMaxLength(150);
+
+            entidad.Property(documento => documento.FechaCarga)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .IsRequired();
+
+            entidad.Property(documento => documento.CargadoPor)
+                .HasMaxLength(255);
+
+            entidad.Property(documento => documento.EstadoRegistro)
+                .HasColumnType("enum('Activo','Inactivo')")
+                .HasDefaultValue("Activo")
+                .IsRequired();
+
+            entidad.HasIndex(documento => new
+                {
+                    documento.EntidadRelacionada,
+                    documento.IdEntidadRelacionada
+                })
+                .HasDatabaseName("IX_DocumentoArchivo_Entidad");
+
+            entidad.HasIndex(documento => documento.IdTipoDocumento)
+                .HasDatabaseName("IX_DocumentoArchivo_IdTipoDocumento");
+
+            entidad.HasIndex(documento => documento.FechaCarga)
+                .HasDatabaseName("IX_DocumentoArchivo_FechaCarga");
+
+            entidad.HasOne(documento => documento.TipoDocumento)
+                .WithMany()
+                .HasForeignKey(documento => documento.IdTipoDocumento)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_DocumentoArchivo_TipoDocumento");
+
+            entidad.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(documento => documento.CargadoPor)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_DocumentoArchivo_CargadoPor");
+        });
+
+        builder.Entity<ParametroPlanilla>(entidad =>
+        {
+            entidad.ToTable("ParametroPlanilla", tabla =>
+            {
+                tabla.HasCheckConstraint("CK_ParametroPlanilla_Vigencia",
+                    "`FechaVigenciaFin` IS NULL OR `FechaVigenciaInicio` IS NULL OR `FechaVigenciaFin` >= `FechaVigenciaInicio`");
+                tabla.HasCheckConstraint("CK_ParametroPlanilla_NoNormativo", "`EsNormativo` = 0");
+                tabla.HasCheckConstraint("CK_ParametroPlanilla_Valor",
+                    "(`TipoParametro` = 'Texto' AND `ValorTexto` IS NOT NULL AND `ValorDecimal` IS NULL) OR (`TipoParametro` <> 'Texto' AND `ValorDecimal` IS NOT NULL AND `ValorTexto` IS NULL)");
+            });
+
+            entidad.HasKey(parametro => parametro.IdParametroPlanilla);
+
+            entidad.Property(parametro => parametro.IdParametroPlanilla)
+                .ValueGeneratedOnAdd();
+
+            entidad.Property(parametro => parametro.Codigo)
+                .HasMaxLength(100)
+                .IsRequired();
+
+            entidad.Property(parametro => parametro.Nombre)
+                .HasMaxLength(150)
+                .IsRequired();
+
+            entidad.Property(parametro => parametro.Descripcion)
+                .HasMaxLength(300);
+
+            entidad.Property(parametro => parametro.TipoParametro)
+                .HasColumnType("enum('Porcentaje','Monto','Cantidad','Texto')")
+                .HasDefaultValue(TiposParametroPlanilla.Porcentaje)
+                .IsRequired();
+
+            entidad.Property(parametro => parametro.Naturaleza)
+                .HasColumnType("enum('Deduccion','Beneficio')");
+
+            entidad.Property(parametro => parametro.ValorDecimal)
+                .HasPrecision(18, 4);
+
+            entidad.Property(parametro => parametro.ValorTexto)
+                .HasMaxLength(255);
+
+            entidad.Property(parametro => parametro.EsEditable)
+                .HasDefaultValue(true)
+                .IsRequired();
+
+            entidad.Property(parametro => parametro.FechaVigenciaInicio)
+                .HasColumnType("date");
+
+            entidad.Property(parametro => parametro.FechaVigenciaFin)
+                .HasColumnType("date");
+
+            entidad.Property(parametro => parametro.FechaCreacion)
+                .HasColumnType("datetime")
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .IsRequired();
+
+            entidad.Property(parametro => parametro.FechaModificacion)
+                .HasColumnType("datetime");
+
+            entidad.Property(parametro => parametro.CreadoPor)
+                .HasMaxLength(255);
+
+            entidad.Property(parametro => parametro.ModificadoPor)
+                .HasMaxLength(255);
+
+            entidad.Property(parametro => parametro.EstadoRegistro)
+                .HasColumnType("enum('Activo','Inactivo')")
+                .HasDefaultValue("Activo")
+                .IsRequired();
+
+            entidad.Property(parametro => parametro.EsNormativo)
+                .HasColumnType("tinyint(1)")
+                .HasDefaultValue(false)
+                .IsRequired();
+
+            entidad.HasIndex(parametro => new { parametro.Codigo, parametro.FechaVigenciaInicio })
+                .IsUnique()
+                .HasDatabaseName("UX_ParametroPlanilla_Codigo_VigenciaInicio");
+
+            entidad.HasIndex(parametro => parametro.IdConceptoPlanilla)
+                .HasDatabaseName("IX_ParametroPlanilla_IdConceptoPlanilla");
+
+            entidad.HasIndex(parametro => parametro.EstadoRegistro)
+                .HasDatabaseName("IX_ParametroPlanilla_EstadoRegistro");
+
+            entidad.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(parametro => parametro.CreadoPor)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_ParametroPlanilla_CreadoPor");
+
+            entidad.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(parametro => parametro.ModificadoPor)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_ParametroPlanilla_ModificadoPor");
+
+            entidad.HasOne(parametro => parametro.ConceptoPlanilla)
+                .WithMany()
+                .HasForeignKey(parametro => parametro.IdConceptoPlanilla)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_ParametroPlanilla_ConceptoPlanilla");
+        });
+
+        builder.Entity<ParametroPlanillaColaborador>(entidad =>
+        {
+            entidad.ToTable("ParametroPlanillaColaborador");
+
+            entidad.HasKey(asignacion => asignacion.IdParametroPlanillaColaborador);
+
+            entidad.Property(asignacion => asignacion.IdParametroPlanillaColaborador)
+                .ValueGeneratedOnAdd();
+
+            entidad.Property(asignacion => asignacion.ValorDecimalOverride)
+                .HasPrecision(18, 4);
+
+            entidad.Property(asignacion => asignacion.ValorTextoOverride)
+                .HasMaxLength(255);
+
+            entidad.Property(asignacion => asignacion.FechaCreacion)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .IsRequired();
+
+            entidad.Property(asignacion => asignacion.CreadoPor)
+                .HasMaxLength(255);
+
+            entidad.Property(asignacion => asignacion.ModificadoPor)
+                .HasMaxLength(255);
+
+            entidad.Property(asignacion => asignacion.EstadoRegistro)
+                .HasColumnType("enum('Activo','Inactivo')")
+                .HasDefaultValue("Activo")
+                .IsRequired();
+
+            entidad.HasIndex(asignacion => new
+                {
+                    asignacion.IdParametroPlanilla,
+                    asignacion.IdColaborador
+                })
+                .IsUnique()
+                .HasDatabaseName("UX_ParametroPlanillaColaborador_Parametro_Colaborador");
+
+            entidad.HasOne(asignacion => asignacion.ParametroPlanilla)
+                .WithMany(parametro => parametro.AsignacionesColaborador)
+                .HasForeignKey(asignacion => asignacion.IdParametroPlanilla)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_ParametroPlanillaColaborador_ParametroPlanilla");
+
+            entidad.HasOne(asignacion => asignacion.Colaborador)
+                .WithMany()
+                .HasForeignKey(asignacion => asignacion.IdColaborador)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_ParametroPlanillaColaborador_Colaborador");
+
+            entidad.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(asignacion => asignacion.CreadoPor)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_ParametroPlanillaColaborador_CreadoPor");
+
+            entidad.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(asignacion => asignacion.ModificadoPor)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_ParametroPlanillaColaborador_ModificadoPor");
+        });
+
+        builder.Entity<ParametroPlanillaPeriodo>(entidad =>
+        {
+            entidad.ToTable("ParametroPlanillaPeriodo");
+
+            entidad.HasKey(asignacion => asignacion.IdParametroPlanillaPeriodo);
+
+            entidad.Property(asignacion => asignacion.IdParametroPlanillaPeriodo)
+                .ValueGeneratedOnAdd();
+
+            entidad.Property(asignacion => asignacion.ValorDecimalOverride)
+                .HasPrecision(18, 4);
+
+            entidad.Property(asignacion => asignacion.ValorTextoOverride)
+                .HasMaxLength(255);
+
+            entidad.Property(asignacion => asignacion.FechaCreacion)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .IsRequired();
+
+            entidad.Property(asignacion => asignacion.CreadoPor)
+                .HasMaxLength(255);
+
+            entidad.Property(asignacion => asignacion.ModificadoPor)
+                .HasMaxLength(255);
+
+            entidad.Property(asignacion => asignacion.EstadoRegistro)
+                .HasColumnType("enum('Activo','Inactivo')")
+                .HasDefaultValue("Activo")
+                .IsRequired();
+
+            entidad.HasIndex(asignacion => new
+                {
+                    asignacion.IdParametroPlanilla,
+                    asignacion.IdPeriodoPlanilla
+                })
+                .IsUnique()
+                .HasDatabaseName("UX_ParametroPlanillaPeriodo_Parametro_Periodo");
+
+            entidad.HasOne(asignacion => asignacion.ParametroPlanilla)
+                .WithMany(parametro => parametro.AsignacionesPeriodo)
+                .HasForeignKey(asignacion => asignacion.IdParametroPlanilla)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_ParametroPlanillaPeriodo_ParametroPlanilla");
+
+            entidad.HasOne(asignacion => asignacion.PeriodoPlanilla)
+                .WithMany()
+                .HasForeignKey(asignacion => asignacion.IdPeriodoPlanilla)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_ParametroPlanillaPeriodo_PeriodoPlanilla");
+
+            entidad.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(asignacion => asignacion.CreadoPor)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_ParametroPlanillaPeriodo_CreadoPor");
+
+            entidad.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(asignacion => asignacion.ModificadoPor)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_ParametroPlanillaPeriodo_ModificadoPor");
+        });
+
+        builder.Entity<EstadoPlanilla>(entidad =>
+        {
+            entidad.ToTable("EstadoPlanilla");
+
+            entidad.HasKey(estado => estado.IdEstadoPlanilla);
+
+            entidad.Property(estado => estado.IdEstadoPlanilla)
+                .ValueGeneratedOnAdd();
+
+            entidad.Property(estado => estado.Nombre)
+                .HasMaxLength(50)
+                .IsRequired();
+
+            entidad.Property(estado => estado.Descripcion)
+                .HasMaxLength(255);
+
+            entidad.Property(estado => estado.EstadoRegistro)
+                .HasColumnType("enum('Activo','Inactivo')")
+                .HasDefaultValue("Activo")
+                .IsRequired();
+
+            entidad.HasIndex(estado => estado.Nombre)
+                .IsUnique()
+                .HasDatabaseName("UX_EstadoPlanilla_Nombre");
+        });
+
+        builder.Entity<TipoIncidenciaPlanilla>(entidad =>
+        {
+            entidad.ToTable("TipoIncidenciaPlanilla");
+
+            entidad.HasKey(tipo => tipo.IdTipoIncidenciaPlanilla);
+
+            entidad.Property(tipo => tipo.IdTipoIncidenciaPlanilla)
+                .ValueGeneratedOnAdd();
+
+            entidad.Property(tipo => tipo.Nombre)
+                .HasMaxLength(100)
+                .IsRequired();
+
+            entidad.Property(tipo => tipo.Naturaleza)
+                .HasColumnType("enum('Ingreso','Deduccion')")
+                .IsRequired();
+
+            entidad.Property(tipo => tipo.Descripcion)
+                .HasMaxLength(255);
+
+            entidad.Property(tipo => tipo.EstadoRegistro)
+                .HasColumnType("enum('Activo','Inactivo')")
+                .HasDefaultValue("Activo")
+                .IsRequired();
+
+            entidad.HasIndex(tipo => tipo.Nombre)
+                .IsUnique()
+                .HasDatabaseName("UX_TipoIncidenciaPlanilla_Nombre");
+
+            entidad.HasIndex(tipo => tipo.IdConceptoPlanilla)
+                .HasDatabaseName("IX_TipoIncidencia_IdConceptoPlanilla");
+
+            entidad.HasOne(tipo => tipo.ConceptoPlanilla)
+                .WithMany()
+                .HasForeignKey(tipo => tipo.IdConceptoPlanilla)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_TipoIncidencia_ConceptoPlanilla");
+        });
+
+        builder.Entity<PeriodoPlanilla>(entidad =>
+        {
+            entidad.ToTable("PeriodoPlanilla");
+
+            entidad.HasKey(periodo => periodo.IdPeriodoPlanilla);
+
+            entidad.Property(periodo => periodo.IdPeriodoPlanilla)
+                .ValueGeneratedOnAdd();
+
+            entidad.Property(periodo => periodo.CodigoPeriodo)
+                .HasMaxLength(30)
+                .IsRequired();
+
+            entidad.Property(periodo => periodo.Nombre)
+                .HasMaxLength(150)
+                .IsRequired();
+
+            entidad.Property(periodo => periodo.TipoPeriodo)
+                .HasColumnType("enum('Mensual','Quincenal')")
+                .HasDefaultValue("Quincenal")
+                .IsRequired();
+
+            entidad.Property(periodo => periodo.FechaInicio)
+                .HasColumnType("date")
+                .IsRequired();
+
+            entidad.Property(periodo => periodo.FechaFin)
+                .HasColumnType("date")
+                .IsRequired();
+
+            entidad.Property(periodo => periodo.Observaciones)
+                .HasMaxLength(500);
+
+            entidad.Property(periodo => periodo.FechaCreacion)
+                .HasColumnType("datetime")
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .IsRequired();
+
+            entidad.Property(periodo => periodo.FechaModificacion)
+                .HasColumnType("datetime");
+
+            entidad.Property(periodo => periodo.CreadoPor)
+                .HasMaxLength(255);
+
+            entidad.Property(periodo => periodo.ModificadoPor)
+                .HasMaxLength(255);
+
+            entidad.Property(periodo => periodo.EstadoRegistro)
+                .HasColumnType("enum('Activo','Inactivo')")
+                .HasDefaultValue("Activo")
+                .IsRequired();
+
+            entidad.HasIndex(periodo => periodo.CodigoPeriodo)
+                .IsUnique()
+                .HasDatabaseName("UX_PeriodoPlanilla_CodigoPeriodo");
+
+            entidad.HasIndex(periodo => new
+                {
+                    periodo.FechaInicio,
+                    periodo.FechaFin
+                })
+                .HasDatabaseName("IX_PeriodoPlanilla_Fechas");
+
+            entidad.HasIndex(periodo => periodo.IdEstadoPlanilla)
+                .HasDatabaseName("IX_PeriodoPlanilla_IdEstadoPlanilla");
+
+            entidad.HasOne(periodo => periodo.EstadoPlanilla)
+                .WithMany()
+                .HasForeignKey(periodo => periodo.IdEstadoPlanilla)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_PeriodoPlanilla_EstadoPlanilla");
+
+            entidad.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(periodo => periodo.CreadoPor)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_PeriodoPlanilla_CreadoPor");
+
+            entidad.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(periodo => periodo.ModificadoPor)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_PeriodoPlanilla_ModificadoPor");
+        });
+
+        builder.Entity<Planilla>(entidad =>
+        {
+            entidad.ToTable("Planilla");
+
+            entidad.HasKey(planilla => planilla.IdPlanilla);
+
+            entidad.Property(planilla => planilla.IdPlanilla)
+                .ValueGeneratedOnAdd();
+
+            entidad.Property(planilla => planilla.FechaCalculo).HasColumnType("datetime");
+            entidad.Property(planilla => planilla.FechaAprobacion).HasColumnType("datetime");
+            entidad.Property(planilla => planilla.FechaCierre).HasColumnType("datetime");
+            entidad.Property(planilla => planilla.FechaModificacion).HasColumnType("datetime");
+
+            entidad.Property(planilla => planilla.SalarioBrutoTotal)
+                .HasPrecision(18, 2)
+                .HasDefaultValue(0.00m)
+                .IsRequired();
+
+            entidad.Property(planilla => planilla.DeduccionesTotal)
+                .HasPrecision(18, 2)
+                .HasDefaultValue(0.00m)
+                .IsRequired();
+
+            entidad.Property(planilla => planilla.SalarioNetoTotal)
+                .HasPrecision(18, 2)
+                .HasDefaultValue(0.00m)
+                .IsRequired();
+
+            entidad.Property(planilla => planilla.CostoPatronalEstimadoTotal)
+                .HasPrecision(18, 2)
+                .HasDefaultValue(0.00m)
+                .IsRequired();
+
+            entidad.Property(planilla => planilla.AprobadoPor)
+                .HasMaxLength(255);
+
+            entidad.Property(planilla => planilla.CerradoPor)
+                .HasMaxLength(255);
+
+            entidad.Property(planilla => planilla.Observaciones)
+                .HasMaxLength(500);
+
+            entidad.Property(planilla => planilla.FechaCreacion)
+                .HasColumnType("datetime")
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .IsRequired();
+
+            entidad.Property(planilla => planilla.CreadoPor)
+                .HasMaxLength(255);
+
+            entidad.Property(planilla => planilla.ModificadoPor)
+                .HasMaxLength(255);
+
+            entidad.Property(planilla => planilla.EstadoRegistro)
+                .HasColumnType("enum('Activo','Inactivo')")
+                .HasDefaultValue("Activo")
+                .IsRequired();
+
+            entidad.HasIndex(planilla => planilla.IdPeriodoPlanilla)
+                .IsUnique()
+                .HasDatabaseName("UX_Planilla_IdPeriodoPlanilla");
+
+            entidad.HasIndex(planilla => planilla.IdEstadoPlanilla)
+                .HasDatabaseName("IX_Planilla_IdEstadoPlanilla");
+
+            entidad.HasIndex(planilla => planilla.IdEjecucionPlanillaVigente)
+                .IsUnique()
+                .HasDatabaseName("UX_Planilla_EjecucionVigente");
+
+            entidad.HasOne(planilla => planilla.PeriodoPlanilla)
+                .WithOne(periodo => periodo.Planilla)
+                .HasForeignKey<Planilla>(planilla => planilla.IdPeriodoPlanilla)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_Planilla_PeriodoPlanilla");
+
+            entidad.HasOne(planilla => planilla.EstadoPlanilla)
+                .WithMany()
+                .HasForeignKey(planilla => planilla.IdEstadoPlanilla)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_Planilla_EstadoPlanilla");
+
+            entidad.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(planilla => planilla.AprobadoPor)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_Planilla_AprobadoPor");
+
+            entidad.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(planilla => planilla.CerradoPor)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_Planilla_CerradoPor");
+
+            entidad.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(planilla => planilla.CreadoPor)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_Planilla_CreadoPor");
+
+            entidad.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(planilla => planilla.ModificadoPor)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_Planilla_ModificadoPor");
+
+            entidad.HasOne(planilla => planilla.EjecucionVigente)
+                .WithMany()
+                .HasForeignKey(planilla => planilla.IdEjecucionPlanillaVigente)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_Planilla_EjecucionVigente");
+        });
+
+        builder.Entity<DetallePlanilla>(entidad =>
+        {
+            entidad.ToTable("DetallePlanilla", tabla =>
+                tabla.HasCheckConstraint("CK_DetallePlanilla_SnapshotCompleto", "`SnapshotCompleto` IN (0,1)"));
+
+            entidad.HasKey(detalle => detalle.IdDetallePlanilla);
+
+            entidad.Property(detalle => detalle.IdDetallePlanilla)
+                .ValueGeneratedOnAdd();
+
+            entidad.Property(detalle => detalle.SalarioBase).HasPrecision(18, 2).IsRequired();
+            entidad.Property(detalle => detalle.SalarioProporcional).HasPrecision(18, 2).IsRequired();
+            entidad.Property(detalle => detalle.TotalHorasExtra).HasPrecision(18, 2).IsRequired();
+            entidad.Property(detalle => detalle.TotalBonos).HasPrecision(18, 2).IsRequired();
+            entidad.Property(detalle => detalle.TotalBeneficiosConfigurables)
+                .HasPrecision(18, 2)
+                .HasDefaultValue(0.00m)
+                .IsRequired();
+            entidad.Property(detalle => detalle.TotalAusencias).HasPrecision(18, 2).IsRequired();
+            entidad.Property(detalle => detalle.SalarioBruto).HasPrecision(18, 2).IsRequired();
+            entidad.Property(detalle => detalle.TotalDeducciones).HasPrecision(18, 2).IsRequired();
+            entidad.Property(detalle => detalle.SalarioNeto).HasPrecision(18, 2).IsRequired();
+            entidad.Property(detalle => detalle.CostoPatronalEstimado).HasPrecision(18, 2).IsRequired();
+
+            entidad.Property(detalle => detalle.CodigoColaborador).HasMaxLength(20);
+            entidad.Property(detalle => detalle.NombreCompleto).HasMaxLength(320);
+            entidad.Property(detalle => detalle.NombrePuesto).HasMaxLength(150);
+            entidad.Property(detalle => detalle.NombreDepartamento).HasMaxLength(150);
+            entidad.Property(detalle => detalle.TipoContrato).HasMaxLength(100);
+            entidad.Property(detalle => detalle.PeriodicidadPago).HasMaxLength(20);
+            entidad.Property(detalle => detalle.CodigoJornada).HasMaxLength(50);
+            entidad.Property(detalle => detalle.HorasOrdinariasDia).HasPrecision(8, 4);
+            entidad.Property(detalle => detalle.SalarioContractual).HasPrecision(18, 2);
+            entidad.Property(detalle => detalle.FuenteDimensionesSnapshot).HasMaxLength(60);
+            entidad.Property(detalle => detalle.SnapshotCompleto)
+                .HasColumnType("tinyint(1)").HasDefaultValue(false).IsRequired();
+            entidad.Property(detalle => detalle.IngresosNoSalariales).HasPrecision(18, 2).HasDefaultValue(0m).IsRequired();
+            entidad.Property(detalle => detalle.CuotasObreras).HasPrecision(18, 2).HasDefaultValue(0m).IsRequired();
+            entidad.Property(detalle => detalle.ImpuestoSalario).HasPrecision(18, 2).HasDefaultValue(0m).IsRequired();
+            entidad.Property(detalle => detalle.OtrasDeducciones).HasPrecision(18, 2).HasDefaultValue(0m).IsRequired();
+            entidad.Property(detalle => detalle.CargasPatronales).HasPrecision(18, 2).HasDefaultValue(0m).IsRequired();
+            entidad.Property(detalle => detalle.RiesgosTrabajo).HasPrecision(18, 2).HasDefaultValue(0m).IsRequired();
+            entidad.Property(detalle => detalle.OtrosCostosPatronales).HasPrecision(18, 2).HasDefaultValue(0m).IsRequired();
+            entidad.Property(detalle => detalle.CostoLaboralTotal).HasPrecision(18, 2).HasDefaultValue(0m).IsRequired();
+
+            entidad.Property(detalle => detalle.Observaciones)
+                .HasMaxLength(500);
+
+            entidad.Property(detalle => detalle.FechaCreacion)
+                .HasColumnType("datetime")
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .IsRequired();
+
+            entidad.HasIndex(detalle => new { detalle.IdEjecucionPlanilla, detalle.IdColaborador })
+                .IsUnique()
+                .HasDatabaseName("UX_DetallePlanilla_Ejecucion_Colaborador");
+
+            entidad.HasIndex(detalle => detalle.IdPlanilla)
+                .HasDatabaseName("IX_DetallePlanilla_IdPlanilla");
+
+            entidad.HasIndex(detalle => detalle.IdColaborador)
+                .HasDatabaseName("IX_DetallePlanilla_IdColaborador");
+
+            entidad.HasOne(detalle => detalle.Planilla)
+                .WithMany(planilla => planilla.Detalles)
+                .HasForeignKey(detalle => detalle.IdPlanilla)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_DetallePlanilla_Planilla");
+
+            entidad.HasOne(detalle => detalle.Colaborador)
+                .WithMany()
+                .HasForeignKey(detalle => detalle.IdColaborador)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_DetallePlanilla_Colaborador");
+
+            entidad.HasOne(detalle => detalle.EjecucionPlanilla)
+                .WithMany(ejecucion => ejecucion.Detalles)
+                .HasForeignKey(detalle => detalle.IdEjecucionPlanilla)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_DetallePlanilla_EjecucionPlanilla");
+        });
+
+        builder.Entity<ColillaPago>(entidad =>
+        {
+            entidad.ToTable("ColillaPago");
+
+            entidad.HasKey(colilla => colilla.IdColillaPago);
+
+            entidad.Property(colilla => colilla.IdColillaPago)
+                .ValueGeneratedOnAdd();
+
+            entidad.Property(colilla => colilla.CodigoColilla)
+                .HasMaxLength(50)
+                .IsRequired();
+
+            entidad.Property(colilla => colilla.RutaArchivo)
+                .HasMaxLength(500);
+
+            entidad.Property(colilla => colilla.FechaGeneracion)
+                .HasColumnType("datetime")
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .IsRequired();
+
+            entidad.Property(colilla => colilla.GeneradoPor)
+                .HasMaxLength(255);
+
+            entidad.Property(colilla => colilla.EstadoRegistro)
+                .HasColumnType("enum('Activo','Inactivo')")
+                .HasDefaultValue("Activo")
+                .IsRequired();
+
+            entidad.HasIndex(colilla => colilla.IdDetallePlanilla)
+                .IsUnique()
+                .HasDatabaseName("UX_ColillaPago_IdDetallePlanilla");
+
+            entidad.HasIndex(colilla => colilla.CodigoColilla)
+                .IsUnique()
+                .HasDatabaseName("UX_ColillaPago_CodigoColilla");
+
+            entidad.HasOne(colilla => colilla.DetallePlanilla)
+                .WithOne(detalle => detalle.ColillaPago)
+                .HasForeignKey<ColillaPago>(colilla => colilla.IdDetallePlanilla)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_ColillaPago_DetallePlanilla");
+
+            entidad.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(colilla => colilla.GeneradoPor)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_ColillaPago_GeneradoPor");
+        });
+
+        builder.Entity<IncidenciaPlanilla>(entidad =>
+        {
+            entidad.ToTable("IncidenciaPlanilla");
+
+            entidad.HasKey(incidencia => incidencia.IdIncidenciaPlanilla);
+
+            entidad.Property(incidencia => incidencia.IdIncidenciaPlanilla)
+                .ValueGeneratedOnAdd();
+
+            entidad.Property(incidencia => incidencia.FechaIncidencia)
+                .HasColumnType("date")
+                .IsRequired();
+
+            entidad.Property(incidencia => incidencia.Cantidad)
+                .HasPrecision(18, 2);
+
+            entidad.Property(incidencia => incidencia.Unidad)
+                .HasMaxLength(30);
+
+            entidad.Property(incidencia => incidencia.Monto)
+                .HasPrecision(18, 2)
+                .HasDefaultValue(0.00m)
+                .IsRequired();
+
+            entidad.Property(incidencia => incidencia.Descripcion)
+                .HasMaxLength(300);
+
+            entidad.Property(incidencia => incidencia.RegistradoPor)
+                .HasMaxLength(255);
+
+            entidad.Property(incidencia => incidencia.FechaRegistro)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .IsRequired();
+
+            entidad.Property(incidencia => incidencia.EstadoRegistro)
+                .HasColumnType("enum('Activo','Inactivo')")
+                .HasDefaultValue("Activo")
+                .IsRequired();
+
+            entidad.HasIndex(incidencia => incidencia.IdPeriodoPlanilla)
+                .HasDatabaseName("IX_IncidenciaPlanilla_IdPeriodoPlanilla");
+
+            entidad.HasIndex(incidencia => incidencia.IdColaborador)
+                .HasDatabaseName("IX_IncidenciaPlanilla_IdColaborador");
+
+            entidad.HasIndex(incidencia => incidencia.IdTipoIncidenciaPlanilla)
+                .HasDatabaseName("IX_IncidenciaPlanilla_IdTipoIncidenciaPlanilla");
+
+            entidad.HasIndex(incidencia => incidencia.FechaIncidencia)
+                .HasDatabaseName("IX_IncidenciaPlanilla_FechaIncidencia");
+
+            entidad.HasIndex(incidencia => incidencia.IdConceptoPlanillaVersion)
+                .HasDatabaseName("IX_IncidenciaPlanilla_ConceptoVersion");
+
+            entidad.HasOne(incidencia => incidencia.PeriodoPlanilla)
+                .WithMany()
+                .HasForeignKey(incidencia => incidencia.IdPeriodoPlanilla)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_IncidenciaPlanilla_PeriodoPlanilla");
+
+            entidad.HasOne(incidencia => incidencia.Colaborador)
+                .WithMany()
+                .HasForeignKey(incidencia => incidencia.IdColaborador)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_IncidenciaPlanilla_Colaborador");
+
+            entidad.HasOne(incidencia => incidencia.TipoIncidenciaPlanilla)
+                .WithMany()
+                .HasForeignKey(incidencia => incidencia.IdTipoIncidenciaPlanilla)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_IncidenciaPlanilla_TipoIncidencia");
+
+            entidad.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(incidencia => incidencia.RegistradoPor)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_IncidenciaPlanilla_RegistradoPor");
+
+            entidad.HasOne(incidencia => incidencia.ConceptoPlanillaVersion)
+                .WithMany()
+                .HasForeignKey(incidencia => incidencia.IdConceptoPlanillaVersion)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_IncidenciaPlanilla_ConceptoVersion");
+        });
+
+        builder.Entity<BitacoraAuditoria>(entidad =>
+        {
+            entidad.ToTable("BitacoraAuditoria");
+
+            entidad.HasKey(registro => registro.IdBitacoraAuditoria);
+
+            entidad.Property(registro => registro.IdBitacoraAuditoria)
+                .ValueGeneratedOnAdd();
+
+            entidad.Property(registro => registro.IdUsuario)
+                .HasMaxLength(255);
+
+            entidad.Property(registro => registro.FechaHora)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .IsRequired();
+
+            entidad.Property(registro => registro.Accion)
+                .HasMaxLength(100)
+                .IsRequired();
+
+            entidad.Property(registro => registro.Entidad)
+                .HasMaxLength(100)
+                .IsRequired();
+
+            entidad.Property(registro => registro.IdRegistro)
+                .HasMaxLength(100);
+
+            entidad.Property(registro => registro.ValoresAnteriores)
+                .HasColumnType("json");
+
+            entidad.Property(registro => registro.ValoresNuevos)
+                .HasColumnType("json");
+
+            entidad.Property(registro => registro.DireccionIP)
+                .HasMaxLength(45);
+
+            entidad.Property(registro => registro.Observacion)
+                .HasMaxLength(500);
+
+            entidad.HasIndex(registro => registro.IdUsuario)
+                .HasDatabaseName("IX_BitacoraAuditoria_IdUsuario");
+
+            entidad.HasIndex(registro => registro.FechaHora)
+                .HasDatabaseName("IX_BitacoraAuditoria_FechaHora");
+
+            entidad.HasIndex(registro => registro.Entidad)
+                .HasDatabaseName("IX_BitacoraAuditoria_Entidad");
+
+            entidad.HasIndex(registro => registro.Accion)
+                .HasDatabaseName("IX_BitacoraAuditoria_Accion");
+
+            entidad.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(registro => registro.IdUsuario)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_BitacoraAuditoria_AspNetUsers");
+        });
+
+        builder.Entity<PaginaContenido>(entidad =>
+        {
+            entidad.ToTable("PaginaContenido");
+
+            entidad.HasKey(pagina => pagina.IdPaginaContenido);
+
+            entidad.Property(pagina => pagina.IdPaginaContenido)
+                .ValueGeneratedOnAdd();
+
+            entidad.Property(pagina => pagina.CodigoPagina)
+                .HasMaxLength(100)
+                .IsRequired();
+
+            entidad.Property(pagina => pagina.Titulo)
+                .HasMaxLength(200)
+                .IsRequired();
+
+            entidad.Property(pagina => pagina.Contenido)
+                .HasColumnType("mediumtext");
+
+            entidad.Property(pagina => pagina.EstaPublicado)
+                .HasDefaultValue(false)
+                .IsRequired();
+
+            entidad.Property(pagina => pagina.FechaCreacion)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .IsRequired();
+
+            entidad.Property(pagina => pagina.CreadoPor)
+                .HasMaxLength(255);
+
+            entidad.Property(pagina => pagina.ModificadoPor)
+                .HasMaxLength(255);
+
+            entidad.Property(pagina => pagina.EstadoRegistro)
+                .HasColumnType("enum('Activo','Inactivo')")
+                .HasDefaultValue(EstadosRegistro.Activo)
+                .IsRequired();
+
+            entidad.HasIndex(pagina => pagina.CodigoPagina)
+                .IsUnique()
+                .HasDatabaseName("UX_PaginaContenido_CodigoPagina");
+
+            entidad.HasIndex(pagina => pagina.EstaPublicado)
+                .HasDatabaseName("IX_PaginaContenido_EstaPublicado");
+        });
+
+        builder.Entity<EstadoActivo>(entidad =>
+        {
+            entidad.ToTable("EstadoActivo");
+
+            entidad.HasKey(estado => estado.IdEstadoActivo);
+
+            entidad.Property(estado => estado.IdEstadoActivo)
+                .ValueGeneratedOnAdd();
+
+            entidad.Property(estado => estado.Nombre)
+                .HasMaxLength(50)
+                .IsRequired();
+
+            entidad.Property(estado => estado.Descripcion)
+                .HasMaxLength(255);
+
+            entidad.Property(estado => estado.EstadoRegistro)
+                .HasColumnType("enum('Activo','Inactivo')")
+                .HasDefaultValue(EstadosRegistro.Activo)
+                .IsRequired();
+
+            entidad.HasIndex(estado => estado.Nombre)
+                .IsUnique()
+                .HasDatabaseName("UX_EstadoActivo_Nombre");
+        });
+
+        builder.Entity<TipoActivo>(entidad =>
+        {
+            entidad.ToTable("TipoActivo");
+
+            entidad.HasKey(tipo => tipo.IdTipoActivo);
+
+            entidad.Property(tipo => tipo.IdTipoActivo)
+                .ValueGeneratedOnAdd();
+
+            entidad.Property(tipo => tipo.Nombre)
+                .HasMaxLength(100)
+                .IsRequired();
+
+            entidad.Property(tipo => tipo.Descripcion)
+                .HasMaxLength(255);
+
+            entidad.Property(tipo => tipo.EstadoRegistro)
+                .HasColumnType("enum('Activo','Inactivo')")
+                .HasDefaultValue(EstadosRegistro.Activo)
+                .IsRequired();
+
+            entidad.HasIndex(tipo => tipo.Nombre)
+                .IsUnique()
+                .HasDatabaseName("UX_TipoActivo_Nombre");
+        });
+
+        builder.Entity<CategoriaActivo>(entidad =>
+        {
+            entidad.ToTable("CategoriaActivo");
+
+            entidad.HasKey(categoria => categoria.IdCategoriaActivo);
+
+            entidad.Property(categoria => categoria.IdCategoriaActivo)
+                .ValueGeneratedOnAdd();
+
+            entidad.Property(categoria => categoria.Nombre)
+                .HasMaxLength(100)
+                .IsRequired();
+
+            entidad.Property(categoria => categoria.Descripcion)
+                .HasMaxLength(255);
+
+            entidad.Property(categoria => categoria.EstadoRegistro)
+                .HasColumnType("enum('Activo','Inactivo')")
+                .HasDefaultValue(EstadosRegistro.Activo)
+                .IsRequired();
+
+            entidad.HasIndex(categoria => categoria.IdTipoActivo)
+                .HasDatabaseName("IX_CategoriaActivo_IdTipoActivo");
+
+            entidad.HasIndex(categoria => new { categoria.IdTipoActivo, categoria.Nombre })
+                .IsUnique()
+                .HasDatabaseName("UX_CategoriaActivo_Tipo_Nombre");
+
+            entidad.HasOne(categoria => categoria.TipoActivo)
+                .WithMany()
+                .HasForeignKey(categoria => categoria.IdTipoActivo)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_CategoriaActivo_TipoActivo");
+        });
+
+        builder.Entity<TipoMedicionUso>(entidad =>
+        {
+            entidad.ToTable("TipoMedicionUso");
+
+            entidad.HasKey(tipo => tipo.IdTipoMedicionUso);
+
+            entidad.Property(tipo => tipo.IdTipoMedicionUso)
+                .ValueGeneratedOnAdd();
+
+            entidad.Property(tipo => tipo.Nombre)
+                .HasMaxLength(50)
+                .IsRequired();
+
+            entidad.Property(tipo => tipo.Descripcion)
+                .HasMaxLength(255);
+
+            entidad.Property(tipo => tipo.EstadoRegistro)
+                .HasColumnType("enum('Activo','Inactivo')")
+                .HasDefaultValue(EstadosRegistro.Activo)
+                .IsRequired();
+
+            entidad.HasIndex(tipo => tipo.Nombre)
+                .IsUnique()
+                .HasDatabaseName("UX_TipoMedicionUso_Nombre");
+        });
+
+        builder.Entity<Activo>(entidad =>
+        {
+            entidad.ToTable("Activo");
+
+            entidad.HasKey(activo => activo.IdActivo);
+
+            entidad.Property(activo => activo.IdActivo)
+                .ValueGeneratedOnAdd();
+
+            entidad.Property(activo => activo.CodigoActivo)
+                .HasMaxLength(30)
+                .IsRequired();
+
+            entidad.Property(activo => activo.NombreActivo)
+                .HasMaxLength(150)
+                .IsRequired();
+
+            entidad.Property(activo => activo.Marca)
+                .HasMaxLength(100);
+
+            entidad.Property(activo => activo.Modelo)
+                .HasMaxLength(100);
+
+            entidad.Property(activo => activo.NumeroSerie)
+                .HasMaxLength(100);
+
+            entidad.Property(activo => activo.Placa)
+                .HasMaxLength(30);
+
+            entidad.Property(activo => activo.Descripcion)
+                .HasMaxLength(500);
+
+            entidad.Property(activo => activo.FechaAdquisicion)
+                .HasColumnType("date");
+
+            entidad.Property(activo => activo.ValorAdquisicion)
+                .HasPrecision(18, 2);
+
+            entidad.Property(activo => activo.UbicacionActual)
+                .HasMaxLength(150);
+
+            entidad.Property(activo => activo.LecturaUsoActual)
+                .HasPrecision(18, 2);
+
+            entidad.Property(activo => activo.Observaciones)
+                .HasMaxLength(500);
+
+            entidad.Property(activo => activo.FechaCreacion)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .IsRequired();
+
+            entidad.Property(activo => activo.CreadoPor)
+                .HasMaxLength(255);
+
+            entidad.Property(activo => activo.FechaModificacion);
+
+            entidad.Property(activo => activo.ModificadoPor)
+                .HasMaxLength(255);
+
+            entidad.Property(activo => activo.EstadoRegistro)
+                .HasColumnType("enum('Activo','Inactivo')")
+                .HasDefaultValue(EstadosRegistro.Activo)
+                .IsRequired();
+
+            entidad.HasIndex(activo => activo.CodigoActivo)
+                .IsUnique()
+                .HasDatabaseName("UX_Activo_CodigoActivo");
+
+            entidad.HasIndex(activo => activo.NombreActivo)
+                .HasDatabaseName("IX_Activo_NombreActivo");
+
+            entidad.HasIndex(activo => activo.IdTipoActivo)
+                .HasDatabaseName("IX_Activo_IdTipoActivo");
+
+            entidad.HasIndex(activo => activo.IdCategoriaActivo)
+                .HasDatabaseName("IX_Activo_IdCategoriaActivo");
+
+            entidad.HasIndex(activo => activo.IdEstadoActivo)
+                .HasDatabaseName("IX_Activo_IdEstadoActivo");
+
+            entidad.HasOne(activo => activo.TipoActivo)
+                .WithMany()
+                .HasForeignKey(activo => activo.IdTipoActivo)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_Activo_TipoActivo");
+
+            entidad.HasOne(activo => activo.CategoriaActivo)
+                .WithMany()
+                .HasForeignKey(activo => activo.IdCategoriaActivo)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_Activo_CategoriaActivo");
+
+            entidad.HasOne(activo => activo.EstadoActivo)
+                .WithMany()
+                .HasForeignKey(activo => activo.IdEstadoActivo)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_Activo_EstadoActivo");
+
+            entidad.HasOne(activo => activo.TipoMedicionUso)
+                .WithMany()
+                .HasForeignKey(activo => activo.IdTipoMedicionUso)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_Activo_TipoMedicionUso");
+
+            entidad.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(activo => activo.CreadoPor)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_Activo_CreadoPor");
+
+            entidad.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(activo => activo.ModificadoPor)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_Activo_ModificadoPor");
+        });
+
+        builder.Entity<AsignacionActivoProyecto>(entidad =>
+        {
+            entidad.ToTable("AsignacionActivoProyecto");
+
+            entidad.HasKey(asignacion => asignacion.IdAsignacionActivoProyecto);
+
+            entidad.Property(asignacion => asignacion.IdAsignacionActivoProyecto)
+                .ValueGeneratedOnAdd();
+
+            entidad.Property(asignacion => asignacion.FechaInicio)
+                .HasColumnType("date")
+                .IsRequired();
+
+            entidad.Property(asignacion => asignacion.FechaFin)
+                .HasColumnType("date")
+                .IsRequired();
+
+            entidad.Property(asignacion => asignacion.Observaciones)
+                .HasMaxLength(500);
+
+            entidad.Property(asignacion => asignacion.AsignadoPor)
+                .HasMaxLength(255);
+
+            entidad.Property(asignacion => asignacion.FechaAsignacion)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .IsRequired();
+
+            entidad.Property(asignacion => asignacion.EstadoRegistro)
+                .HasColumnType("enum('Activo','Inactivo')")
+                .HasDefaultValue(EstadosRegistro.Activo)
+                .IsRequired();
+
+            entidad.HasIndex(asignacion => asignacion.IdActivo)
+                .HasDatabaseName("IX_AsignacionActivoProyecto_IdActivo");
+
+            entidad.HasIndex(asignacion => asignacion.IdProyecto)
+                .HasDatabaseName("IX_AsignacionActivoProyecto_IdProyecto");
+
+            entidad.HasIndex(asignacion => new { asignacion.FechaInicio, asignacion.FechaFin })
+                .HasDatabaseName("IX_AsignacionActivoProyecto_Fechas");
+
+            entidad.HasOne(asignacion => asignacion.Activo)
+                .WithMany()
+                .HasForeignKey(asignacion => asignacion.IdActivo)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_AsignacionActivoProyecto_Activo");
+
+            entidad.HasOne(asignacion => asignacion.Proyecto)
+                .WithMany()
+                .HasForeignKey(asignacion => asignacion.IdProyecto)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_AsignacionActivoProyecto_Proyecto");
+
+            entidad.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(asignacion => asignacion.AsignadoPor)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_AsignacionActivoProyecto_AsignadoPor");
+        });
+
+        builder.Entity<RegistroUsoActivo>(entidad =>
+        {
+            entidad.ToTable("RegistroUsoActivo");
+
+            entidad.HasKey(registro => registro.IdRegistroUsoActivo);
+
+            entidad.Property(registro => registro.IdRegistroUsoActivo)
+                .ValueGeneratedOnAdd();
+
+            entidad.Property(registro => registro.FechaRegistro)
+                .HasColumnType("date")
+                .IsRequired();
+
+            entidad.Property(registro => registro.LecturaAnterior)
+                .HasPrecision(18, 2);
+
+            entidad.Property(registro => registro.LecturaNueva)
+                .HasPrecision(18, 2)
+                .IsRequired();
+
+            entidad.Property(registro => registro.CantidadUso)
+                .HasPrecision(18, 2);
+
+            entidad.Property(registro => registro.Observaciones)
+                .HasMaxLength(500);
+
+            entidad.Property(registro => registro.RegistradoPor)
+                .HasMaxLength(255);
+
+            entidad.Property(registro => registro.FechaCreacion)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .IsRequired();
+
+            entidad.Property(registro => registro.EstadoRegistro)
+                .HasColumnType("enum('Activo','Inactivo')")
+                .HasDefaultValue(EstadosRegistro.Activo)
+                .IsRequired();
+
+            entidad.HasIndex(registro => registro.IdActivo)
+                .HasDatabaseName("IX_RegistroUsoActivo_IdActivo");
+
+            entidad.HasIndex(registro => registro.IdProyecto)
+                .HasDatabaseName("IX_RegistroUsoActivo_IdProyecto");
+
+            entidad.HasIndex(registro => registro.FechaRegistro)
+                .HasDatabaseName("IX_RegistroUsoActivo_FechaRegistro");
+
+            entidad.HasOne(registro => registro.Activo)
+                .WithMany()
+                .HasForeignKey(registro => registro.IdActivo)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_RegistroUsoActivo_Activo");
+
+            entidad.HasOne(registro => registro.Proyecto)
+                .WithMany()
+                .HasForeignKey(registro => registro.IdProyecto)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_RegistroUsoActivo_Proyecto");
+
+            entidad.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(registro => registro.RegistradoPor)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_RegistroUsoActivo_RegistradoPor");
+        });
+
+		builder.Entity<EstadoMantenimiento>(entidad =>
+		{
+			entidad.ToTable("EstadoMantenimiento");
+
+			entidad.HasKey(estado => estado.IdEstadoMantenimiento);
+
+			entidad.Property(estado => estado.IdEstadoMantenimiento)
+				.ValueGeneratedOnAdd();
+
+			entidad.Property(estado => estado.Nombre)
+				.HasMaxLength(50)
+				.IsRequired();
+
+			entidad.Property(estado => estado.Descripcion)
+				.HasMaxLength(255);
+
+			entidad.Property(estado => estado.EstadoRegistro)
+				.HasColumnType("enum('Activo','Inactivo')")
+				.HasDefaultValue(EstadosRegistro.Activo)
+				.IsRequired();
+
+			entidad.HasIndex(estado => estado.Nombre)
+				.IsUnique()
+				.HasDatabaseName("UX_EstadoMantenimiento_Nombre");
+		});
+
+		builder.Entity<EstadoProyecto>(entidad =>
+        {
+            entidad.ToTable("EstadoProyecto");
+
+            entidad.HasKey(estado => estado.IdEstadoProyecto);
+
+            entidad.Property(estado => estado.IdEstadoProyecto)
+                .ValueGeneratedOnAdd();
+
+            entidad.Property(estado => estado.Nombre)
+                .HasMaxLength(50)
+                .IsRequired();
+
+            entidad.Property(estado => estado.Descripcion)
+                .HasMaxLength(255);
+
+            entidad.Property(estado => estado.EstadoRegistro)
+                .HasColumnType("enum('Activo','Inactivo')")
+                .HasDefaultValue(EstadosRegistro.Activo)
+                .IsRequired();
+
+            entidad.HasIndex(estado => estado.Nombre)
+                .IsUnique()
+                .HasDatabaseName("UX_EstadoProyecto_Nombre");
+        });
+
+        builder.Entity<Proyecto>(entidad =>
+        {
+            entidad.ToTable("Proyecto");
+
+            entidad.HasKey(proyecto => proyecto.IdProyecto);
+
+            entidad.Property(proyecto => proyecto.IdProyecto)
+                .ValueGeneratedOnAdd();
+
+            entidad.Property(proyecto => proyecto.CodigoProyecto)
+                .HasMaxLength(30)
+                .IsRequired();
+
+            entidad.Property(proyecto => proyecto.NombreProyecto)
+                .HasMaxLength(150)
+                .IsRequired();
+
+            entidad.Property(proyecto => proyecto.Descripcion)
+                .HasMaxLength(500);
+
+            entidad.Property(proyecto => proyecto.Responsable)
+                .HasMaxLength(150);
+
+            entidad.Property(proyecto => proyecto.Ubicacion)
+                .HasMaxLength(200);
+
+            entidad.Property(proyecto => proyecto.Observaciones)
+                .HasMaxLength(500);
+
+            entidad.Property(proyecto => proyecto.FechaCreacion)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .IsRequired();
+
+            entidad.Property(proyecto => proyecto.CreadoPor)
+                .HasMaxLength(255);
+
+            entidad.Property(proyecto => proyecto.ModificadoPor)
+                .HasMaxLength(255);
+
+            entidad.Property(proyecto => proyecto.EstadoRegistro)
+                .HasColumnType("enum('Activo','Inactivo')")
+                .HasDefaultValue(EstadosRegistro.Activo)
+                .IsRequired();
+
+            entidad.HasIndex(proyecto => proyecto.CodigoProyecto)
+                .IsUnique()
+                .HasDatabaseName("UX_Proyecto_CodigoProyecto");
+
+            entidad.HasIndex(proyecto => proyecto.NombreProyecto)
+                .HasDatabaseName("IX_Proyecto_NombreProyecto");
+
+            entidad.HasIndex(proyecto => proyecto.IdEstadoProyecto)
+                .HasDatabaseName("IX_Proyecto_IdEstadoProyecto");
+
+            entidad.HasOne(proyecto => proyecto.EstadoProyecto)
+                .WithMany()
+                .HasForeignKey(proyecto => proyecto.IdEstadoProyecto)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        builder.Entity<ProyectoPublicado>(entidad =>
+        {
+            entidad.ToTable("ProyectoPublicado");
+
+            entidad.HasKey(proyecto => proyecto.IdProyectoPublicado);
+
+            entidad.Property(proyecto => proyecto.IdProyectoPublicado)
+                .ValueGeneratedOnAdd();
+
+            entidad.Property(proyecto => proyecto.Titulo)
+                .HasMaxLength(200)
+                .IsRequired();
+
+            entidad.Property(proyecto => proyecto.Descripcion)
+                .HasMaxLength(500);
+
+            entidad.Property(proyecto => proyecto.EstadoVisual)
+                .HasMaxLength(50);
+
+            entidad.Property(proyecto => proyecto.EstaPublicado)
+                .HasDefaultValue(false)
+                .IsRequired();
+
+            entidad.Property(proyecto => proyecto.FechaCreacion)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .IsRequired();
+
+            entidad.Property(proyecto => proyecto.CreadoPor)
+                .HasMaxLength(255);
+
+            entidad.Property(proyecto => proyecto.ModificadoPor)
+                .HasMaxLength(255);
+
+            entidad.Property(proyecto => proyecto.EstadoRegistro)
+                .HasColumnType("enum('Activo','Inactivo')")
+                .HasDefaultValue(EstadosRegistro.Activo)
+                .IsRequired();
+
+            entidad.HasIndex(proyecto => proyecto.IdProyecto)
+                .HasDatabaseName("IX_ProyectoPublicado_IdProyecto");
+
+            entidad.HasIndex(proyecto => proyecto.EstaPublicado)
+                .HasDatabaseName("IX_ProyectoPublicado_EstaPublicado");
+
+            entidad.HasOne(proyecto => proyecto.Proyecto)
+                .WithMany()
+                .HasForeignKey(proyecto => proyecto.IdProyecto)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+    }
+}

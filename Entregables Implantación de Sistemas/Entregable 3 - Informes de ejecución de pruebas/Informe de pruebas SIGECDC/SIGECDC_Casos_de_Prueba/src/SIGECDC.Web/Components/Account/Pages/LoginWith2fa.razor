@@ -1,0 +1,108 @@
+﻿@page "/Account/LoginWith2fa"
+
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Identity
+@using SIGECDC.Persistence.Identity
+
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+@inject IdentityRedirectManager RedirectManager
+@inject ILogger<LoginWith2fa> Logger
+
+<PageTitle>Autenticación de dos factores</PageTitle>
+
+<h1>Autenticación de dos factores</h1>
+<hr />
+<StatusMessage Message="@message" />
+<p>El inicio de sesión está protegido con una aplicación autenticadora. Ingrese el código de autenticación.</p>
+<div class="row">
+    <div class="col-md-4">
+        <EditForm Model="Input" FormName="login-with-2fa" OnValidSubmit="OnValidSubmitAsync" method="post">
+            <input type="hidden" name="ReturnUrl" value="@ReturnUrl" />
+            <input type="hidden" name="RememberMe" value="@RememberMe" />
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger" role="alert" />
+            <div class="form-floating mb-3">
+                <InputText @bind-Value="Input.TwoFactorCode" id="Input.TwoFactorCode" class="form-control" autocomplete="off" />
+                <label for="Input.TwoFactorCode" class="form-label">Código de autenticación</label>
+                <ValidationMessage For="() => Input.TwoFactorCode" class="text-danger" />
+            </div>
+            <div class="checkbox mb-3">
+                <label for="remember-machine" class="form-label">
+                    <InputCheckbox @bind-Value="Input.RememberMachine" />
+                    Recordar este equipo
+                </label>
+            </div>
+            <div>
+                <button type="submit" class="w-100 btn btn-lg btn-primary">Iniciar sesión</button>
+            </div>
+        </EditForm>
+    </div>
+</div>
+<p>
+    ¿No tiene acceso a su dispositivo autenticador? Puede
+    <a href="Account/LoginWithRecoveryCode?ReturnUrl=@ReturnUrl">iniciar sesión con un código de recuperación</a>.
+</p>
+
+@code {
+    private string? message;
+    private ApplicationUser user = default!;
+
+    [SupplyParameterFromForm]
+    private InputModel Input { get; set; } = default!;
+
+    [SupplyParameterFromQuery]
+    private string? ReturnUrl { get; set; }
+
+    [SupplyParameterFromQuery]
+    private bool RememberMe { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Input ??= new();
+
+        // Verifica que el usuario haya pasado primero por la pantalla de usuario y contraseña.
+        user = await SignInManager.GetTwoFactorAuthenticationUserAsync() ??
+            throw new InvalidOperationException("No se pudo cargar el usuario de autenticación de dos factores.");
+    }
+
+    private async Task OnValidSubmitAsync()
+    {
+        var authenticatorCode = Input.TwoFactorCode!.Replace(" ", string.Empty).Replace("-", string.Empty);
+        var result = await SignInManager.TwoFactorAuthenticatorSignInAsync(authenticatorCode, RememberMe, Input.RememberMachine);
+        var userId = await UserManager.GetUserIdAsync(user);
+
+        if (result.Succeeded)
+        {
+            Logger.LogInformation("El usuario con ID '{UserId}' inició sesión con 2FA.", userId);
+            RedirectManager.RedirectTo(ReturnUrl);
+        }
+        else if (result.IsLockedOut)
+        {
+            Logger.LogWarning("La cuenta del usuario con ID '{UserId}' fue bloqueada.", userId);
+            RedirectManager.RedirectTo("Account/Lockout");
+        }
+        else if (result.IsNotAllowed)
+        {
+            Logger.LogWarning("Inicio 2FA rechazado para una cuenta no habilitada.");
+            message = "Error: no fue posible iniciar sesión. Verifique sus credenciales o contacte al administrador.";
+        }
+        else
+        {
+            Logger.LogWarning("Código de autenticación inválido para el usuario con ID '{UserId}'.", userId);
+            message = "Error: el código de autenticación no es válido.";
+        }
+    }
+
+    private sealed class InputModel
+    {
+        [Required]
+        [StringLength(7, ErrorMessage = "El campo {0} debe tener al menos {2} y como máximo {1} caracteres.", MinimumLength = 6)]
+        [DataType(DataType.Text)]
+        [Display(Name = "Código de autenticación")]
+        public string? TwoFactorCode { get; set; }
+
+        [Display(Name = "Recordar este equipo")]
+        public bool RememberMachine { get; set; }
+    }
+}

@@ -1,0 +1,20 @@
+<div class="form-grid">
+    <label>Código interno<InputText @bind-Value="Solicitud.Codigo" maxlength="100" /></label>
+    <label>Nombre<InputText @bind-Value="Solicitud.Nombre" maxlength="150" /></label>
+    <label>Concepto clasificado<InputSelect @bind-Value="Solicitud.IdConceptoVersion"><option value="0">Seleccione</option>
+        @foreach (var c in Conceptos.Where(RecorridoPlanilla.EsParametroInternoAdmitido)) { <option value="@c.IdVersion">@c.Nombre · @c.Clasificacion · @c.UnidadPermitida · desde @c.Vigencia.Inicio.ToString("dd/MM/yyyy")</option> }
+    </InputSelect></label>
+    <label>Valor<InputNumber @bind-Value="Solicitud.Valor" /></label>
+    <label>Vigencia desde<InputDate @bind-Value="Solicitud.Inicio" /></label>
+    <label>Vigencia hasta (opcional)<InputDate @bind-Value="Solicitud.Fin" /></label>
+    <label>Referencia de respaldo empresarial<InputTextArea @bind-Value="Solicitud.Soporte" maxlength="300" /></label>
+</div>
+@if (Conceptos.SingleOrDefault(c => c.IdVersion == Solicitud.IdConceptoVersion) is { } concepto)
+{
+    <p>@(concepto.UnidadPermitida == "Porcentaje" ? "Ingrese el porcentaje en formato humano: 10 representa 10 %. La base es el salario devengado del tramo confirmado; el motor calcula el importe." : "Ingrese el monto documentado en CRC. Cero se admite solo si es un valor explícito válido.")</p>
+    <p>La clasificación, la unidad y la base proceden del concepto gobernado. No se sustituyen tasas normativas.</p>
+}
+@code {
+    [Parameter, EditorRequired] public ParametroInternoInterfaz Solicitud { get; set; } = default!;
+    [Parameter] public IReadOnlyList<ConceptoMonetarioVersion> Conceptos { get; set; } = [];
+}

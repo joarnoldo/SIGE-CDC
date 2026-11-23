@@ -1,0 +1,630 @@
+@page "/operaciones/activos"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Administrador,Operaciones")]
+@rendermode InteractiveServer
+@using SIGECDC.Application.Activos
+@inject IActivoService ActivoService
+@inject IAsignacionActivoProyectoService AsignacionActivoProyectoService
+@inject AuthenticationStateProvider Autenticacion
+@inject ILogger<Activos> Logger
+
+<PageTitle>Activos | SIGE-CDC</PageTitle>
+
+<section class="page-banner">
+    <div class="container page-banner__inner stack--tight">
+        <p class="eyebrow">Operaciones</p>
+        <h1>Gestión de activos</h1>
+        <p class="lead">Registre y consulte los activos institucionales, su estado y ubicación.</p>
+    </div>
+</section>
+
+<section class="section-shell">
+    <div class="container admin-grid">
+        <article class="form-section">
+            <h2>Registrar activo</h2>
+
+            @if (!string.IsNullOrWhiteSpace(mensajeFormulario))
+            {
+                <div class="alert alert--info">@mensajeFormulario</div>
+            }
+
+            <EditForm Model="solicitudRegistro" OnValidSubmit="RegistrarActivoAsync">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <div class="form-grid">
+                    <div class="field">
+                        <label for="codigoActivo">Código</label>
+                        <InputText id="codigoActivo" class="form-control" @bind-Value="solicitudRegistro.CodigoActivo" />
+                    </div>
+
+                    <div class="field">
+                        <label for="nombreActivo">Nombre del activo</label>
+                        <InputText id="nombreActivo" class="form-control" @bind-Value="solicitudRegistro.NombreActivo" />
+                    </div>
+
+                    <div class="field">
+                        <label for="tipoActivo">Tipo de activo</label>
+                        <select id="tipoActivo" class="form-control" @bind="solicitudRegistro.IdTipoActivo" @bind:after="OnTipoActivoChangedAsync">
+                            <option value="">Seleccione un tipo</option>
+                            @foreach (var tipo in tiposActivo)
+                            {
+                                <option value="@tipo.IdTipoActivo">@tipo.Nombre</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="field">
+                        <label for="categoriaActivo">Categoría</label>
+                        <select id="categoriaActivo" class="form-control" @bind="solicitudRegistro.IdCategoriaActivo">
+                            <option value="">Seleccione una categoría</option>
+                            @foreach (var categoria in categoriasActivo)
+                            {
+                                <option value="@categoria.IdCategoriaActivo">@categoria.Nombre</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="field">
+                        <label for="marca">Marca</label>
+                        <InputText id="marca" class="form-control" @bind-Value="solicitudRegistro.Marca" />
+                    </div>
+
+                    <div class="field">
+                        <label for="modelo">Modelo</label>
+                        <InputText id="modelo" class="form-control" @bind-Value="solicitudRegistro.Modelo" />
+                    </div>
+
+                    <div class="field">
+                        <label for="numeroSerie">Número de serie</label>
+                        <InputText id="numeroSerie" class="form-control" @bind-Value="solicitudRegistro.NumeroSerie" />
+                    </div>
+
+                    <div class="field">
+                        <label for="placa">Placa</label>
+                        <InputText id="placa" class="form-control" @bind-Value="solicitudRegistro.Placa" />
+                    </div>
+
+                    <div class="field">
+                        <label for="fechaAdquisicion">Fecha de adquisición</label>
+                        <InputDate id="fechaAdquisicion" class="form-control" @bind-Value="solicitudRegistro.FechaAdquisicion" />
+                    </div>
+
+                    <div class="field">
+                        <label for="valorAdquisicion">Valor de adquisición</label>
+                        <InputNumber id="valorAdquisicion" class="form-control" @bind-Value="solicitudRegistro.ValorAdquisicion" />
+                    </div>
+
+                    <div class="field">
+                        <label for="ubicacionActual">Ubicación actual</label>
+                        <InputText id="ubicacionActual" class="form-control" @bind-Value="solicitudRegistro.UbicacionActual" />
+                    </div>
+
+                    <div class="field field--span-2">
+                        <label for="descripcion">Descripción</label>
+                        <InputTextArea id="descripcion" class="form-control" @bind-Value="solicitudRegistro.Descripcion" />
+                    </div>
+
+                    <div class="field field--span-2">
+                        <label for="observaciones">Observaciones</label>
+                        <InputTextArea id="observaciones" class="form-control" @bind-Value="solicitudRegistro.Observaciones" />
+                    </div>
+                </div>
+
+                <div class="form-actions mt-3">
+                    <button class="btn btn--primary" type="submit" disabled="@guardando">
+                        @(guardando ? "Registrando..." : "Registrar activo")
+                    </button>
+                    <button class="btn btn--secondary" type="button" disabled="@guardando" @onclick="LimpiarFormularioRegistro">Limpiar</button>
+                </div>
+            </EditForm>
+        </article>
+
+        <article class="table-card">
+            <div class="table-toolbar">
+                <div>
+                    <h2 class="card__title">Activos registrados</h2>
+                    <p class="card__meta">Inventario vigente de activos institucionales.</p>
+                </div>
+                <span class="badge badge--info">@activos.Count activos</span>
+            </div>
+
+            @if (cargando)
+            {
+                <div class="empty-state">
+                    <strong>Cargando activos</strong>
+                    <p class="text-muted">Estamos recuperando los registros de activos.</p>
+                </div>
+            }
+            else if (activos.Count == 0)
+            {
+                <div class="empty-state">
+                    <strong>No hay activos registrados</strong>
+                    <p class="text-muted">Registre el primer activo desde el formulario.</p>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Código</th>
+                                <th>Activo</th>
+                                <th>Tipo / Categoría</th>
+                                <th>Marca / Modelo</th>
+                                <th>Serie / Placa</th>
+                                <th>Adquisición</th>
+                                <th>Ubicación</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var activo in activos)
+                            {
+                                <tr>
+                                    <td>@activo.CodigoActivo</td>
+                                    <td>
+                                        <strong>@activo.NombreActivo</strong>
+                                        <p class="card__meta">@activo.Descripcion</p>
+                                    </td>
+                                    <td>
+                                        <small>@activo.TipoActivo</small><br />
+                                        <small>@activo.CategoriaActivo</small>
+                                    </td>
+                                    <td>
+                                        <small>@(string.IsNullOrWhiteSpace(activo.Marca) ? "-" : activo.Marca)</small><br />
+                                        <small>@(string.IsNullOrWhiteSpace(activo.Modelo) ? "-" : activo.Modelo)</small>
+                                    </td>
+                                    <td>
+                                        <small>S: @(string.IsNullOrWhiteSpace(activo.NumeroSerie) ? "-" : activo.NumeroSerie)</small><br />
+                                        <small>P: @(string.IsNullOrWhiteSpace(activo.Placa) ? "-" : activo.Placa)</small>
+                                    </td>
+                                    <td>
+                                        <small>@(activo.FechaAdquisicion?.ToString("dd/MM/yyyy") ?? "-")</small><br />
+                                        <small>@(activo.ValorAdquisicion?.ToString("N2") ?? "-")</small>
+                                    </td>
+                                    <td>@(string.IsNullOrWhiteSpace(activo.UbicacionActual) ? "-" : activo.UbicacionActual)</td>
+                                    <td><span class="badge badge--accent">@activo.EstadoActivo</span></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </article>
+    </div>
+</section>
+
+<section class="section-shell">
+    <div class="container admin-grid">
+        <article class="form-section">
+            <h2>Actualizar estado y ubicación</h2>
+            <p class="card__meta">Los cambios se registran en la bitácora del activo.</p>
+
+            @if (!string.IsNullOrWhiteSpace(mensajeActualizacion))
+            {
+                <div class="alert alert--info">@mensajeActualizacion</div>
+            }
+
+            <EditForm Model="solicitudActualizacion" OnValidSubmit="ActualizarEstadoUbicacionAsync">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <div class="form-grid">
+                    <div class="field field--span-2">
+                        <label for="activoActualizacion">Activo</label>
+                        <InputSelect id="activoActualizacion"
+                                     class="form-control"
+                                     @bind-Value="solicitudActualizacion.IdActivo"
+                                     @bind-Value:after="OnActivoActualizacionChangedAsync">
+                            <option value="0">Seleccione un activo</option>
+                            @foreach (var activo in activos)
+                            {
+                                <option value="@activo.IdActivo">@activo.CodigoActivo - @activo.NombreActivo</option>
+                            }
+                        </InputSelect>
+                    </div>
+
+                    <div class="field">
+                        <label for="estadoActualizacion">Estado</label>
+                        <InputSelect id="estadoActualizacion" class="form-control" @bind-Value="solicitudActualizacion.IdEstadoActivo">
+                            <option value="0">Seleccione un estado</option>
+                            @foreach (var estado in estadosActivo)
+                            {
+                                <option value="@estado.IdEstadoActivo">@estado.Nombre</option>
+                            }
+                        </InputSelect>
+                    </div>
+
+                    <div class="field">
+                        <label for="ubicacionActualizacion">Ubicación actual</label>
+                        <InputText id="ubicacionActualizacion" class="form-control" @bind-Value="solicitudActualizacion.UbicacionActual" />
+                    </div>
+                </div>
+
+                <div class="form-actions mt-3">
+                    <button class="btn btn--primary" type="submit" disabled="@actualizando">
+                        @(actualizando ? "Actualizando..." : "Guardar estado y ubicación")
+                    </button>
+                </div>
+            </EditForm>
+        </article>
+
+        <article class="table-card">
+            <div class="table-toolbar">
+                <div>
+                    <h2 class="card__title">Trazabilidad del activo</h2>
+                    <p class="card__meta">Historial de cambios de estado y ubicación.</p>
+                </div>
+                <span class="badge badge--info">@trazabilidad.Count cambios</span>
+            </div>
+
+            @if (solicitudActualizacion.IdActivo <= 0)
+            {
+                <div class="empty-state">
+                    <strong>Seleccione un activo</strong>
+                    <p class="text-muted">El historial se mostrará al seleccionar el activo.</p>
+                </div>
+            }
+            else if (trazabilidad.Count == 0)
+            {
+                <div class="empty-state">
+                    <strong>Sin cambios registrados</strong>
+                    <p class="text-muted">Este activo aún no tiene trazabilidad de estado o ubicación.</p>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Usuario</th>
+                                <th>Cambio</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var cambio in trazabilidad)
+                            {
+                                <tr>
+                                    <td>@cambio.FechaHora.ToString("dd/MM/yyyy HH:mm")</td>
+                                    <td>@(string.IsNullOrWhiteSpace(cambio.IdUsuario) ? "Sin usuario" : cambio.IdUsuario)</td>
+                                    <td>@cambio.DescripcionCambio</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </article>
+    </div>
+</section>
+
+<section class="section-shell">
+    <div class="container admin-grid">
+        <article class="form-section">
+            <h2>Consultar disponibilidad</h2>
+            <p class="card__meta">La disponibilidad considera el estado actual y los traslapes de asignaciones en el rango indicado.</p>
+
+            @if (!string.IsNullOrWhiteSpace(mensajeDisponibilidad))
+            {
+                <div class="alert alert--info">@mensajeDisponibilidad</div>
+            }
+
+            <EditForm Model="filtroDisponibilidad" OnValidSubmit="ConsultarDisponibilidadAsync">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <div class="form-grid">
+                    <div class="field">
+                        <label for="fechaInicioDisponibilidad">Fecha inicial</label>
+                        <InputDate id="fechaInicioDisponibilidad" class="form-control" @bind-Value="filtroDisponibilidad.FechaInicio" />
+                    </div>
+
+                    <div class="field">
+                        <label for="fechaFinDisponibilidad">Fecha final</label>
+                        <InputDate id="fechaFinDisponibilidad" class="form-control" @bind-Value="filtroDisponibilidad.FechaFin" />
+                    </div>
+
+                    <div class="field field--span-2">
+                        <label for="estadoDisponibilidad">Estado</label>
+                        <InputSelect id="estadoDisponibilidad" class="form-control" @bind-Value="filtroDisponibilidad.IdEstadoActivo">
+                            <option value="">Todos los estados</option>
+                            @foreach (var estado in estadosActivo)
+                            {
+                                <option value="@estado.IdEstadoActivo">@estado.Nombre</option>
+                            }
+                        </InputSelect>
+                    </div>
+                </div>
+
+                <div class="form-actions mt-3">
+                    <button class="btn btn--primary" type="submit" disabled="@consultandoDisponibilidad">
+                        @(consultandoDisponibilidad ? "Consultando..." : "Consultar disponibilidad")
+                    </button>
+                </div>
+            </EditForm>
+        </article>
+
+        <article class="table-card">
+            <div class="table-toolbar">
+                <div>
+                    <h2 class="card__title">Disponibilidad por rango</h2>
+                    <p class="card__meta">Resultado según el estado y las asignaciones vigentes.</p>
+                </div>
+                <span class="badge badge--info">@disponibilidad.Count activos</span>
+            </div>
+
+            @if (!consultaDisponibilidadRealizada)
+            {
+                <div class="empty-state">
+                    <strong>Defina el rango de consulta</strong>
+                    <p class="text-muted">Seleccione las fechas y, opcionalmente, filtre por estado.</p>
+                </div>
+            }
+            else if (disponibilidad.Count == 0)
+            {
+                <div class="empty-state">
+                    <strong>Sin resultados</strong>
+                    <p class="text-muted">No se encontraron activos para los filtros seleccionados.</p>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Código</th>
+                                <th>Activo</th>
+                                <th>Tipo / Categoría</th>
+                                <th>Estado</th>
+                                <th>Ubicación</th>
+                                <th>Disponibilidad</th>
+                                <th>Motivo</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var activo in disponibilidad)
+                            {
+                                <tr>
+                                    <td>@activo.CodigoActivo</td>
+                                    <td>@activo.NombreActivo</td>
+                                    <td>
+                                        <small>@activo.TipoActivo</small><br />
+                                        <small>@activo.CategoriaActivo</small>
+                                    </td>
+                                    <td><span class="badge badge--info">@activo.EstadoActivo</span></td>
+                                    <td>@(string.IsNullOrWhiteSpace(activo.UbicacionActual) ? "-" : activo.UbicacionActual)</td>
+                                    <td>
+                                        <span class="badge @(activo.EstaDisponible ? "badge--success" : "badge--danger")">
+                                            @(activo.EstaDisponible ? "Disponible" : "No disponible")
+                                        </span>
+                                    </td>
+                                    <td>@activo.MotivoDisponibilidad</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </article>
+    </div>
+</section>
+
+@code {
+    private List<ActivoResumen> activos = [];
+    private List<TipoActivoOpcion> tiposActivo = [];
+    private List<CategoriaActivoOpcion> categoriasActivo = [];
+    private List<EstadoActivoOpcion> estadosActivo = [];
+    private List<TrazabilidadActivoResumen> trazabilidad = [];
+    private List<DisponibilidadActivoResumen> disponibilidad = [];
+    private SolicitudRegistroActivo solicitudRegistro = new();
+    private SolicitudActualizacionEstadoUbicacion solicitudActualizacion = new();
+    private FiltroDisponibilidadActivo filtroDisponibilidad = CrearFiltroDisponibilidadInicial();
+    private bool cargando = true;
+    private bool guardando;
+    private bool actualizando;
+    private bool consultandoDisponibilidad;
+    private bool consultaDisponibilidadRealizada;
+    private string? mensajeFormulario;
+    private string? mensajeActualizacion;
+    private string? mensajeDisponibilidad;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            tiposActivo = [.. await ActivoService.ObtenerTiposActivoAsync()];
+            estadosActivo = [.. await ActivoService.ObtenerEstadosActivoAsync()];
+            await CargarActivosAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudo cargar la gestión de activos.");
+            mensajeFormulario = "No se pudo cargar la información de activos. Verifique la conexión e intente nuevamente.";
+            cargando = false;
+        }
+    }
+
+    private async Task CargarActivosAsync()
+    {
+        cargando = true;
+        activos = [.. await ActivoService.ObtenerActivosAsync()];
+        cargando = false;
+    }
+
+    private async Task OnTipoActivoChangedAsync()
+    {
+        solicitudRegistro.IdCategoriaActivo = null;
+        var idTipo = solicitudRegistro.IdTipoActivo ?? 0;
+        if (idTipo > 0)
+        {
+            categoriasActivo = [.. await ActivoService.ObtenerCategoriasPorTipoAsync(idTipo)];
+        }
+        else
+        {
+            categoriasActivo = [];
+        }
+    }
+
+    private async Task RegistrarActivoAsync()
+    {
+        if (guardando)
+        {
+            return;
+        }
+
+        guardando = true;
+        mensajeFormulario = null;
+
+        try
+        {
+            await ActivoService.RegistrarActivoAsync(
+                solicitudRegistro,
+                await ObtenerIdUsuarioActualAsync());
+            solicitudRegistro = new SolicitudRegistroActivo();
+            categoriasActivo = [];
+            mensajeFormulario = "Activo registrado correctamente con estado Disponible.";
+            await CargarActivosAsync();
+        }
+        catch (ArgumentException ex)
+        {
+            mensajeFormulario = ex.Message;
+        }
+        catch (InvalidOperationException ex)
+        {
+            mensajeFormulario = ex.Message;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudo registrar el activo {CodigoActivo}.", solicitudRegistro.CodigoActivo);
+            mensajeFormulario = "No se pudo registrar el activo. Intente nuevamente y, si el problema continúa, revise la configuración de la base de datos.";
+        }
+        finally
+        {
+            guardando = false;
+        }
+    }
+
+    private void LimpiarFormularioRegistro()
+    {
+        solicitudRegistro = new SolicitudRegistroActivo();
+        categoriasActivo = [];
+        mensajeFormulario = null;
+    }
+
+    private async Task OnActivoActualizacionChangedAsync()
+    {
+        mensajeActualizacion = null;
+        var activo = activos.FirstOrDefault(registro => registro.IdActivo == solicitudActualizacion.IdActivo);
+        if (activo is null)
+        {
+            solicitudActualizacion.IdEstadoActivo = 0;
+            solicitudActualizacion.UbicacionActual = null;
+            trazabilidad = [];
+            return;
+        }
+
+        solicitudActualizacion.IdEstadoActivo = activo.IdEstadoActivo;
+        solicitudActualizacion.UbicacionActual = activo.UbicacionActual;
+        await CargarTrazabilidadAsync();
+    }
+
+    private async Task ActualizarEstadoUbicacionAsync()
+    {
+        if (actualizando)
+        {
+            return;
+        }
+
+        actualizando = true;
+        mensajeActualizacion = null;
+
+        try
+        {
+            await ActivoService.ActualizarEstadoUbicacionAsync(
+                solicitudActualizacion,
+                await ObtenerIdUsuarioActualAsync());
+            await CargarActivosAsync();
+            await OnActivoActualizacionChangedAsync();
+            mensajeActualizacion = "El estado y la ubicación se actualizaron correctamente.";
+        }
+        catch (ArgumentException ex)
+        {
+            mensajeActualizacion = ex.Message;
+        }
+        catch (InvalidOperationException ex)
+        {
+            mensajeActualizacion = ex.Message;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudo actualizar el activo {IdActivo}.", solicitudActualizacion.IdActivo);
+            mensajeActualizacion = "No se pudo actualizar el activo. Intente nuevamente.";
+        }
+        finally
+        {
+            actualizando = false;
+        }
+    }
+
+    private async Task CargarTrazabilidadAsync()
+    {
+        trazabilidad = [.. await ActivoService.ObtenerTrazabilidadActivoAsync(solicitudActualizacion.IdActivo)];
+    }
+
+    private async Task ConsultarDisponibilidadAsync()
+    {
+        if (consultandoDisponibilidad)
+        {
+            return;
+        }
+
+        consultandoDisponibilidad = true;
+        mensajeDisponibilidad = null;
+
+        try
+        {
+            disponibilidad = [.. await AsignacionActivoProyectoService.ConsultarDisponibilidadAsync(filtroDisponibilidad)];
+            consultaDisponibilidadRealizada = true;
+            mensajeDisponibilidad = disponibilidad.Count == 0
+                ? "No se encontraron activos para el rango y estado seleccionados."
+                : $"Se encontraron {disponibilidad.Count} activos para el rango consultado.";
+        }
+        catch (ArgumentException ex)
+        {
+            disponibilidad = [];
+            consultaDisponibilidadRealizada = false;
+            mensajeDisponibilidad = ex.Message;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudo consultar la disponibilidad de activos.");
+            disponibilidad = [];
+            consultaDisponibilidadRealizada = false;
+            mensajeDisponibilidad = "No se pudo consultar la disponibilidad. Intente nuevamente.";
+        }
+        finally
+        {
+            consultandoDisponibilidad = false;
+        }
+    }
+
+    private static FiltroDisponibilidadActivo CrearFiltroDisponibilidadInicial()
+    {
+        return new FiltroDisponibilidadActivo
+        {
+            FechaInicio = DateTime.Today,
+            FechaFin = DateTime.Today.AddDays(7)
+        };
+    }
+
+    private async Task<string> ObtenerIdUsuarioActualAsync()
+    {
+        var estadoAutenticacion = await Autenticacion.GetAuthenticationStateAsync();
+        return estadoAutenticacion.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+            ?? throw new InvalidOperationException("No se pudo identificar al usuario actual.");
+    }
+}

@@ -1,0 +1,1069 @@
+@page "/operaciones/mantenimientos"
+@page "/admin/activos/mantenimientos"
+@rendermode InteractiveServer
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Administrador,Operaciones")]
+
+@using Microsoft.AspNetCore.Components.Authorization
+@using SIGECDC.Application.Activos
+@using SIGECDC.Application.Operaciones
+
+@inject IMantenimientoService MantenimientoService
+@inject IActivoService ActivoService
+@inject IProyectoService ProyectoService
+@inject AuthenticationStateProvider Autenticacion
+@inject ILogger<Mantenimientos> Logger
+
+<PageTitle>Órdenes de mantenimiento | SIGE-CDC</PageTitle>
+
+<section class="page-banner">
+    <div class="container page-banner__inner stack--tight">
+        <p class="eyebrow">Operaciones</p>
+        <h1>Órdenes de mantenimiento</h1>
+        <p class="lead">
+            Cree órdenes correctivas, controle su ejecución y consulte el historial de cada activo.
+        </p>
+    </div>
+</section>
+
+<section class="section-shell">
+    <div class="container stack">
+        @if (!string.IsNullOrWhiteSpace(mensajeEstado))
+        {
+            <div class="alert alert--@(mensajeEsError ? "danger" : "success")"
+                 role="@(mensajeEsError ? "alert" : "status")">
+                <strong>@(mensajeEsError ? "No se pudo completar la acción" : "Acción completada")</strong>
+                <span>@mensajeEstado</span>
+            </div>
+        }
+
+        <section class="metric-grid" aria-label="Resumen de mantenimientos">
+            <article class="metric-card">
+                <span>Programados</span>
+                <strong>@ContarEstado("Programado")</strong>
+                <small>Pendientes de iniciar</small>
+            </article>
+            <article class="metric-card">
+                <span>En proceso</span>
+                <strong>@ContarEstado("En proceso")</strong>
+                <small>Activos temporalmente no disponibles</small>
+            </article>
+            <article class="metric-card">
+                <span>Finalizados</span>
+                <strong>@ContarEstado("Finalizado")</strong>
+                <small>Con cierre registrado</small>
+            </article>
+        </section>
+
+        <section class="page-grid">
+            <div class="page-main stack">
+                <article class="table-card">
+                    <div class="table-toolbar">
+                        <div>
+                            <p class="eyebrow">Seguimiento</p>
+                            <h2 class="card__title">Órdenes registradas</h2>
+                            <p class="card__meta">
+                                Las acciones disponibles dependen del estado actual de cada orden.
+                            </p>
+                        </div>
+                        <span class="badge badge--info">@TextoCantidad(mantenimientos.Count)</span>
+                    </div>
+
+                    @if (cargando)
+                    {
+                        <div class="empty-state">
+                            <strong>Cargando órdenes</strong>
+                            <p class="text-muted">Estamos recuperando la información registrada.</p>
+                        </div>
+                    }
+                    else if (mantenimientos.Count == 0)
+                    {
+                        <div class="empty-state">
+                            <strong>No hay órdenes de mantenimiento</strong>
+                            <p class="text-muted">
+                                Registre un correctivo o defina un plan preventivo desde Operaciones.
+                            </p>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Activo</th>
+                                        <th>Orden</th>
+                                        <th>Estado</th>
+                                        <th>Fechas</th>
+                                        <th>Costos y tiempo</th>
+                                        <th>Evidencias</th>
+                                        <th>Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var mantenimiento in mantenimientos)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <strong>@mantenimiento.CodigoActivo</strong>
+                                                <div class="text-muted">@mantenimiento.Activo</div>
+                                                @if (!string.IsNullOrWhiteSpace(mantenimiento.Proyecto))
+                                                {
+                                                    <div class="card__meta">@mantenimiento.Proyecto</div>
+                                                }
+                                            </td>
+                                            <td>
+                                                <span class="badge badge--ink">@mantenimiento.TipoMantenimiento</span>
+                                                <div class="card__meta">
+                                                    @(string.IsNullOrWhiteSpace(mantenimiento.Descripcion)
+                                                        ? "Sin descripción"
+                                                        : mantenimiento.Descripcion)
+                                                </div>
+                                                @if (!string.IsNullOrWhiteSpace(mantenimiento.Responsable))
+                                                {
+                                                    <div class="card__meta">Responsable: @mantenimiento.Responsable</div>
+                                                }
+                                            </td>
+                                            <td>
+                                                <span class="badge @ObtenerClaseEstado(mantenimiento.EstadoMantenimiento)">
+                                                    @mantenimiento.EstadoMantenimiento
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <div class="stack--tight">
+                                                    <span>Programada: @FormatearFecha(mantenimiento.FechaProgramada)</span>
+                                                    <span>Inicio: @FormatearFechaHora(mantenimiento.FechaInicio)</span>
+                                                    <span>Fin: @FormatearFechaHora(mantenimiento.FechaFin)</span>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="stack--tight">
+                                                    <span>Estimado: @FormatearMonto(mantenimiento.CostoEstimado)</span>
+                                                    <span>Real: @FormatearMonto(mantenimiento.CostoReal)</span>
+                                                    <span>Fuera de servicio: @FormatearHoras(mantenimiento.TiempoFueraServicioHoras)</span>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                @if (mantenimiento.Evidencias.Count == 0)
+                                                {
+                                                    <span class="text-muted">Sin evidencias</span>
+                                                }
+                                                else
+                                                {
+                                                    <div class="stack--tight">
+                                                        @foreach (var evidencia in mantenimiento.Evidencias)
+                                                        {
+                                                            <a href="@RutaDescarga(evidencia.IdDocumentoArchivo)"
+                                                               data-enhance-nav="false">
+                                                                @evidencia.NombreOriginal
+                                                            </a>
+                                                        }
+                                                    </div>
+                                                }
+                                            </td>
+                                            <td>
+                                                <div class="table-actions">
+                                                    @if (EsEstado(mantenimiento, "Programado"))
+                                                    {
+                                                        <button type="button"
+                                                                disabled="@HayOperacionEnCurso"
+                                                                @onclick="() => IniciarAsync(mantenimiento.IdMantenimiento)">
+                                                            @(EstaProcesando(mantenimiento.IdMantenimiento)
+                                                                ? "Iniciando..."
+                                                                : "Iniciar")
+                                                        </button>
+                                                    }
+                                                    else if (EsEstado(mantenimiento, "En proceso"))
+                                                    {
+                                                        <button type="button"
+                                                                disabled="@HayOperacionEnCurso"
+                                                                @onclick="() => AbrirCierre(mantenimiento)">
+                                                            Finalizar
+                                                        </button>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted">Sin acciones</span>
+                                                    }
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </article>
+            </div>
+
+            <aside class="page-aside">
+                <EditForm Model="solicitudCreacion"
+                          OnValidSubmit="CrearOrdenAsync"
+                          OnInvalidSubmit="LimpiarMensaje"
+                          class="form-section stack">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
+
+                    <div>
+                        <p class="eyebrow">Nueva orden</p>
+                        <h2>Registrar correctivo</h2>
+                        <p class="text-muted">
+                            La orden se registrará automáticamente con estado Programado.
+                        </p>
+                    </div>
+
+                    <div>
+                        <label for="orden-activo">Activo</label>
+                        <InputSelect id="orden-activo"
+                                     class="form-control"
+                                     @bind-Value="solicitudCreacion.IdActivo">
+                            <option value="0">Seleccione un activo</option>
+                            @foreach (var activo in activosElegibles)
+                            {
+                                <option value="@activo.IdActivo">
+                                    @activo.CodigoActivo - @activo.NombreActivo
+                                </option>
+                            }
+                        </InputSelect>
+                        <ValidationMessage For="() => solicitudCreacion.IdActivo" />
+                    </div>
+
+                    <div>
+                        <label for="orden-proyecto">Proyecto (opcional)</label>
+                        <InputSelect id="orden-proyecto"
+                                     class="form-control"
+                                     @bind-Value="solicitudCreacion.IdProyecto">
+                            <option value="">Sin proyecto</option>
+                            @foreach (var proyecto in proyectos)
+                            {
+                                <option value="@proyecto.IdProyecto">
+                                    @proyecto.CodigoProyecto - @proyecto.NombreProyecto
+                                </option>
+                            }
+                        </InputSelect>
+                        <ValidationMessage For="() => solicitudCreacion.IdProyecto" />
+                    </div>
+
+                    <div>
+                        <label for="orden-fecha">Fecha programada</label>
+                        <InputDate id="orden-fecha"
+                                   class="form-control"
+                                   @bind-Value="solicitudCreacion.FechaProgramada" />
+                        <ValidationMessage For="() => solicitudCreacion.FechaProgramada" />
+                    </div>
+
+                    <div>
+                        <label for="orden-descripcion">Descripción</label>
+                        <InputTextArea id="orden-descripcion"
+                                       class="form-control"
+                                       rows="4"
+                                       maxlength="500"
+                                       @bind-Value="solicitudCreacion.Descripcion" />
+                        <ValidationMessage For="() => solicitudCreacion.Descripcion" />
+                    </div>
+
+                    <div class="form-grid">
+                        <div>
+                            <label for="orden-costo">Costo estimado</label>
+                            <InputNumber id="orden-costo"
+                                         class="form-control"
+                                         min="0"
+                                         max="9999999999999999.99"
+                                         step="0.01"
+                                         @bind-Value="solicitudCreacion.CostoEstimado" />
+                            <ValidationMessage For="() => solicitudCreacion.CostoEstimado" />
+                        </div>
+                        <div>
+                            <label for="orden-responsable">Responsable</label>
+                            <InputText id="orden-responsable"
+                                       class="form-control"
+                                       maxlength="150"
+                                       @bind-Value="solicitudCreacion.Responsable" />
+                            <ValidationMessage For="() => solicitudCreacion.Responsable" />
+                        </div>
+                    </div>
+
+                    <button class="btn btn--primary"
+                            type="submit"
+                            disabled="@(HayOperacionEnCurso || cargando || !activosElegibles.Any())">
+                        @(procesando ? "Guardando..." : "Crear orden correctiva")
+                    </button>
+                </EditForm>
+            </aside>
+        </section>
+
+        <article class="table-card">
+            <div class="table-toolbar">
+                <div>
+                    <p class="eyebrow">Trazabilidad</p>
+                    <h2 class="card__title">Historial por activo</h2>
+                    <p class="card__meta">Consulte todas las órdenes asociadas a un activo.</p>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <div class="form-grid">
+                    <div class="field field--span-2">
+                        <label for="historial-activo">Activo</label>
+                        <select id="historial-activo"
+                                class="form-control"
+                                @bind="idActivoHistorial">
+                            <option value="0">Seleccione un activo</option>
+                            @foreach (var activo in activos)
+                            {
+                                <option value="@activo.IdActivo">
+                                    @activo.CodigoActivo - @activo.NombreActivo
+                                </option>
+                            }
+                        </select>
+                    </div>
+                    <div class="form-actions">
+                        <button class="btn btn--secondary"
+                                type="button"
+                                disabled="@(HayOperacionEnCurso || idActivoHistorial <= 0)"
+                                @onclick="ConsultarHistorialAsync">
+                            @(consultandoHistorial ? "Consultando..." : "Consultar historial")
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            @if (historialConsultado)
+            {
+                @if (historial.Count == 0)
+                {
+                    <div class="empty-state">
+                        <strong>El activo no tiene órdenes registradas</strong>
+                        <p class="text-muted">No se encontraron mantenimientos asociados.</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Tipo</th>
+                                    <th>Estado</th>
+                                    <th>Programación</th>
+                                    <th>Ejecución</th>
+                                    <th>Resultado</th>
+                                    <th>Evidencias</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var mantenimiento in historial)
+                                {
+                                    <tr>
+                                        <td>@mantenimiento.TipoMantenimiento</td>
+                                        <td>
+                                            <span class="badge @ObtenerClaseEstado(mantenimiento.EstadoMantenimiento)">
+                                                @mantenimiento.EstadoMantenimiento
+                                            </span>
+                                        </td>
+                                        <td>@FormatearFecha(mantenimiento.FechaProgramada)</td>
+                                        <td>
+                                            <div class="stack--tight">
+                                                <span>Inicio: @FormatearFechaHora(mantenimiento.FechaInicio)</span>
+                                                <span>Fin: @FormatearFechaHora(mantenimiento.FechaFin)</span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            @(string.IsNullOrWhiteSpace(mantenimiento.Resultado)
+                                                ? "-"
+                                                : mantenimiento.Resultado)
+                                        </td>
+                                        <td>
+                                            @if (mantenimiento.Evidencias.Count == 0)
+                                            {
+                                                <span class="text-muted">Sin evidencias</span>
+                                            }
+                                            else
+                                            {
+                                                <div class="stack--tight">
+                                                    @foreach (var evidencia in mantenimiento.Evidencias)
+                                                    {
+                                                        <a href="@RutaDescarga(evidencia.IdDocumentoArchivo)"
+                                                           data-enhance-nav="false">
+                                                            @evidencia.NombreOriginal
+                                                        </a>
+                                                    }
+                                                </div>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            }
+        </article>
+    </div>
+</section>
+
+@if (ordenCierre is not null)
+{
+    <div class="modal-backdrop-sige">
+        <div class="card modal-card-sige" role="dialog" aria-modal="true" aria-labelledby="titulo-cierre">
+            <div class="card__header">
+                <div>
+                    <p class="eyebrow">Cierre de orden</p>
+                    <h2 id="titulo-cierre" class="card__title">Finalizar mantenimiento</h2>
+                    <p class="card__meta">
+                        @ordenCierre.CodigoActivo - @ordenCierre.Activo
+                    </p>
+                </div>
+                <button type="button"
+                        class="btn-close"
+                        aria-label="Cerrar"
+                        disabled="@procesando"
+                        @onclick="CerrarModalCierre">
+                </button>
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(mensajeCierre))
+            {
+                <div class="alert alert--danger" role="alert">@mensajeCierre</div>
+            }
+
+            <EditForm Model="solicitudCierre"
+                      OnValidSubmit="FinalizarAsync"
+                      OnInvalidSubmit="LimpiarMensajeCierre"
+                      class="stack">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <div class="form-grid">
+                    <div>
+                        <label for="cierre-costo">Costo real</label>
+                        <input id="cierre-costo"
+                               class="form-control"
+                               type="number"
+                               min="0"
+                               max="9999999999999999.99"
+                               step="0.01"
+                               @bind="solicitudCierre.CostoReal"
+                               @bind:event="oninput" />
+                        <ValidationMessage For="() => solicitudCierre.CostoReal" />
+                    </div>
+                    <div>
+                        <label for="cierre-tiempo">Tiempo fuera de servicio (horas)</label>
+                        <input id="cierre-tiempo"
+                               class="form-control"
+                               type="number"
+                               min="0"
+                               max="9999999999999999.99"
+                               step="0.01"
+                               @bind="solicitudCierre.TiempoFueraServicioHoras"
+                               @bind:event="oninput" />
+                        <ValidationMessage For="() => solicitudCierre.TiempoFueraServicioHoras" />
+                    </div>
+                    <div class="field field--span-2">
+                        <label for="cierre-resultado">Resultado (opcional)</label>
+                        <InputTextArea id="cierre-resultado"
+                                       class="form-control"
+                                       rows="4"
+                                       maxlength="500"
+                                       @bind-Value="solicitudCierre.Resultado" />
+                        <ValidationMessage For="() => solicitudCierre.Resultado" />
+                    </div>
+                    <div class="field field--span-2">
+                        <label for="cierre-evidencias">Evidencias</label>
+                        <InputFile id="cierre-evidencias"
+                                   OnChange="SeleccionarEvidencias"
+                                   accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                                   disabled="@procesando"
+                                   multiple />
+                        <p class="help-text">
+                            Adjunte uno o más archivos PDF, DOC, DOCX, JPG, JPEG o PNG.
+                            El máximo es 10 MB por archivo.
+                        </p>
+
+                        @if (archivosEvidencia.Count > 0)
+                        {
+                            <ul>
+                                @foreach (var archivo in archivosEvidencia)
+                                {
+                                    <li>@archivo.Name · @FormatearTamano(archivo.Size)</li>
+                                }
+                            </ul>
+                        }
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button class="btn btn--secondary"
+                            type="button"
+                            disabled="@procesando"
+                            @onclick="CerrarModalCierre">
+                        Volver
+                    </button>
+                    <button class="btn btn--primary"
+                            type="submit"
+                            disabled="@procesando">
+                        @(procesando ? "Finalizando..." : "Finalizar orden")
+                    </button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+}
+
+@code {
+    private const long TamanoMaximoEvidencia = 10 * 1024 * 1024;
+
+    private static readonly HashSet<string> ExtensionesPermitidas =
+        new(StringComparer.OrdinalIgnoreCase)
+        {
+            ".pdf",
+            ".doc",
+            ".docx",
+            ".jpg",
+            ".jpeg",
+            ".png"
+        };
+
+    private List<MantenimientoResumen> mantenimientos = [];
+    private List<MantenimientoResumen> historial = [];
+    private List<ActivoResumen> activos = [];
+    private List<ProyectoResumen> proyectos = [];
+    private List<IBrowserFile> archivosEvidencia = [];
+
+    private SolicitudCrearOrdenMantenimiento solicitudCreacion = NuevaSolicitudCreacion();
+    private SolicitudCerrarOrdenMantenimiento solicitudCierre = NuevaSolicitudCierre();
+    private MantenimientoResumen? ordenCierre;
+
+    private long idActivoHistorial;
+    private long? idMantenimientoProcesando;
+    private bool cargando = true;
+    private bool procesando;
+    private bool consultandoHistorial;
+    private bool historialConsultado;
+    private bool mensajeEsError;
+    private string? mensajeEstado;
+    private string? mensajeCierre;
+    private bool HayOperacionEnCurso => procesando || consultandoHistorial;
+
+    private IEnumerable<ActivoResumen> activosElegibles => activos.Where(
+        activo => !string.Equals(
+            activo.EstadoActivo,
+            "Dado de baja",
+            StringComparison.OrdinalIgnoreCase));
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            await CargarDatosAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "No se pudieron cargar las órdenes de mantenimiento.");
+            mensajeEsError = true;
+            mensajeEstado = "No se pudo cargar la información de mantenimiento. Intente nuevamente.";
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private async Task CargarDatosAsync()
+    {
+        mantenimientos =
+        [
+            .. await MantenimientoService.ObtenerMantenimientosAsync()
+        ];
+        activos = [.. await ActivoService.ObtenerActivosAsync()];
+        proyectos = [.. await ProyectoService.ObtenerProyectosAsync()];
+
+        if (historialConsultado && idActivoHistorial > 0)
+        {
+            historial =
+            [
+                .. await MantenimientoService.ObtenerHistorialActivoAsync(idActivoHistorial)
+            ];
+        }
+    }
+
+    private async Task CrearOrdenAsync()
+    {
+        if (HayOperacionEnCurso)
+        {
+            return;
+        }
+
+        IniciarProcesamiento();
+
+        try
+        {
+            var idMantenimiento =
+                await MantenimientoService.CrearOrdenCorrectivaAsync(
+                solicitudCreacion,
+                await ObtenerIdUsuarioActualAsync());
+
+            solicitudCreacion = NuevaSolicitudCreacion();
+            await RecargarTrasOperacionAsync(
+                "La orden correctiva se creó con estado Programado.",
+                "crear",
+                idMantenimiento);
+        }
+        catch (ArgumentException ex)
+        {
+            MostrarError(ex.Message);
+        }
+        catch (InvalidOperationException ex) when (EsErrorFuncional(ex))
+        {
+            MostrarError(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(
+                ex,
+                "No se pudo crear la orden correctiva para el activo {IdActivo}.",
+                solicitudCreacion.IdActivo);
+            MostrarError("No se pudo crear la orden de mantenimiento. Intente nuevamente.");
+        }
+        finally
+        {
+            FinalizarProcesamiento();
+        }
+    }
+
+    private async Task IniciarAsync(long idMantenimiento)
+    {
+        if (HayOperacionEnCurso)
+        {
+            return;
+        }
+
+        IniciarProcesamiento(idMantenimiento);
+
+        try
+        {
+            await MantenimientoService.IniciarOrdenAsync(
+                idMantenimiento,
+                await ObtenerIdUsuarioActualAsync());
+
+            await RecargarTrasOperacionAsync(
+                "La orden se inició correctamente y se actualizó la disponibilidad del activo.",
+                "iniciar",
+                idMantenimiento);
+        }
+        catch (ArgumentException ex)
+        {
+            MostrarError(ex.Message);
+        }
+        catch (InvalidOperationException ex) when (EsErrorFuncional(ex))
+        {
+            MostrarError(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(
+                ex,
+                "No se pudo iniciar la orden {IdMantenimiento}.",
+                idMantenimiento);
+            MostrarError("No se pudo iniciar la orden de mantenimiento. Intente nuevamente.");
+        }
+        finally
+        {
+            FinalizarProcesamiento();
+        }
+    }
+
+    private void AbrirCierre(MantenimientoResumen mantenimiento)
+    {
+        if (HayOperacionEnCurso)
+        {
+            return;
+        }
+
+        ordenCierre = mantenimiento;
+        solicitudCierre = new SolicitudCerrarOrdenMantenimiento
+        {
+            IdMantenimiento = mantenimiento.IdMantenimiento,
+            CostoReal = mantenimiento.CostoReal,
+            TiempoFueraServicioHoras = mantenimiento.TiempoFueraServicioHoras,
+            Resultado = mantenimiento.Resultado,
+            Evidencias = []
+        };
+        archivosEvidencia = [];
+        mensajeCierre = null;
+    }
+
+    private void CerrarModalCierre()
+    {
+        if (procesando)
+        {
+            return;
+        }
+
+        ordenCierre = null;
+        solicitudCierre = NuevaSolicitudCierre();
+        archivosEvidencia = [];
+        mensajeCierre = null;
+    }
+
+    private void SeleccionarEvidencias(InputFileChangeEventArgs evento)
+    {
+        if (procesando)
+        {
+            return;
+        }
+
+        mensajeCierre = null;
+
+        try
+        {
+            var seleccionados = evento.GetMultipleFiles();
+            var archivoInvalido = seleccionados.FirstOrDefault(archivo =>
+                archivo.Size <= 0 ||
+                archivo.Size > TamanoMaximoEvidencia ||
+                !ExtensionesPermitidas.Contains(Path.GetExtension(archivo.Name)));
+
+            if (archivoInvalido is not null)
+            {
+                archivosEvidencia = [];
+                solicitudCierre.Evidencias = [];
+                mensajeCierre = archivoInvalido.Size > TamanoMaximoEvidencia
+                    ? $"El archivo {archivoInvalido.Name} supera el máximo de 10 MB."
+                    : $"El archivo {archivoInvalido.Name} no tiene un formato permitido.";
+                return;
+            }
+
+            archivosEvidencia = [.. seleccionados];
+            solicitudCierre.Evidencias = CrearMetadatosEvidencias(
+                archivosEvidencia);
+        }
+        catch (InvalidOperationException)
+        {
+            archivosEvidencia = [];
+            solicitudCierre.Evidencias = [];
+            mensajeCierre = "No se pudo procesar la selección de archivos. Seleccione menos evidencias e intente nuevamente.";
+        }
+    }
+
+    private async Task FinalizarAsync()
+    {
+        if (HayOperacionEnCurso || ordenCierre is null)
+        {
+            return;
+        }
+
+        if (archivosEvidencia.Count == 0)
+        {
+            mensajeCierre = "Adjunte al menos una evidencia antes de finalizar la orden.";
+            return;
+        }
+
+        var idMantenimientoFinalizado = ordenCierre.IdMantenimiento;
+        var evidencias = new List<SolicitudEvidenciaMantenimiento>(archivosEvidencia.Count);
+        IniciarProcesamiento(ordenCierre.IdMantenimiento);
+        mensajeCierre = null;
+
+        try
+        {
+            foreach (var archivo in archivosEvidencia)
+            {
+                evidencias.Add(new SolicitudEvidenciaMantenimiento
+                {
+                    NombreOriginal = archivo.Name,
+                    MimeType = NormalizarMimeType(archivo.ContentType),
+                    TamanoBytes = archivo.Size,
+                    Contenido = archivo.OpenReadStream(TamanoMaximoEvidencia)
+                });
+            }
+
+            solicitudCierre.Evidencias = evidencias;
+
+            await MantenimientoService.FinalizarOrdenAsync(
+                solicitudCierre,
+                await ObtenerIdUsuarioActualAsync());
+
+            ordenCierre = null;
+            solicitudCierre = NuevaSolicitudCierre();
+            archivosEvidencia = [];
+            await RecargarTrasOperacionAsync(
+                "La orden se finalizó y sus evidencias quedaron protegidas.",
+                "finalizar",
+                idMantenimientoFinalizado);
+        }
+        catch (ArgumentException ex)
+        {
+            mensajeCierre = ex.Message;
+        }
+        catch (InvalidOperationException ex) when (EsErrorFuncional(ex))
+        {
+            mensajeCierre = ex.Message;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(
+                ex,
+                "No se pudo finalizar la orden {IdMantenimiento}.",
+                solicitudCierre.IdMantenimiento);
+            mensajeCierre = "No se pudo finalizar la orden de mantenimiento. Intente nuevamente.";
+        }
+        finally
+        {
+            foreach (var evidencia in evidencias)
+            {
+                evidencia.Dispose();
+            }
+
+            solicitudCierre.Evidencias = CrearMetadatosEvidencias(
+                archivosEvidencia);
+            FinalizarProcesamiento();
+        }
+    }
+
+    private static IReadOnlyList<SolicitudEvidenciaMantenimiento>
+        CrearMetadatosEvidencias(
+            IEnumerable<IBrowserFile> archivos)
+    {
+        return
+        [
+            .. archivos.Select(archivo =>
+                new SolicitudEvidenciaMantenimiento
+                {
+                    NombreOriginal = archivo.Name,
+                    MimeType = NormalizarMimeType(archivo.ContentType),
+                    TamanoBytes = archivo.Size,
+                    Contenido = Stream.Null
+                })
+        ];
+    }
+
+    private async Task RecargarTrasOperacionAsync(
+        string mensajeExito,
+        string operacion,
+        long idMantenimiento)
+    {
+        try
+        {
+            await CargarDatosAsync();
+            MostrarExito(mensajeExito);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(
+                ex,
+                "La operación {Operacion} de la orden {IdMantenimiento} se confirmó, pero no se pudo recargar la vista.",
+                operacion,
+                idMantenimiento);
+            MostrarExito(
+                $"{mensajeExito} No se pudo actualizar la vista; recargue la página para consultar el estado confirmado.");
+        }
+    }
+
+    private static string? NormalizarMimeType(string? mimeType)
+    {
+        return string.IsNullOrWhiteSpace(mimeType)
+            || string.Equals(
+                mimeType,
+                "application/octet-stream",
+                StringComparison.OrdinalIgnoreCase)
+            ? null
+            : mimeType.Trim();
+    }
+
+    private static bool EsErrorFuncional(InvalidOperationException excepcion)
+    {
+        var mensaje = excepcion.Message;
+        return mensaje.StartsWith("No se puede ", StringComparison.Ordinal)
+            || mensaje.StartsWith(
+                "No se encontró la orden de mantenimiento seleccionada.",
+                StringComparison.Ordinal)
+            || mensaje.StartsWith(
+                "No se encontró el activo seleccionado.",
+                StringComparison.Ordinal)
+            || mensaje.StartsWith(
+                "No se encontró el activo asociado a la orden.",
+                StringComparison.Ordinal)
+            || mensaje.StartsWith(
+                "No se encontró el proyecto seleccionado.",
+                StringComparison.Ordinal)
+            || mensaje.StartsWith(
+                "No se encontró al usuario responsable",
+                StringComparison.Ordinal)
+            || mensaje.StartsWith(
+                "Solo un mantenimiento ",
+                StringComparison.Ordinal)
+            || mensaje.StartsWith(
+                "La orden no posee una fecha de inicio válida.",
+                StringComparison.Ordinal)
+            || mensaje.StartsWith(
+                "La fecha de inicio de la orden es posterior",
+                StringComparison.Ordinal);
+    }
+
+    private async Task ConsultarHistorialAsync()
+    {
+        if (idActivoHistorial <= 0 || HayOperacionEnCurso)
+        {
+            return;
+        }
+
+        consultandoHistorial = true;
+        historialConsultado = false;
+        LimpiarMensaje();
+
+        try
+        {
+            historial =
+            [
+                .. await MantenimientoService.ObtenerHistorialActivoAsync(idActivoHistorial)
+            ];
+            historialConsultado = true;
+        }
+        catch (ArgumentException ex)
+        {
+            MostrarError(ex.Message);
+        }
+        catch (InvalidOperationException ex) when (EsErrorFuncional(ex))
+        {
+            MostrarError(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(
+                ex,
+                "No se pudo consultar el historial de mantenimiento del activo {IdActivo}.",
+                idActivoHistorial);
+            MostrarError("No se pudo consultar el historial del activo. Intente nuevamente.");
+        }
+        finally
+        {
+            consultandoHistorial = false;
+        }
+    }
+
+    private void IniciarProcesamiento(long? idMantenimiento = null)
+    {
+        procesando = true;
+        idMantenimientoProcesando = idMantenimiento;
+        LimpiarMensaje();
+    }
+
+    private void FinalizarProcesamiento()
+    {
+        procesando = false;
+        idMantenimientoProcesando = null;
+    }
+
+    private void MostrarExito(string mensaje)
+    {
+        mensajeEsError = false;
+        mensajeEstado = mensaje;
+    }
+
+    private void MostrarError(string mensaje)
+    {
+        mensajeEsError = true;
+        mensajeEstado = mensaje;
+    }
+
+    private void LimpiarMensaje()
+    {
+        mensajeEstado = null;
+        mensajeEsError = false;
+    }
+
+    private void LimpiarMensajeCierre()
+    {
+        mensajeCierre = null;
+    }
+
+    private bool EstaProcesando(long idMantenimiento)
+    {
+        return procesando && idMantenimientoProcesando == idMantenimiento;
+    }
+
+    private int ContarEstado(string estado)
+    {
+        return mantenimientos.Count(mantenimiento => EsEstado(mantenimiento, estado));
+    }
+
+    private static bool EsEstado(MantenimientoResumen mantenimiento, string estado)
+    {
+        return string.Equals(
+            mantenimiento.EstadoMantenimiento,
+            estado,
+            StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string ObtenerClaseEstado(string estado)
+    {
+        return estado switch
+        {
+            "Programado" => "badge--info",
+            "En proceso" => "badge--accent",
+            "Finalizado" => "badge--success",
+            "Cancelado" => "badge--ink",
+            _ => "badge--ink"
+        };
+    }
+
+    private static SolicitudCrearOrdenMantenimiento NuevaSolicitudCreacion()
+    {
+        return new SolicitudCrearOrdenMantenimiento
+        {
+            FechaProgramada = DateTime.Today
+        };
+    }
+
+    private static SolicitudCerrarOrdenMantenimiento NuevaSolicitudCierre()
+    {
+        return new SolicitudCerrarOrdenMantenimiento
+        {
+            Evidencias = []
+        };
+    }
+
+    private async Task<string> ObtenerIdUsuarioActualAsync()
+    {
+        var estadoAutenticacion = await Autenticacion.GetAuthenticationStateAsync();
+        return estadoAutenticacion.User
+            .FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)
+            ?.Value
+            ?? throw new InvalidOperationException("No se pudo identificar al usuario actual.");
+    }
+
+    private static string RutaDescarga(long idDocumentoArchivo)
+    {
+        return $"/operaciones/mantenimientos/evidencias/{idDocumentoArchivo}/descargar";
+    }
+
+    private static string TextoCantidad(int cantidad)
+    {
+        return cantidad == 1 ? "1 orden" : $"{cantidad} órdenes";
+    }
+
+    private static string FormatearFecha(DateTime fecha)
+    {
+        return fecha.ToString("dd/MM/yyyy");
+    }
+
+    private static string FormatearFechaHora(DateTime? fecha)
+    {
+        return fecha?.ToString("dd/MM/yyyy HH:mm") ?? "-";
+    }
+
+    private static string FormatearMonto(decimal? monto)
+    {
+        return monto.HasValue ? $"₡{monto.Value:N2}" : "-";
+    }
+
+    private static string FormatearHoras(decimal? horas)
+    {
+        return horas.HasValue ? $"{horas.Value:N2} h" : "-";
+    }
+
+    private static string FormatearTamano(long tamanoBytes)
+    {
+        return tamanoBytes >= 1024 * 1024
+            ? $"{tamanoBytes / 1024d / 1024d:N2} MB"
+            : $"{tamanoBytes / 1024d:N1} KB";
+    }
+}

@@ -1,0 +1,27 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="f7f91b74-1f3a-4e4c-b6f8-bb5ff1b29d2b" name="jloca@JARVIS 2026-10-05 15:26:49" runUser="JARVIS\jloca" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-10-05T15:26:49.4193566-06:00" queuing="2026-10-05T15:26:49.4193569-06:00" start="2026-10-05T15:26:48.1755205-06:00" finish="2026-10-05T15:26:49.4197747-06:00" />
+  <TestSettings name="default" id="9166251b-3c33-48aa-a22c-fac3bf1b99f3">
+    <Deployment runDeploymentRoot="jloca_JARVIS_2026-10-05_15_26_49" />
+  </TestSettings>
+  <TestLists>
+    <TestList name="Resultados sin formato de lista" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="Todos los resultados cargados" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Completed">
+    <Counters total="0" executed="0" passed="0" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.8.2+699d445a1a (64-bit .NET 10.0.12)&#xD;
+[xUnit.net 00:00:00.22]   Discovering: SIGECDC.Tests&#xD;
+[xUnit.net 00:00:00.43]   Discovered:  SIGECDC.Tests&#xD;
+[xUnit.net 00:00:00.49]   Starting:    SIGECDC.Tests&#xD;
+[xUnit.net 00:00:00.50]   Finished:    SIGECDC.Tests&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="JARVIS" outcome="Warning" timestamp="2026-10-05T15:26:49.3424521-06:00">
+        <Text>Ninguna prueba coincide con el filtro de casos de prueba proporcionado "FullyQualifiedName~EntregableImplantacion&amp;Name~Auth001|FullyQualifiedName~EntregableImplantacion&amp;Name~Pub003|FullyQualifiedName~EntregableImplantacion&amp;Name~Pub004|FullyQualifiedName~EntregableImplantacion&amp;Name~Pub005|FullyQualifiedName~EntregableImplantaci..." en C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

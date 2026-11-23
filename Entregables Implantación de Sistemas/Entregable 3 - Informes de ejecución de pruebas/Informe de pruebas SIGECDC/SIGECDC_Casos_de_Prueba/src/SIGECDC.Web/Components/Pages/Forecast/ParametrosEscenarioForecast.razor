@@ -1,0 +1,36 @@
+@page "/rrhh/forecast/{IdForecastEscenario:long}/parametros"
+@rendermode InteractiveServer
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Administrador,Recursos Humanos")]
+@using SIGECDC.Application.Forecast
+@inject IForecastEscenarioService Escenarios
+@inject AuthenticationStateProvider Autenticacion
+
+<PageTitle>Parámetros Forecast | SIGE-CDC</PageTitle>
+<section class="section-shell"><div class="container stack">
+    <h1>Parámetros del escenario</h1>
+    <NavegacionEscenarioForecast IdEscenario="IdForecastEscenario" Nombre="@escenario?.Nombre" Estado="@escenario?.EstadoEscenario" Etapa="Parámetros y ajustes" SnapshotVigente="@(escenario?.VersionMotor == SIGECDC.Domain.Forecast.ProyeccionFinanciera.VersionMotor)" />
+    <p>Solo conceptos gobernados y vigentes para la proyección. Las tasas normativas no son editables.
+        Cada ajuste sustituye el valor histórico de su concepto; no se suma al mismo.</p>
+    @if (escenario is not null)
+    {
+        <EvidenciaFinancieraForecast IdEscenario="IdForecastEscenario" SoloOverrides="true" />
+        @if (escenario.EstadoEscenario == "Borrador")
+        {
+            <a class="btn btn--primary" href="@($"/rrhh/forecast/{IdForecastEscenario}/asignaciones-proyecto")">Siguiente: distribución por proyecto</a>
+        }
+    }
+    else { <p role="status">Escenario no disponible para esta consulta.</p> }
+</div></section>
+@code {
+    [Parameter] public long IdForecastEscenario { get; set; }
+    private EscenarioForecastDetalle? escenario;
+    protected override async Task OnParametersSetAsync()
+    {
+        try
+        {
+            var actor = (await Autenticacion.GetAuthenticationStateAsync()).User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "";
+            escenario = await Escenarios.ObtenerDetalleAsync(IdForecastEscenario, actor);
+        }
+        catch (UnauthorizedAccessException) { escenario = null; }
+    }
+}

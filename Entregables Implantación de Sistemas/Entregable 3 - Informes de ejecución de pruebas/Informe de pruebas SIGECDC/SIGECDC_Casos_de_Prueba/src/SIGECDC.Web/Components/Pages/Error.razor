@@ -1,0 +1,35 @@
+@page "/Error"
+@using System.Diagnostics
+
+<PageTitle>Error | Canales y Drenajes del Caribe S.R.L.</PageTitle>
+
+<section class="page-banner">
+    <div class="container page-banner__inner stack--tight">
+        <p class="eyebrow">Error</p>
+        <h1>No pudimos procesar la solicitud.</h1>
+        <p class="lead">Puede volver al inicio o intentar nuevamente en unos minutos.</p>
+    </div>
+</section>
+
+<section class="section-shell section-shell--compact">
+    <div class="container panel-highlight stack">
+        @if (ShowRequestId)
+        {
+            <p>
+                <strong>Referencia:</strong> <code>@RequestId</code>
+            </p>
+        }
+        <a class="btn btn--primary" href="">Volver al inicio</a>
+    </div>
+</section>
+
+@code {
+    [CascadingParameter]
+    private HttpContext? HttpContext { get; set; }
+
+    private string? RequestId { get; set; }
+    private bool ShowRequestId => !string.IsNullOrEmpty(RequestId);
+
+    protected override void OnInitialized() =>
+        RequestId = Activity.Current?.Id ?? HttpContext?.TraceIdentifier;
+}

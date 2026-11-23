@@ -1,0 +1,280 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="9754fc24-5c21-48b2-aff3-de45b25e75a6" name="jloca@JARVIS 2026-10-05 15:46:14" runUser="JARVIS\jloca" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-10-05T15:46:14.1566096-06:00" queuing="2026-10-05T15:46:14.1566098-06:00" start="2026-10-05T15:45:59.7804021-06:00" finish="2026-10-05T15:49:50.8396681-06:00" />
+  <TestSettings name="default" id="2cefc9d3-fc7c-4c98-861b-7e8570b55e9c">
+    <Deployment runDeploymentRoot="jloca_JARVIS_2026-10-05_15_46_14" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="f043e66b-ecd9-432a-a563-574c382bb723" testId="3e57162d-ae33-0bb5-5ec3-a3f0e8d4f40d" testName="PLA-006 — Proteger colilla de otro empleado" computerName="JARVIS" duration="00:00:05.0766835" startTime="2026-10-05T15:48:52.9779409-06:00" endTime="2026-10-05T15:48:52.9779410-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="f043e66b-ecd9-432a-a563-574c382bb723" />
+    <UnitTestResult executionId="535346f1-7a50-49fb-af88-f270f61ceeef" testId="577eb8d3-e498-18bc-b870-691043df1515" testName="RH-005 — Adjuntar y recuperar documento válido" computerName="JARVIS" duration="00:00:04.1950876" startTime="2026-10-05T15:49:35.3085264-06:00" endTime="2026-10-05T15:49:35.3085265-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="535346f1-7a50-49fb-af88-f270f61ceeef" />
+    <UnitTestResult executionId="dd39cc1b-26a9-4f4d-97a9-042f2c48e175" testId="01a2a229-21e7-cfaf-29da-dec9c631eb83" testName="RH-002 — Actualizar colaborador" computerName="JARVIS" duration="00:00:04.4950734" startTime="2026-10-05T15:49:23.3853020-06:00" endTime="2026-10-05T15:49:23.3853022-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="dd39cc1b-26a9-4f4d-97a9-042f2c48e175" />
+    <UnitTestResult executionId="6fd203a2-02a8-4663-a369-25b30c4faeae" testId="361615f6-a1a5-d598-a75b-9a37bd379d78" testName="AUD-002 — Trazabilidad de RRHH y planilla" computerName="JARVIS" duration="00:00:07.4068839" startTime="2026-10-05T15:47:08.6657974-06:00" endTime="2026-10-05T15:47:08.6657977-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="6fd203a2-02a8-4663-a369-25b30c4faeae" />
+    <UnitTestResult executionId="c76fc2f0-c7ea-42ee-9c90-0799bfffc2fa" testId="781a44c3-9a07-ef2a-b0a4-aebe07b21af4" testName="ACT-005 — Asignar activo libre" computerName="JARVIS" duration="00:00:06.9579089" startTime="2026-10-05T15:46:14.1312275-06:00" endTime="2026-10-05T15:46:14.1312659-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c76fc2f0-c7ea-42ee-9c90-0799bfffc2fa" />
+    <UnitTestResult executionId="b2770dca-097e-4487-b54d-040445defc4c" testId="4c9bb534-a597-4371-2bf2-7f3e3e423299" testName="RH-006 — Rechazar documento con contenido inválido" computerName="JARVIS" duration="00:00:04.3559873" startTime="2026-10-05T15:49:39.6650874-06:00" endTime="2026-10-05T15:49:39.6650875-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b2770dca-097e-4487-b54d-040445defc4c" />
+    <UnitTestResult executionId="0d9641e8-4a76-4ec3-b90b-685d1f916d66" testId="93c14abb-76eb-bb6d-7fb5-5093b824147d" testName="PLA-003 — Bloquear cálculo sin condición laboral" computerName="JARVIS" duration="00:00:04.6915584" startTime="2026-10-05T15:48:10.9853976-06:00" endTime="2026-10-05T15:48:10.9853977-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="0d9641e8-4a76-4ec3-b90b-685d1f916d66" />
+    <UnitTestResult executionId="5b39f7f6-a743-4b64-91c3-f1b9f27b0fc3" testId="3bd5b570-76c6-dc8f-6de8-9a0cc92915f1" testName="PLA-007 — Bloqueo de planilla aprobada y cerrada" computerName="JARVIS" duration="00:00:04.9487913" startTime="2026-10-05T15:48:15.9347617-06:00" endTime="2026-10-05T15:48:15.9347619-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="5b39f7f6-a743-4b64-91c3-f1b9f27b0fc3" />
+    <UnitTestResult executionId="b14f9a20-d9d4-4638-806c-0a2ade132bb8" testId="93c56f62-90d2-a55a-3981-2d8bc45a2863" testName="AUD-001 — Historial de acceso y contacto de solo lectura" computerName="JARVIS" duration="00:00:04.6882702" startTime="2026-10-05T15:47:01.2583544-06:00" endTime="2026-10-05T15:47:01.2583545-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b14f9a20-d9d4-4638-806c-0a2ade132bb8" />
+    <UnitTestResult executionId="81f6ec64-0a46-4f92-b952-e1abad076460" testId="92b5195d-5974-af72-3b9b-241f27bb39c9" testName="PUB-001 — Páginas institucionales anónimas" computerName="JARVIS" duration="00:00:04.4013251" startTime="2026-10-05T15:49:01.6768342-06:00" endTime="2026-10-05T15:49:01.6768343-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="81f6ec64-0a46-4f92-b952-e1abad076460" />
+    <UnitTestResult executionId="087f6a8e-cfb0-4f89-aad0-c7e444ceba5b" testId="689500a0-26a1-cdc2-03b5-77a374cad6c0" testName="PLA-002 — Calcular planilla válida" computerName="JARVIS" duration="00:00:04.7093445" startTime="2026-10-05T15:48:47.9006925-06:00" endTime="2026-10-05T15:48:47.9006928-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="087f6a8e-cfb0-4f89-aad0-c7e444ceba5b" />
+    <UnitTestResult executionId="81a9f064-2fca-4833-b64e-971b6fa21361" testId="514e014c-50e6-fc35-d731-929901c227fd" testName="FOR-001 — Generar proyección desde histórico autorizado" computerName="JARVIS" duration="00:00:05.2543177" startTime="2026-10-05T15:47:27.0939661-06:00" endTime="2026-10-05T15:47:27.0939662-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="81a9f064-2fca-4833-b64e-971b6fa21361" />
+    <UnitTestResult executionId="5dde6c2b-5d4a-4cc5-83db-a50ac539a521" testId="ed0fc8dd-47ef-a7b7-2f0b-202c1d504031" testName="ACT-004 — Crear y actualizar proyecto" computerName="JARVIS" duration="00:00:04.3326101" startTime="2026-10-05T15:46:47.6751556-06:00" endTime="2026-10-05T15:46:47.6751558-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="5dde6c2b-5d4a-4cc5-83db-a50ac539a521" />
+    <UnitTestResult executionId="40a920b3-ceea-4eb0-a82f-1ce82d6ff580" testId="58715c67-170b-2b60-1389-f7dd1655bed5" testName="PUB-005 — Publicación de contenido institucional" computerName="JARVIS" duration="00:00:04.5504186" startTime="2026-10-05T15:49:10.4104897-06:00" endTime="2026-10-05T15:49:10.4104897-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="40a920b3-ceea-4eb0-a82f-1ce82d6ff580" />
+    <UnitTestResult executionId="d39b795e-a80f-497d-88a2-529a7d4d9801" testId="5da9ed6b-82e4-490b-b635-099ff158b4da" testName="FOR-006 — Comparar Forecast y planilla real autorizada" computerName="JARVIS" duration="00:00:06.5319830" startTime="2026-10-05T15:47:33.6264510-06:00" endTime="2026-10-05T15:47:33.6264511-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d39b795e-a80f-497d-88a2-529a7d4d9801" />
+    <UnitTestResult executionId="cf0ea225-cc0a-4b1d-bb73-dba6db11395a" testId="975ba498-a32d-8693-5967-999f1db8ec8a" testName="ACT-006 — Rechazar asignación solapada" computerName="JARVIS" duration="00:00:03.7986989" startTime="2026-10-05T15:46:25.8683179-06:00" endTime="2026-10-05T15:46:25.8683180-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="cf0ea225-cc0a-4b1d-bb73-dba6db11395a" />
+    <UnitTestResult executionId="be10f357-8538-46d5-83b0-aeee1e61c687" testId="d2065e7d-0a7e-fefd-a03a-9130fd2b2e62" testName="FOR-003 — Parámetro proyectado y preservación del histórico" computerName="JARVIS" duration="00:00:05.3876651" startTime="2026-10-05T15:47:47.0173309-06:00" endTime="2026-10-05T15:47:47.0173310-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="be10f357-8538-46d5-83b0-aeee1e61c687" />
+    <UnitTestResult executionId="ac4a919c-a184-4a2c-b1fb-d70fb66cf3c6" testId="62902f86-3c26-051a-1ca8-da12d64c5daa" testName="ACT-008 — Completar mantenimiento correctivo" computerName="JARVIS" duration="00:00:04.1373751" startTime="2026-10-05T15:46:18.2705825-06:00" endTime="2026-10-05T15:46:18.2705827-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="ac4a919c-a184-4a2c-b1fb-d70fb66cf3c6" />
+    <UnitTestResult executionId="9bc287e8-0181-4fb9-afd8-4acdda10abe2" testId="741c82a0-022b-7f4c-ac69-374853f7f8c0" testName="RH-004 — Catálogos y asignación organizativa" computerName="JARVIS" duration="00:00:07.7269747" startTime="2026-10-05T15:49:31.1129225-06:00" endTime="2026-10-05T15:49:31.1129226-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="9bc287e8-0181-4fb9-afd8-4acdda10abe2" />
+    <UnitTestResult executionId="641cbf72-9818-4e1a-b4fb-99f8d5cab4b9" testId="49bb6eb0-0e7b-e8ed-e4ae-d9e3c065ee12" testName="RH-003 — Desactivar conservando historial" computerName="JARVIS" duration="00:00:04.2651705" startTime="2026-10-05T15:49:43.9307613-06:00" endTime="2026-10-05T15:49:43.9307614-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="641cbf72-9818-4e1a-b4fb-99f8d5cab4b9" />
+    <UnitTestResult executionId="0ea57268-2333-41b4-830c-ee5ce3b0c116" testId="cd8fc91c-6fa9-8847-68b2-654ff58b481c" testName="AUTH-004 — Separación representativa de permisos" computerName="JARVIS" duration="00:00:05.0845437" startTime="2026-10-05T15:47:52.1028423-06:00" endTime="2026-10-05T15:47:52.1028424-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="0ea57268-2333-41b4-830c-ee5ce3b0c116" />
+    <UnitTestResult executionId="8a7a5609-439d-4b43-a578-166e910bd139" testId="d1a9c04d-ae44-73b6-600f-4641d95691fe" testName="PUB-006 — Mostrar y ocultar tarjeta pública" computerName="JARVIS" duration="00:00:04.2742804" startTime="2026-10-05T15:49:18.8891932-06:00" endTime="2026-10-05T15:49:18.8891933-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="8a7a5609-439d-4b43-a578-166e910bd139" />
+    <UnitTestResult executionId="2213f87f-f9f9-4076-a31d-d4e27bae6972" testId="365ffe69-bc19-63cb-666d-5d4c02c036c0" testName="PLA-004 — Parámetro aplicado al colaborador correspondiente" computerName="JARVIS" duration="00:00:10.3510629" startTime="2026-10-05T15:48:38.1737704-06:00" endTime="2026-10-05T15:48:38.1737706-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="2213f87f-f9f9-4076-a31d-d4e27bae6972" />
+    <UnitTestResult executionId="ffcf9b40-51d3-4d32-a67d-775a99eccf87" testId="0a62ba94-683b-1ff9-3e4f-0a6c882de8ef" testName="ACT-003 — Disponibilidad según fechas y estado" computerName="JARVIS" duration="00:00:04.2264685" startTime="2026-10-05T15:46:30.0953069-06:00" endTime="2026-10-05T15:46:30.0953070-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="ffcf9b40-51d3-4d32-a67d-775a99eccf87" />
+    <UnitTestResult executionId="2fc9da0e-d6c6-4a50-b641-7addd2aafa52" testId="7a0c9701-85d6-8243-dd17-527533ff54ad" testName="PLA-001 — Registrar incidencias de planilla" computerName="JARVIS" duration="00:00:05.0162373" startTime="2026-10-05T15:48:43.1906727-06:00" endTime="2026-10-05T15:48:43.1906728-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="2fc9da0e-d6c6-4a50-b641-7addd2aafa52" />
+    <UnitTestResult executionId="5d8890cb-fa11-4b99-8f3e-2e8e0194abb6" testId="cc35a465-1463-0c4e-b969-f00620755677" testName="ACT-009 — Acumular uso y consultar inactividad" computerName="JARVIS" duration="00:00:04.4423942" startTime="2026-10-05T15:46:43.3420634-06:00" endTime="2026-10-05T15:46:43.3420636-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="5d8890cb-fa11-4b99-8f3e-2e8e0194abb6" />
+    <UnitTestResult executionId="e01bd1a9-1730-49c5-a20d-a27b49062156" testId="09d07841-0a38-6329-8cae-8352d25916d2" testName="AUTH-001 — Acceso válido con los cuatro roles" computerName="JARVIS" duration="00:00:04.8465160" startTime="2026-10-05T15:48:01.8479211-06:00" endTime="2026-10-05T15:48:01.8479212-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="e01bd1a9-1730-49c5-a20d-a27b49062156" />
+    <UnitTestResult executionId="d781080f-6d2f-4a42-8b7c-08b1ef6e81a7" testId="0f535992-2a51-481b-421e-bfdbfb353c13" testName="PLA-005 — Consultar y descargar colilla propia" computerName="JARVIS" duration="00:00:05.4621617" startTime="2026-10-05T15:48:21.3974704-06:00" endTime="2026-10-05T15:48:21.3974705-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d781080f-6d2f-4a42-8b7c-08b1ef6e81a7" />
+    <UnitTestResult executionId="39775576-8006-4a67-8285-ceb1411868f7" testId="6981801a-17ed-114d-daa7-f8e459c4f629" testName="PLA-008 — Reportes de planilla en PDF y Excel" computerName="JARVIS" duration="00:00:06.4241130" startTime="2026-10-05T15:48:27.8221750-06:00" endTime="2026-10-05T15:48:27.8221751-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="39775576-8006-4a67-8285-ceb1411868f7" />
+    <UnitTestResult executionId="aaefc8a3-95ca-46c8-aebd-5d89721c9081" testId="1b087b86-b60e-2fdc-ef98-8de354553e3b" testName="PUB-004 — Contacto vacío rechazado" computerName="JARVIS" duration="00:00:04.2961450" startTime="2026-10-05T15:48:57.2749814-06:00" endTime="2026-10-05T15:48:57.2749821-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="aaefc8a3-95ca-46c8-aebd-5d89721c9081" />
+    <UnitTestResult executionId="3b2cb380-2822-487f-bd39-55ebca8b64e8" testId="74ec3c34-ce3d-be99-0c41-dcc4a7252948" testName="ACT-001 — Registrar y clasificar activo" computerName="JARVIS" duration="00:00:04.4613673" startTime="2026-10-05T15:46:34.5572425-06:00" endTime="2026-10-05T15:46:34.5572426-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="3b2cb380-2822-487f-bd39-55ebca8b64e8" />
+    <UnitTestResult executionId="fead87f1-bf5f-4276-bfd5-7ba708473679" testId="63976883-a9b0-31c0-b8a5-f04a0a44fd2d" testName="AUTH-002 — Contraseña inválida rechazada" computerName="JARVIS" duration="00:00:04.8974266" startTime="2026-10-05T15:47:57.0008920-06:00" endTime="2026-10-05T15:47:57.0008921-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="fead87f1-bf5f-4276-bfd5-7ba708473679" />
+    <UnitTestResult executionId="d112439d-7022-44d9-bd55-493899c9cd23" testId="8842766e-c1eb-6c79-4a79-6f36da2a84a3" testName="ACT-007 — Programar mantenimiento preventivo" computerName="JARVIS" duration="00:00:03.7981010" startTime="2026-10-05T15:46:22.0691391-06:00" endTime="2026-10-05T15:46:22.0691392-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d112439d-7022-44d9-bd55-493899c9cd23" />
+    <UnitTestResult executionId="3d437213-bae1-45cb-9ace-f743752bf688" testId="068bf6de-d27d-0e87-5f9d-3f9b637c23fa" testName="AUTH-003 — Cierre de sesión efectivo" computerName="JARVIS" duration="00:00:04.4444865" startTime="2026-10-05T15:48:06.2930131-06:00" endTime="2026-10-05T15:48:06.2930133-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="3d437213-bae1-45cb-9ace-f743752bf688" />
+    <UnitTestResult executionId="14a19b9c-e141-469e-b4e6-ba03a6f2eded" testId="2392ec89-4fd2-3978-5a57-bf7c42843e86" testName="RH-001 — Registrar y consultar colaborador" computerName="JARVIS" duration="00:00:04.3246640" startTime="2026-10-05T15:49:48.2559378-06:00" endTime="2026-10-05T15:49:48.2559378-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="14a19b9c-e141-469e-b4e6-ba03a6f2eded" />
+    <UnitTestResult executionId="359641e0-5542-4320-a9c1-009b4d9cb905" testId="bf2e126f-e682-3da2-7ffd-edd6c37213a7" testName="PUB-002 — Filtro y detalle del portafolio" computerName="JARVIS" duration="00:00:04.2033629" startTime="2026-10-05T15:49:14.6143555-06:00" endTime="2026-10-05T15:49:14.6143555-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="359641e0-5542-4320-a9c1-009b4d9cb905" />
+    <UnitTestResult executionId="067ae590-5c03-4ae8-9da7-ee846added09" testId="866bde4a-9637-e14a-7797-b1f1a33a42a5" testName="FOR-004 — Excluir y reincorporar en escenario editable" computerName="JARVIS" duration="00:00:06.8171630" startTime="2026-10-05T15:47:15.4837885-06:00" endTime="2026-10-05T15:47:15.4837887-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="067ae590-5c03-4ae8-9da7-ee846added09" />
+    <UnitTestResult executionId="72e101b3-8cff-4bcb-a6e2-a891dd27e86f" testId="9e5e75e7-938f-3847-0200-bb47f8c15ad0" testName="ACT-002 — Estado, ubicación y trazabilidad" computerName="JARVIS" duration="00:00:04.3411751" startTime="2026-10-05T15:46:38.8990740-06:00" endTime="2026-10-05T15:46:38.8990742-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="72e101b3-8cff-4bcb-a6e2-a891dd27e86f" />
+    <UnitTestResult executionId="5739a36f-a27d-4ae3-ae9b-28a9d9858807" testId="5956a6b3-27c7-8547-7225-f616ac71a756" testName="AUD-003 — Bitácora de operaciones" computerName="JARVIS" duration="00:00:08.8913806" startTime="2026-10-05T15:46:56.5695364-06:00" endTime="2026-10-05T15:46:56.5695365-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="5739a36f-a27d-4ae3-ae9b-28a9d9858807" />
+    <UnitTestResult executionId="1b11d1d9-d024-4bd6-b878-ebdb3c6490d9" testId="58e115ce-89c6-6a06-d75f-370d0cc01184" testName="PUB-003 — Envío válido de contacto" computerName="JARVIS" duration="00:00:04.1821187" startTime="2026-10-05T15:49:05.8595584-06:00" endTime="2026-10-05T15:49:05.8595585-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="1b11d1d9-d024-4bd6-b878-ebdb3c6490d9" />
+    <UnitTestResult executionId="4940f247-54fc-42a5-8bb8-e6fb5cf51eaf" testId="35877acb-fadd-d042-8aa5-0f4b5553ae97" testName="FOR-005 — Guardar, recuperar y comparar escenarios" computerName="JARVIS" duration="00:00:06.3547948" startTime="2026-10-05T15:47:21.8391591-06:00" endTime="2026-10-05T15:47:21.8391592-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="4940f247-54fc-42a5-8bb8-e6fb5cf51eaf" />
+    <UnitTestResult executionId="dd5ab9ec-d5b9-4b56-95cd-935b6347fc5b" testId="f46b9d02-9e60-95e5-263c-0c0d4985ff3f" testName="FOR-002 — Rechazar histórico no aprobado" computerName="JARVIS" duration="00:00:08.0017644" startTime="2026-10-05T15:47:41.6287857-06:00" endTime="2026-10-05T15:47:41.6287858-06:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="dd5ab9ec-d5b9-4b56-95cd-935b6347fc5b" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="RH-003 — Desactivar conservando historial" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="49bb6eb0-0e7b-e8ed-e4ae-d9e3c065ee12">
+      <Execution id="641cbf72-9818-4e1a-b4fb-99f8d5cab4b9" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.RecursosHumanosAcademicoTests" name="Rh003_DesactivarColaboradorSinEliminarHistorial" />
+    </UnitTest>
+    <UnitTest name="PUB-004 — Contacto vacío rechazado" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="1b087b86-b60e-2fdc-ef98-8de354553e3b">
+      <Execution id="aaefc8a3-95ca-46c8-aebd-5d89721c9081" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.PublicoAcademicoTests" name="Pub004_RechazarContactoConObligatoriosVacios" />
+    </UnitTest>
+    <UnitTest name="ACT-008 — Completar mantenimiento correctivo" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="62902f86-3c26-051a-1ca8-da12d64c5daa">
+      <Execution id="ac4a919c-a184-4a2c-b1fb-d70fb66cf3c6" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.ActivosAcademicoTests" name="Act008_CompletarOrdenCorrectivaConEvidencia" />
+    </UnitTest>
+    <UnitTest name="AUTH-001 — Acceso válido con los cuatro roles" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="09d07841-0a38-6329-8cae-8352d25916d2">
+      <Execution id="e01bd1a9-1730-49c5-a20d-a27b49062156" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.IdentidadAcademicoTests" name="Auth001_IniciarSesionConCredencialesValidas" />
+    </UnitTest>
+    <UnitTest name="PLA-008 — Reportes de planilla en PDF y Excel" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="6981801a-17ed-114d-daa7-f8e459c4f629">
+      <Execution id="39775576-8006-4a67-8285-ceb1411868f7" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.PlanillaAcademicoTests" name="Pla008_ExportarReporteConPeriodoYTotalesCorrectos" />
+    </UnitTest>
+    <UnitTest name="PLA-001 — Registrar incidencias de planilla" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="7a0c9701-85d6-8243-dd17-527533ff54ad">
+      <Execution id="2fc9da0e-d6c6-4a50-b641-7addd2aafa52" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.PlanillaAcademicoTests" name="Pla001_RegistrarHorasExtraAusenciaYBono" />
+    </UnitTest>
+    <UnitTest name="PLA-006 — Proteger colilla de otro empleado" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="3e57162d-ae33-0bb5-5ec3-a3f0e8d4f40d">
+      <Execution id="f043e66b-ecd9-432a-a563-574c382bb723" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.PlanillaAcademicoTests" name="Pla006_DenegarColillaAjenaPorAccesoDirecto" />
+    </UnitTest>
+    <UnitTest name="PUB-002 — Filtro y detalle del portafolio" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="bf2e126f-e682-3da2-7ffd-edd6c37213a7">
+      <Execution id="359641e0-5542-4320-a9c1-009b4d9cb905" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.PublicoAcademicoTests" name="Pub002_FiltrarPortafolioYConsultarDetalle" />
+    </UnitTest>
+    <UnitTest name="RH-002 — Actualizar colaborador" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="01a2a229-21e7-cfaf-29da-dec9c631eb83">
+      <Execution id="dd39cc1b-26a9-4f4d-97a9-042f2c48e175" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.RecursosHumanosAcademicoTests" name="Rh002_ActualizarDatosDeColaborador" />
+    </UnitTest>
+    <UnitTest name="PLA-004 — Parámetro aplicado al colaborador correspondiente" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="365ffe69-bc19-63cb-666d-5d4c02c036c0">
+      <Execution id="2213f87f-f9f9-4076-a31d-d4e27bae6972" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.PlanillaAcademicoTests" name="Pla004_ConfigurarYAsignarConceptoAUnColaborador" />
+    </UnitTest>
+    <UnitTest name="PLA-005 — Consultar y descargar colilla propia" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="0f535992-2a51-481b-421e-bfdbfb353c13">
+      <Execution id="d781080f-6d2f-4a42-8b7c-08b1ef6e81a7" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.PlanillaAcademicoTests" name="Pla005_ConsultarYDescargarColillaPropia" />
+    </UnitTest>
+    <UnitTest name="PLA-007 — Bloqueo de planilla aprobada y cerrada" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="3bd5b570-76c6-dc8f-6de8-9a0cc92915f1">
+      <Execution id="5b39f7f6-a743-4b64-91c3-f1b9f27b0fc3" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.PlanillaAcademicoTests" name="Pla007_AprobarCerrarYRechazarCambios" />
+    </UnitTest>
+    <UnitTest name="PUB-005 — Publicación de contenido institucional" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="58715c67-170b-2b60-1389-f7dd1655bed5">
+      <Execution id="40a920b3-ceea-4eb0-a82f-1ce82d6ff580" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.PublicoAcademicoTests" name="Pub005_CrearActualizarYPublicarContenido" />
+    </UnitTest>
+    <UnitTest name="RH-006 — Rechazar documento con contenido inválido" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="4c9bb534-a597-4371-2bf2-7f3e3e423299">
+      <Execution id="b2770dca-097e-4487-b54d-040445defc4c" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.RecursosHumanosAcademicoTests" name="Rh006_RechazarArchivoQueNoEsPdf" />
+    </UnitTest>
+    <UnitTest name="FOR-001 — Generar proyección desde histórico autorizado" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="514e014c-50e6-fc35-d731-929901c227fd">
+      <Execution id="81a9f064-2fca-4833-b64e-971b6fa21361" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.ForecastAcademicoTests" name="For001_GenerarProyeccionFuturaConHistoricoAutorizado" />
+    </UnitTest>
+    <UnitTest name="FOR-004 — Excluir y reincorporar en escenario editable" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="866bde4a-9637-e14a-7797-b1f1a33a42a5">
+      <Execution id="067ae590-5c03-4ae8-9da7-ee846added09" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.ForecastAcademicoTests" name="For004_ActualizarTotalesAlExcluirYReincorporarColaborador" />
+    </UnitTest>
+    <UnitTest name="PUB-001 — Páginas institucionales anónimas" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="92b5195d-5974-af72-3b9b-241f27bb39c9">
+      <Execution id="81f6ec64-0a46-4f92-b952-e1abad076460" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.PublicoAcademicoTests" name="Pub001_ConsultarPaginasInstitucionalesSinSesion" />
+    </UnitTest>
+    <UnitTest name="RH-005 — Adjuntar y recuperar documento válido" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="577eb8d3-e498-18bc-b870-691043df1515">
+      <Execution id="535346f1-7a50-49fb-af88-f270f61ceeef" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.RecursosHumanosAcademicoTests" name="Rh005_AdjuntarDocumentoAlExpedienteCorrecto" />
+    </UnitTest>
+    <UnitTest name="AUTH-003 — Cierre de sesión efectivo" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="068bf6de-d27d-0e87-5f9d-3f9b637c23fa">
+      <Execution id="3d437213-bae1-45cb-9ace-f743752bf688" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.IdentidadAcademicoTests" name="Auth003_CerrarSesionYBloquearReingresoDirecto" />
+    </UnitTest>
+    <UnitTest name="AUD-002 — Trazabilidad de RRHH y planilla" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="361615f6-a1a5-d598-a75b-9a37bd379d78">
+      <Execution id="6fd203a2-02a8-4663-a369-25b30c4faeae" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.AuditoriaAcademicoTests" name="Aud002_ConsultarTrazabilidadDeRecursosHumanosYPlanilla" />
+    </UnitTest>
+    <UnitTest name="FOR-006 — Comparar Forecast y planilla real autorizada" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="5da9ed6b-82e4-490b-b635-099ff158b4da">
+      <Execution id="d39b795e-a80f-497d-88a2-529a7d4d9801" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.ForecastAcademicoTests" name="For006_CompararProyeccionConPlanillaRealCompatible" />
+    </UnitTest>
+    <UnitTest name="PLA-003 — Bloquear cálculo sin condición laboral" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="93c14abb-76eb-bb6d-7fb5-5093b824147d">
+      <Execution id="0d9641e8-4a76-4ec3-b90b-685d1f916d66" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.PlanillaAcademicoTests" name="Pla003_RechazarCalculoIncompletoSinPersistenciaParcial" />
+    </UnitTest>
+    <UnitTest name="ACT-004 — Crear y actualizar proyecto" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="ed0fc8dd-47ef-a7b7-2f0b-202c1d504031">
+      <Execution id="5dde6c2b-5d4a-4cc5-83db-a50ac539a521" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.ActivosAcademicoTests" name="Act004_CrearYActualizarProyecto" />
+    </UnitTest>
+    <UnitTest name="PLA-002 — Calcular planilla válida" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="689500a0-26a1-cdc2-03b5-77a374cad6c0">
+      <Execution id="087f6a8e-cfb0-4f89-aad0-c7e444ceba5b" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.PlanillaAcademicoTests" name="Pla002_CalcularPlanillaConTotalesEsperados" />
+    </UnitTest>
+    <UnitTest name="AUD-001 — Historial de acceso y contacto de solo lectura" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="93c56f62-90d2-a55a-3981-2d8bc45a2863">
+      <Execution id="b14f9a20-d9d4-4638-806c-0a2ade132bb8" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.AuditoriaAcademicoTests" name="Aud001_ConsultarHistorialAccesosYContactoSinEdicion" />
+    </UnitTest>
+    <UnitTest name="AUD-003 — Bitácora de operaciones" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="5956a6b3-27c7-8547-7225-f616ac71a756">
+      <Execution id="5739a36f-a27d-4ae3-ae9b-28a9d9858807" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.AuditoriaAcademicoTests" name="Aud003_ConsultarTrazabilidadDeActivosProyectosYAsignaciones" />
+    </UnitTest>
+    <UnitTest name="ACT-006 — Rechazar asignación solapada" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="975ba498-a32d-8693-5967-999f1db8ec8a">
+      <Execution id="cf0ea225-cc0a-4b1d-bb73-dba6db11395a" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.ActivosAcademicoTests" name="Act006_RechazarAsignacionSolapada" />
+    </UnitTest>
+    <UnitTest name="ACT-002 — Estado, ubicación y trazabilidad" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="9e5e75e7-938f-3847-0200-bb47f8c15ad0">
+      <Execution id="72e101b3-8cff-4bcb-a6e2-a891dd27e86f" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.ActivosAcademicoTests" name="Act002_ActualizarEstadoYUbicacion" />
+    </UnitTest>
+    <UnitTest name="ACT-005 — Asignar activo libre" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="781a44c3-9a07-ef2a-b0a4-aebe07b21af4">
+      <Execution id="c76fc2f0-c7ea-42ee-9c90-0799bfffc2fa" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.ActivosAcademicoTests" name="Act005_AsignarActivoDisponibleAProyecto" />
+    </UnitTest>
+    <UnitTest name="ACT-009 — Acumular uso y consultar inactividad" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="cc35a465-1463-0c4e-b969-f00620755677">
+      <Execution id="5d8890cb-fa11-4b99-8f3e-2e8e0194abb6" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.ActivosAcademicoTests" name="Act009_AcumularLecturasYConsultarTiempoFueraServicio" />
+    </UnitTest>
+    <UnitTest name="FOR-005 — Guardar, recuperar y comparar escenarios" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="35877acb-fadd-d042-8aa5-0f4b5553ae97">
+      <Execution id="4940f247-54fc-42a5-8bb8-e6fb5cf51eaf" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.ForecastAcademicoTests" name="For005_GuardarYCompararEscenariosCompatibles" />
+    </UnitTest>
+    <UnitTest name="FOR-002 — Rechazar histórico no aprobado" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="f46b9d02-9e60-95e5-263c-0c0d4985ff3f">
+      <Execution id="dd5ab9ec-d5b9-4b56-95cd-935b6347fc5b" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.ForecastAcademicoTests" name="For002_RechazarFuenteHistoricaNoAprobada" />
+    </UnitTest>
+    <UnitTest name="AUTH-002 — Contraseña inválida rechazada" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="63976883-a9b0-31c0-b8a5-f04a0a44fd2d">
+      <Execution id="fead87f1-bf5f-4276-bfd5-7ba708473679" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.IdentidadAcademicoTests" name="Auth002_RechazarCredencialesInvalidas" />
+    </UnitTest>
+    <UnitTest name="ACT-001 — Registrar y clasificar activo" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="74ec3c34-ce3d-be99-0c41-dcc4a7252948">
+      <Execution id="3b2cb380-2822-487f-bd39-55ebca8b64e8" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.ActivosAcademicoTests" name="Act001_RegistrarActivoDisponible" />
+    </UnitTest>
+    <UnitTest name="PUB-006 — Mostrar y ocultar tarjeta pública" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="d1a9c04d-ae44-73b6-600f-4641d95691fe">
+      <Execution id="8a7a5609-439d-4b43-a578-166e910bd139" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.PublicoAcademicoTests" name="Pub006_PublicarYOcultarProyecto" />
+    </UnitTest>
+    <UnitTest name="ACT-003 — Disponibilidad según fechas y estado" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="0a62ba94-683b-1ff9-3e4f-0a6c882de8ef">
+      <Execution id="ffcf9b40-51d3-4d32-a67d-775a99eccf87" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.ActivosAcademicoTests" name="Act003_ConsultarDisponibilidadPorFechasYEstado" />
+    </UnitTest>
+    <UnitTest name="FOR-003 — Parámetro proyectado y preservación del histórico" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="d2065e7d-0a7e-fefd-a03a-9130fd2b2e62">
+      <Execution id="be10f357-8538-46d5-83b0-aeee1e61c687" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.ForecastAcademicoTests" name="For003_AplicarParametroSinModificarHistorico" />
+    </UnitTest>
+    <UnitTest name="RH-004 — Catálogos y asignación organizativa" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="741c82a0-022b-7f4c-ac69-374853f7f8c0">
+      <Execution id="9bc287e8-0181-4fb9-afd8-4acdda10abe2" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.RecursosHumanosAcademicoTests" name="Rh004_CrearPuestoDepartamentoYAsignarColaborador" />
+    </UnitTest>
+    <UnitTest name="PUB-003 — Envío válido de contacto" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="58e115ce-89c6-6a06-d75f-370d0cc01184">
+      <Execution id="1b11d1d9-d024-4bd6-b878-ebdb3c6490d9" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.PublicoAcademicoTests" name="Pub003_EnviarConsultaContactoValida" />
+    </UnitTest>
+    <UnitTest name="RH-001 — Registrar y consultar colaborador" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="2392ec89-4fd2-3978-5a57-bf7c42843e86">
+      <Execution id="14a19b9c-e141-469e-b4e6-ba03a6f2eded" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.RecursosHumanosAcademicoTests" name="Rh001_RegistrarYConsultarColaborador" />
+    </UnitTest>
+    <UnitTest name="ACT-007 — Programar mantenimiento preventivo" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="8842766e-c1eb-6c79-4a79-6f36da2a84a3">
+      <Execution id="d112439d-7022-44d9-bd55-493899c9cd23" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.ActivosAcademicoTests" name="Act007_DefinirMantenimientoPreventivo" />
+    </UnitTest>
+    <UnitTest name="AUTH-004 — Separación representativa de permisos" storage="c:\users\jloca\onedrive\desktop\sige-cdc\sigecdc\sigecdc.tests\bin\debug\net10.0\sigecdc.tests.dll" id="cd8fc91c-6fa9-8847-68b2-654ff58b481c">
+      <Execution id="0ea57268-2333-41b4-830c-ee5ce3b0c116" />
+      <TestMethod codeBase="C:\Users\jloca\OneDrive\Desktop\SIGE-CDC\SIGECDC\SIGECDC.Tests\bin\Debug\net10.0\SIGECDC.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="SIGECDC.Tests.EntregableImplantacion.IdentidadAcademicoTests" name="Auth004_AutorizarFuncionesPropiasYDenegarOtroRol" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="3e57162d-ae33-0bb5-5ec3-a3f0e8d4f40d" executionId="f043e66b-ecd9-432a-a563-574c382bb723" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="577eb8d3-e498-18bc-b870-691043df1515" executionId="535346f1-7a50-49fb-af88-f270f61ceeef" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="01a2a229-21e7-cfaf-29da-dec9c631eb83" executionId="dd39cc1b-26a9-4f4d-97a9-042f2c48e175" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="361615f6-a1a5-d598-a75b-9a37bd379d78" executionId="6fd203a2-02a8-4663-a369-25b30c4faeae" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="781a44c3-9a07-ef2a-b0a4-aebe07b21af4" executionId="c76fc2f0-c7ea-42ee-9c90-0799bfffc2fa" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="4c9bb534-a597-4371-2bf2-7f3e3e423299" executionId="b2770dca-097e-4487-b54d-040445defc4c" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="93c14abb-76eb-bb6d-7fb5-5093b824147d" executionId="0d9641e8-4a76-4ec3-b90b-685d1f916d66" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="3bd5b570-76c6-dc8f-6de8-9a0cc92915f1" executionId="5b39f7f6-a743-4b64-91c3-f1b9f27b0fc3" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="93c56f62-90d2-a55a-3981-2d8bc45a2863" executionId="b14f9a20-d9d4-4638-806c-0a2ade132bb8" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="92b5195d-5974-af72-3b9b-241f27bb39c9" executionId="81f6ec64-0a46-4f92-b952-e1abad076460" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="689500a0-26a1-cdc2-03b5-77a374cad6c0" executionId="087f6a8e-cfb0-4f89-aad0-c7e444ceba5b" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="514e014c-50e6-fc35-d731-929901c227fd" executionId="81a9f064-2fca-4833-b64e-971b6fa21361" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="ed0fc8dd-47ef-a7b7-2f0b-202c1d504031" executionId="5dde6c2b-5d4a-4cc5-83db-a50ac539a521" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="58715c67-170b-2b60-1389-f7dd1655bed5" executionId="40a920b3-ceea-4eb0-a82f-1ce82d6ff580" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="5da9ed6b-82e4-490b-b635-099ff158b4da" executionId="d39b795e-a80f-497d-88a2-529a7d4d9801" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="975ba498-a32d-8693-5967-999f1db8ec8a" executionId="cf0ea225-cc0a-4b1d-bb73-dba6db11395a" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="d2065e7d-0a7e-fefd-a03a-9130fd2b2e62" executionId="be10f357-8538-46d5-83b0-aeee1e61c687" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="62902f86-3c26-051a-1ca8-da12d64c5daa" executionId="ac4a919c-a184-4a2c-b1fb-d70fb66cf3c6" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="741c82a0-022b-7f4c-ac69-374853f7f8c0" executionId="9bc287e8-0181-4fb9-afd8-4acdda10abe2" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="49bb6eb0-0e7b-e8ed-e4ae-d9e3c065ee12" executionId="641cbf72-9818-4e1a-b4fb-99f8d5cab4b9" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="cd8fc91c-6fa9-8847-68b2-654ff58b481c" executionId="0ea57268-2333-41b4-830c-ee5ce3b0c116" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="d1a9c04d-ae44-73b6-600f-4641d95691fe" executionId="8a7a5609-439d-4b43-a578-166e910bd139" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="365ffe69-bc19-63cb-666d-5d4c02c036c0" executionId="2213f87f-f9f9-4076-a31d-d4e27bae6972" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="0a62ba94-683b-1ff9-3e4f-0a6c882de8ef" executionId="ffcf9b40-51d3-4d32-a67d-775a99eccf87" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="7a0c9701-85d6-8243-dd17-527533ff54ad" executionId="2fc9da0e-d6c6-4a50-b641-7addd2aafa52" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="cc35a465-1463-0c4e-b969-f00620755677" executionId="5d8890cb-fa11-4b99-8f3e-2e8e0194abb6" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="09d07841-0a38-6329-8cae-8352d25916d2" executionId="e01bd1a9-1730-49c5-a20d-a27b49062156" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="0f535992-2a51-481b-421e-bfdbfb353c13" executionId="d781080f-6d2f-4a42-8b7c-08b1ef6e81a7" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="6981801a-17ed-114d-daa7-f8e459c4f629" executionId="39775576-8006-4a67-8285-ceb1411868f7" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1b087b86-b60e-2fdc-ef98-8de354553e3b" executionId="aaefc8a3-95ca-46c8-aebd-5d89721c9081" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="74ec3c34-ce3d-be99-0c41-dcc4a7252948" executionId="3b2cb380-2822-487f-bd39-55ebca8b64e8" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="63976883-a9b0-31c0-b8a5-f04a0a44fd2d" executionId="fead87f1-bf5f-4276-bfd5-7ba708473679" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="8842766e-c1eb-6c79-4a79-6f36da2a84a3" executionId="d112439d-7022-44d9-bd55-493899c9cd23" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="068bf6de-d27d-0e87-5f9d-3f9b637c23fa" executionId="3d437213-bae1-45cb-9ace-f743752bf688" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="2392ec89-4fd2-3978-5a57-bf7c42843e86" executionId="14a19b9c-e141-469e-b4e6-ba03a6f2eded" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="bf2e126f-e682-3da2-7ffd-edd6c37213a7" executionId="359641e0-5542-4320-a9c1-009b4d9cb905" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="866bde4a-9637-e14a-7797-b1f1a33a42a5" executionId="067ae590-5c03-4ae8-9da7-ee846added09" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="9e5e75e7-938f-3847-0200-bb47f8c15ad0" executionId="72e101b3-8cff-4bcb-a6e2-a891dd27e86f" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="5956a6b3-27c7-8547-7225-f616ac71a756" executionId="5739a36f-a27d-4ae3-ae9b-28a9d9858807" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="58e115ce-89c6-6a06-d75f-370d0cc01184" executionId="1b11d1d9-d024-4bd6-b878-ebdb3c6490d9" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="35877acb-fadd-d042-8aa5-0f4b5553ae97" executionId="4940f247-54fc-42a5-8bb8-e6fb5cf51eaf" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="f46b9d02-9e60-95e5-263c-0c0d4985ff3f" executionId="dd5ab9ec-d5b9-4b56-95cd-935b6347fc5b" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Resultados sin formato de lista" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="Todos los resultados cargados" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Completed">
+    <Counters total="42" executed="42" passed="42" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.8.2+699d445a1a (64-bit .NET 10.0.12)&#xD;
+[xUnit.net 00:00:00.16]   Discovering: SIGECDC.Tests&#xD;
+[xUnit.net 00:00:00.36]   Discovered:  SIGECDC.Tests&#xD;
+[xUnit.net 00:00:00.37]   Starting:    SIGECDC.Tests&#xD;
+[xUnit.net 00:03:50.32]   Finished:    SIGECDC.Tests&#xD;
+</StdOut>
+    </Output>
+  </ResultSummary>
+</TestRun>

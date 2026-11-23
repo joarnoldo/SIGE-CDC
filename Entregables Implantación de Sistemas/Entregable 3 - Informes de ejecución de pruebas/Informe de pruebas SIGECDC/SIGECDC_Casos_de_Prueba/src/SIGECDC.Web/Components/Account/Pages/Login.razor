@@ -1,0 +1,174 @@
+﻿@page "/Account/Login"
+
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Identity
+@using SIGECDC.Application.Auditoria
+@using SIGECDC.Persistence.Identity
+
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+@inject IHistorialSistemaService HistorialSistemaService
+@inject ILogger<Login> Logger
+@inject IdentityRedirectManager RedirectManager
+
+<PageTitle>Acceso interno | SIGE-CDC</PageTitle>
+
+<section class="page-banner">
+    <div class="container page-banner__inner stack--tight">
+        <p class="eyebrow">Acceso interno</p>
+        <h1>Ingreso al sistema SIGE-CDC.</h1>
+        <p class="lead">Esta sección es exclusiva para usuarios autorizados de Canales y Drenajes del Caribe S.R.L.</p>
+    </div>
+</section>
+
+<section class="section-shell">
+    <div class="container page-grid">
+        <section class="page-main">
+            <EditForm EditContext="editContext" method="post" OnSubmit="LoginUser" FormName="login" class="form-section stack">
+                <DataAnnotationsValidator />
+
+                <div>
+                    <p class="eyebrow">Credenciales</p>
+                    <h2>Iniciar sesión</h2>
+                    <p class="lead">Ingrese con la cuenta asignada para consultar las funciones internas disponibles según su rol.</p>
+                </div>
+
+                <StatusMessage Message="@errorMessage" />
+                <ValidationSummary class="text-danger" role="alert" />
+
+                <div class="form-grid">
+                    <div class="field field--span-2">
+                        <label for="Input.Email">Correo electrónico</label>
+                        <InputText @bind-Value="Input.Email" id="Input.Email" autocomplete="username" aria-required="true" placeholder="usuario@empresa.com" />
+                        <ValidationMessage For="() => Input.Email" />
+                    </div>
+                    <div class="field field--span-2">
+                        <label for="Input.Password">Contraseña</label>
+                        <InputText type="password" @bind-Value="Input.Password" id="Input.Password" autocomplete="current-password" aria-required="true" placeholder="Contraseña de acceso" />
+                        <ValidationMessage For="() => Input.Password" />
+                    </div>
+                </div>
+
+                <label class="checkbox-card">
+                    <InputCheckbox @bind-Value="Input.RememberMe" />
+                    <span>Recordar sesión en este equipo</span>
+                </label>
+
+                <div class="form-actions">
+                    <span class="help-text">El registro de usuarios no está habilitado públicamente.</span>
+                    <a href="Account/ForgotPassword">Necesito recuperar mi acceso</a>
+                    <button class="btn btn--primary" type="submit">Ingresar</button>
+                </div>
+            </EditForm>
+        </section>
+
+        <aside class="page-aside">
+            <article class="card card--accent stack">
+                <p class="eyebrow">Usuarios autorizados</p>
+                <h2>Acceso protegido</h2>
+                <p>Las funciones internas del sistema requieren autenticación y permisos asignados por rol.</p>
+            </article>
+        </aside>
+    </div>
+</section>
+
+@code {
+    private string? errorMessage;
+    private EditContext editContext = default!;
+
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    [SupplyParameterFromForm]
+    private InputModel Input { get; set; } = default!;
+
+    [SupplyParameterFromQuery]
+    private string? ReturnUrl { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Input ??= new();
+
+        editContext = new EditContext(Input);
+
+        if (HttpMethods.IsGet(HttpContext.Request.Method))
+        {
+            await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
+        }
+    }
+
+    public async Task LoginUser()
+    {
+        if (!editContext.Validate())
+        {
+            return;
+        }
+
+        var usuario = await UserManager.FindByEmailAsync(Input.Email);
+        var result = await SignInManager.PasswordSignInAsync(Input.Email, Input.Password, Input.RememberMe, lockoutOnFailure: true);
+
+        if (result.Succeeded)
+        {
+            await RegistrarAccesoAsync("Acceso exitoso", usuario?.Id, "Ingreso interno completado.");
+            Logger.LogInformation("Usuario inició sesión.");
+            RedirectManager.RedirectTo(ReturnUrl);
+        }
+        else if (result.RequiresTwoFactor)
+        {
+            await RegistrarAccesoAsync("Acceso requiere verificacion", usuario?.Id, "El ingreso requiere verificación adicional.");
+            RedirectManager.RedirectTo(
+                "Account/LoginWith2fa",
+                new() { ["returnUrl"] = ReturnUrl, ["rememberMe"] = Input.RememberMe });
+        }
+        else if (result.IsLockedOut)
+        {
+            await RegistrarAccesoAsync("Acceso bloqueado", usuario?.Id, "La cuenta se encuentra bloqueada.");
+            Logger.LogWarning("Cuenta de usuario bloqueada.");
+            RedirectManager.RedirectTo("Account/Lockout");
+        }
+        else if (result.IsNotAllowed)
+        {
+            await RegistrarAccesoAsync("Acceso fallido", null, "Cuenta no habilitada o credenciales inválidas.");
+            Logger.LogWarning("Intento de acceso rechazado para una cuenta no habilitada.");
+            errorMessage = "Error: no fue posible iniciar sesión. Verifique sus credenciales o contacte al administrador.";
+        }
+        else
+        {
+            await RegistrarAccesoAsync("Acceso fallido", null, "Credenciales inválidas.");
+            errorMessage = "Error: credenciales inválidas.";
+        }
+    }
+
+    private async Task RegistrarAccesoAsync(string accion, string? idUsuario, string observacion)
+    {
+        try
+        {
+            await HistorialSistemaService.RegistrarAccesoAsync(new SolicitudRegistroAcceso
+            {
+                IdUsuario = idUsuario,
+                Accion = accion,
+                DireccionIP = HttpContext.Connection.RemoteIpAddress?.ToString(),
+                Observacion = observacion
+            });
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "No se pudo registrar el evento de acceso interno.");
+        }
+    }
+
+    private sealed class InputModel
+    {
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; } = "";
+
+        [Required]
+        [DataType(DataType.Password)]
+        public string Password { get; set; } = "";
+
+        [Display(Name = "Recordar sesión")]
+        public bool RememberMe { get; set; }
+    }
+}

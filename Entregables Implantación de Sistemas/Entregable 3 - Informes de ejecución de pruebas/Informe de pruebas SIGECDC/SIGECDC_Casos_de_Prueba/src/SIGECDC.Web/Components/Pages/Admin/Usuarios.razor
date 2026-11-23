@@ -1,0 +1,124 @@
+@page "/admin/usuarios"
+@using Microsoft.AspNetCore.Authorization
+@using SIGECDC.Application.Identity
+@using System.Security.Claims
+@inject IServiceScopeFactory ScopeFactory
+@inject AuthenticationStateProvider Autenticacion
+@attribute [Authorize(Roles = "Administrador")]
+@rendermode InteractiveServer
+
+<PageTitle>Usuarios — SIGE-CDC</PageTitle>
+<div class="page-frame">
+    <div class="page-header"><h1>Usuarios</h1></div>
+    <p>Cuentas administradas. El vínculo con un colaborador es opcional y corresponde a cuentas Empleado.</p>
+    @if (mensaje is not null) { <div class="alert alert-info" role="status">@mensaje</div> }
+    @if (error is not null) { <div class="alert alert-danger" role="alert">@error</div> }
+    <div class="form-actions">
+        <label>Buscar por correo <input @bind="busqueda" class="form-control" maxlength="256" /></label>
+        <button class="btn btn--secondary" disabled="@ocupado" @onclick="CargarAsync">Buscar</button>
+        <button class="btn btn--primary" disabled="@ocupado" @onclick="Nueva">Nueva cuenta</button>
+    </div>
+    <p>Se muestran hasta 100 cuentas. Use el filtro para acotar los resultados.</p>
+    <div class="table-responsive">
+        <table class="table"><thead><tr><th>Correo</th><th>Rol</th><th>Estado</th><th>Colaborador</th><th>Acción</th></tr></thead>
+            <tbody>@foreach (var cuenta in cuentas)
+            {
+                <tr><td>@cuenta.Email</td><td>@string.Join(", ", cuenta.Roles)</td><td>@(cuenta.Activa ? "Activa" : "Bloqueada")</td>
+                    <td>@NombreColaborador(cuenta.IdColaborador)</td><td><button class="btn btn--secondary" disabled="@ocupado" @onclick="() => Seleccionar(cuenta)">Gestionar</button></td></tr>
+            }</tbody>
+        </table>
+    </div>
+    @if (mostrarFormulario)
+    {
+        <section class="card stack">
+            <h2>@(seleccionada is null ? "Crear cuenta" : "Gestionar " + seleccionada.Email)</h2>
+            <EditForm Model="formulario" OnSubmit="GuardarAsync" FormName="administrar-cuenta">
+                <fieldset disabled="@ocupado" class="stack">
+                    @if (seleccionada is null)
+                    {
+                        <label>Correo electrónico <InputText @bind-Value="formulario.Email" type="email" required class="form-control" autocomplete="off" /></label>
+                        <label>Contraseña inicial <InputText @bind-Value="formulario.Password" type="password" required class="form-control" autocomplete="new-password" /></label>
+                    }
+                    <label>Rol <InputSelect @bind-Value="formulario.Rol" class="form-select">
+                        <option value="">Seleccione un rol</option>
+                        @foreach (var rol in RolesCuentas.Oficiales) { <option value="@rol">@rol</option> }
+                    </InputSelect></label>
+                    <label>Colaborador (solo Empleado) <InputSelect @bind-Value="formulario.IdColaborador" class="form-select">
+                        <option value="">Sin vínculo</option>
+                        @foreach (var c in colaboradores.Where(c => c.IdUsuario is null || c.IdUsuario == seleccionada?.Id))
+                        { <option value="@c.Id">@c.Codigo — @c.Nombre</option> }
+                    </InputSelect></label>
+                    <button type="submit" class="btn btn--primary">@(seleccionada is null ? "Crear cuenta" : "Guardar rol y vínculo")</button>
+                </fieldset>
+            </EditForm>
+            @if (seleccionada is not null)
+            {
+                <div class="form-actions"><button disabled="@ocupado" class="btn btn--secondary" @onclick="EstadoAsync">@(seleccionada.Activa ? "Bloquear cuenta" : "Reactivar cuenta")</button></div>
+                <label>Contraseña temporal <input type="password" @bind="passwordTemporal" class="form-control" autocomplete="new-password" disabled="@ocupado" /></label>
+                <p>Verifique la identidad de la persona y comunique la contraseña por un medio seguro. No se enviará un correo. Después podrá cambiarla en Mi cuenta.</p>
+                <button class="btn btn--secondary" disabled="@(ocupado || string.IsNullOrWhiteSpace(passwordTemporal))" @onclick="ResetAsync">Establecer contraseña temporal</button>
+            }
+            <button class="btn btn--secondary" disabled="@ocupado" @onclick="Cancelar">Cancelar</button>
+        </section>
+    }
+</div>
+
+@code {
+    private IReadOnlyList<CuentaResumen> cuentas = [];
+    private IReadOnlyList<ColaboradorCuenta> colaboradores = [];
+    private CrearCuenta formulario = new();
+    private CuentaResumen? seleccionada;
+    private string? error, mensaje;
+    private string busqueda = "", passwordTemporal = "";
+    private bool ocupado, mostrarFormulario;
+    protected override Task OnInitializedAsync() => CargarAsync();
+    private string NombreColaborador(long? id) => id is null ? "Sin vínculo" : colaboradores.SingleOrDefault(c => c.Id == id)?.Codigo ?? "Vínculo conservado";
+    private void Nueva() { Cancelar(); mostrarFormulario = true; }
+    private void Cancelar() { seleccionada = null; formulario = new(); passwordTemporal = ""; mostrarFormulario = false; }
+    private void Seleccionar(CuentaResumen cuenta)
+    {
+        seleccionada = cuenta; passwordTemporal = ""; mostrarFormulario = true;
+        formulario = new() { Email = cuenta.Email, Rol = cuenta.Roles.Count == 1 ? cuenta.Roles[0] : "", IdColaborador = cuenta.IdColaborador };
+    }
+    private Task CargarAsync() => EjecutarAsync(async (servicio, actor) => await LeerAsync(servicio, actor));
+    private async Task LeerAsync(IAdministracionCuentasService servicio, ClaimsPrincipal actor)
+    {
+        cuentas = await servicio.ListarAsync(actor, busqueda);
+        colaboradores = await servicio.ColaboradoresAsync(actor);
+    }
+    private Task GuardarAsync() => EjecutarAsync(async (servicio, actor) =>
+    {
+        if (seleccionada is null) await servicio.CrearAsync(actor, formulario);
+        else await servicio.CambiarRolVinculoAsync(actor, seleccionada.Id, seleccionada.Version, formulario.Rol, formulario.IdColaborador);
+        mensaje = seleccionada is null ? "Cuenta creada." : "Rol y vínculo actualizados.";
+        Cancelar(); await LeerAsync(servicio, actor);
+    });
+    private Task EstadoAsync() => EjecutarAsync(async (servicio, actor) =>
+    {
+        var cuenta = seleccionada!;
+        await servicio.CambiarEstadoAsync(actor, cuenta.Id, cuenta.Version, !cuenta.Activa);
+        mensaje = cuenta.Activa ? "Cuenta bloqueada." : "Cuenta reactivada.";
+        Cancelar(); await LeerAsync(servicio, actor);
+    });
+    private Task ResetAsync() => EjecutarAsync(async (servicio, actor) =>
+    {
+        await servicio.RestablecerPasswordAsync(actor, seleccionada!.Id, seleccionada.Version, passwordTemporal);
+        mensaje = "Contraseña temporal establecida.";
+        Cancelar(); await LeerAsync(servicio, actor);
+    });
+    private async Task EjecutarAsync(Func<IAdministracionCuentasService, ClaimsPrincipal, Task> operacion)
+    {
+        if (ocupado) return;
+        ocupado = true; error = null; mensaje = null;
+        try
+        {
+            var actor = (await Autenticacion.GetAuthenticationStateAsync()).User;
+            await using var scope = ScopeFactory.CreateAsyncScope();
+            await operacion(scope.ServiceProvider.GetRequiredService<IAdministracionCuentasService>(), actor);
+        }
+        catch (OperacionCuentaException ex) { error = ex.Message; }
+        catch (UnauthorizedAccessException) { error = "Acceso administrativo no disponible. Inicie sesión nuevamente."; }
+        catch (Exception) { error = "No se completó la operación. Actualice el listado e intente nuevamente."; }
+        finally { ocupado = false; passwordTemporal = ""; formulario.Password = ""; }
+    }
+}

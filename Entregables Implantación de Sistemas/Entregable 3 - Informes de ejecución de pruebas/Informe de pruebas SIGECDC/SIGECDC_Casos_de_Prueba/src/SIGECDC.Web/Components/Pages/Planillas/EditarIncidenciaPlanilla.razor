@@ -1,0 +1,107 @@
+@page "/rrhh/incidencias-planilla/{IdIncidenciaPlanilla:long}"
+@rendermode InteractiveServer
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Recursos Humanos")]
+@inherits ComponenteRecorridoPlanilla
+@inject IConsultaRecorridoPlanilla Consulta
+@inject RecorridoPlanilla Recorrido
+@inject IIncidenciasCalculadasService Incidencias
+
+<PageTitle>Confirmar incidencia | SIGE-CDC</PageTitle>
+<section class="section-shell"><div class="container stack">
+    <h1>Revisar y confirmar incidencia</h1>
+    <MensajeRecorrido Texto="@Mensaje" Error="@EsError" />
+    <a href="rrhh/incidencias-planilla">Volver a incidencias</a>
+    @if (hecho is not null)
+    {
+        <p>@hecho.Colaborador · @hecho.Concepto · @hecho.Captura.FechaHecho.ToString("dd/MM/yyyy") · @hecho.Captura.Cantidad @hecho.Captura.Unidad</p>
+        <p>Referencia del hecho: @hecho.Captura.ReferenciaHecho</p>
+        <p>Estado del período: @hecho.EstadoPeriodo · @(hecho.UltimaConfirmacion == 0 ? "Sin confirmar" : $"Última confirmación V{hecho.UltimaConfirmacion}")</p>
+        @if (concepto?.PermiteMontoManual == true && hecho.Captura.Unidad == "Monto") { <p>Monto capturado: @hecho.Captura.MontoManual.ToString("N2") CRC</p> }
+        @if (hecho.EstadoPeriodo == "Borrador" && hecho.Estado == "Activo" && concepto is not null)
+        {
+            <details class="form-section"><summary>Corregir el hecho capturado</summary>
+                <p>Conserva concepto, unidad, colaborador y período. No modifica resultados ni confirmaciones históricas. Después de guardar debe reconfirmar con respaldo nuevo antes de calcular.</p>
+                <div class="form-grid">
+                    <label>Fecha del hecho<input type="date" @bind="fechaCorreccion" /></label>
+                    @if (concepto.Codigo is "HORA_EXTRA_ORDINARIA" or "AUSENCIA_SIN_GOCE")
+                    { <label>Cantidad (@hecho.Captura.Unidad)<input type="number" step="0.01" @bind="cantidadCorreccion" /></label> }
+                    @if (concepto.PermiteMontoManual && concepto.TipoBase == "MONTO_AUTORIZADO")
+                    { <label>Monto documentado (CRC)<input type="number" step="0.01" @bind="montoCorreccion" /></label> }
+                    <label>Referencia del hecho corregido<input maxlength="300" @bind="referenciaCorreccion" /></label>
+                </div>
+                <button class="btn btn--secondary" disabled="@(Ocupado || fechaCorreccion is null || string.IsNullOrWhiteSpace(referenciaCorreccion))" @onclick="CorregirAsync">Guardar corrección y exigir reconfirmación</button>
+            </details>
+            <EditForm Model="solicitud" OnValidSubmit="ConfirmarAsync" class="form-section stack">
+                <DataAnnotationsValidator /><ValidationSummary />
+                <label>Respaldo de la confirmación<InputText @bind-Value="solicitud.Soporte" maxlength="500" /></label>
+                <label>Referencia de la relación ordinaria acreditada<InputText @bind-Value="solicitud.RelacionOrdinaria" maxlength="500" /></label>
+                @if (concepto.Codigo == "HORA_EXTRA_ORDINARIA")
+                {
+                    <label>Tipo de día<InputSelect @bind-Value="solicitud.TipoDia"><option value="">Seleccione</option>
+                        <option>Ordinario</option><option>Feriado</option><option>Descanso</option><option>Especial</option></InputSelect></label>
+                    <p>El motor vigente calcula HE ordinaria. Las otras clases sin regla aplicable bloquean el cálculo; no las clasifique como ordinarias para continuar.</p>
+                }
+                @if (concepto.Codigo is not ("HORA_EXTRA_ORDINARIA" or "AUSENCIA_SIN_GOCE"))
+                {
+                    <label>Parámetro interno<InputSelect @bind-Value="solicitud.IdParametro"><option value="">Sin parámetro (solo monto manual permitido)</option>
+                        @foreach (var p in parametros.Where(p => p.Version.IdConcepto == concepto.IdConcepto && p.Version.Activo && p.Version.Vigencia!.Contiene(hecho.Captura.FechaHecho))) { <option value="@p.Version.IdVersion">@p.Nombre · @p.Version.Tipo · desde @p.Version.Vigencia!.Inicio.ToString("dd/MM/yyyy")</option> }
+                    </InputSelect></label>
+                    @if (hecho.Captura.Unidad == "Porcentaje")
+                    {
+                        <label><InputCheckbox @bind-Value="solicitud.ConfirmarBaseSalario" /> Confirmo el salario devengado del tramo que contiene la fecha como base autorizada del parámetro.</label>
+                    }
+                }
+                <p>@(concepto.RequiereAutorizacion ? "Este concepto requiere autorización explícita." : "La confirmación requiere respaldo; la autorización se registra si corresponde.")</p>
+                <label><InputCheckbox @bind-Value="solicitud.Autorizar" /> Autorizo expresamente esta incidencia</label>
+                @if (solicitud.Autorizar) { <label>Referencia de autorización<InputText @bind-Value="solicitud.Autorizacion" maxlength="500" /></label> }
+                <button class="btn btn--primary" type="submit" disabled="@Ocupado">@(hecho.UltimaConfirmacion == 0 ? "Confirmar incidencia" : "Reconfirmar y conservar versión anterior")</button>
+                <button class="btn btn--secondary" type="button" disabled="@Ocupado" @onclick="ExaminarAsync">Comprobar bloqueos financieros</button>
+            </EditForm>
+        }
+        else
+        {
+            <p class="alert alert--warning">Esta incidencia no se puede confirmar: el período está bloqueado, está inactiva o pertenece al legado sin versión de concepto. No se reinterpretará como evidencia válida.</p>
+        }
+        @foreach (var b in bloqueos) { <p class="alert alert--warning">@b</p> }
+        <a class="btn btn--secondary" href="@($"rrhh/periodos-planilla/{hecho.Captura.IdPeriodo}")">Siguiente: revisar y calcular período</a>
+    }
+</div></section>
+@code {
+    [Parameter] public long IdIncidenciaPlanilla { get; set; }
+    private IncidenciaRecorrido? hecho;
+    private ConceptoMonetarioVersion? concepto;
+    private IReadOnlyList<ParametroRecorrido> parametros = [];
+    private ConfirmacionIncidenciaInterfaz solicitud = new();
+    private List<string> bloqueos = [];
+    private DateTime? fechaCorreccion;
+    private decimal? cantidadCorreccion, montoCorreccion;
+    private string referenciaCorreccion = "";
+    protected override Task OnParametersSetAsync() => AccionAsync(CargarAsync);
+    private async Task CargarAsync()
+    {
+        var actor = await ActorAsync();
+        hecho = (await Consulta.IncidenciasAsync(null, actor)).SingleOrDefault(h => h.Id == IdIncidenciaPlanilla);
+        var catalogos = await Consulta.CatalogosAsync(actor);
+        concepto = catalogos.Conceptos.SingleOrDefault(c => c.IdVersion == hecho?.Captura.IdConceptoVersion);
+        parametros = await Consulta.ParametrosAsync(actor);
+        solicitud.IdIncidencia = IdIncidenciaPlanilla; solicitud.VersionEsperada = hecho?.UltimaConfirmacion ?? 0;
+        fechaCorreccion = hecho?.Captura.FechaHecho; cantidadCorreccion = hecho?.Captura.Cantidad;
+        montoCorreccion = concepto?.PermiteMontoManual == true && concepto.TipoBase == "MONTO_AUTORIZADO" ? hecho?.Captura.MontoManual : null;
+        referenciaCorreccion = hecho?.Captura.ReferenciaHecho ?? "";
+    }
+    private Task CorregirAsync() => AccionAsync(async () =>
+    {
+        await Recorrido.CorregirHechoAsync(IdIncidenciaPlanilla, fechaCorreccion, cantidadCorreccion, montoCorreccion, referenciaCorreccion, await ActorAsync());
+        solicitud = new(); bloqueos.Clear(); await CargarAsync();
+    }, "Hecho corregido. Reconfirme con evidencia actual antes de calcular; las versiones anteriores se conservan.");
+    private Task ConfirmarAsync() => AccionAsync(async () =>
+    {
+        await Recorrido.ConfirmarAsync(solicitud, await ActorAsync()); await CargarAsync();
+    }, "Confirmación conservada con su versión. Revise los bloqueos antes de calcular.");
+    private Task ExaminarAsync() => AccionAsync(async () =>
+    {
+        var resultado = await Incidencias.ExaminarIncidenciasAsync(hecho!.Captura.IdPeriodo, hecho.Captura.IdColaborador,
+            solicitud.RelacionOrdinaria.Trim(), await ActorAsync());
+        bloqueos = resultado.Bloqueos.Select(b => MensajesRecorridoPlanilla.Traducir(b.Codigo)).Distinct().ToList();
+    });
+}

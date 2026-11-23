@@ -1,0 +1,53 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
+  <metadata>
+    <id>PDFsharp</id>
+    <version>6.2.4</version>
+    <title>PDFsharp for Windows and Linux</title>
+    <authors>PDFsharp Team</authors>
+    <owners>empira Software GmbH</owners>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <license type="expression">MIT</license>
+    <licenseUrl>https://licenses.nuget.org/MIT</licenseUrl>
+    <icon>images\PDFsharp-128x128.png</icon>
+    <readme>README.md</readme>
+    <projectUrl>https://docs.pdfsharp.net/</projectUrl>
+    <description>PDFsharp is the Open Source library for creating and modifying PDF documents using .NET. It has an easy-to-use API that allows developers to generate or modify PDF files programmatically. PDFsharp can be used for various applications, including creating reports, invoices, and other types of documents.
+This package does not depend on Windows and can be used on any .NET compatible platform including Linux and macOS.
+See https://docs.pdfsharp.net for details.</description>
+    <summary>A .NET library for processing PDF.</summary>
+    <releaseNotes>This is a version of PDFsharp compatible with .NET 6 and higher.
+The package ‘PdfSharp’ can be used on any platform including Windows and Linux. The Target Frameworks are ‘net8.0’, ‘net9.0’, ‘net10.0’, and ‘netstandard2.0’.
+The packages ‘PDFsharp-gdi’ and ‘PDFsharp-wpf’ can be used under Windows only. The Target Frameworks are ‘net8.0-windows’, ‘net9.0-windows’, ‘net10.0-windows’, and ‘net462’.
+We also publish packages that contain PDFsharp plus MigraDoc.
+See the project docs site for further information:
+https://docs.pdfsharp.net/link/readme-v6.2.html</releaseNotes>
+    <copyright>© 2026 empira</copyright>
+    <tags>PDFsharp PDF creation</tags>
+    <repository type="git" url="https://github.com/empira/PDFsharp" branch="master" />
+    <dependencies>
+      <group targetFramework="net8.0">
+        <dependency id="Microsoft.Extensions.Logging.Abstractions" version="8.0.3" />
+        <dependency id="System.Security.Cryptography.Pkcs" version="8.0.1" />
+      </group>
+      <group targetFramework="net9.0">
+        <dependency id="Microsoft.Extensions.Logging.Abstractions" version="8.0.3" />
+        <dependency id="System.Security.Cryptography.Pkcs" version="8.0.1" />
+      </group>
+      <group targetFramework="net10.0">
+        <dependency id="Microsoft.Extensions.Logging.Abstractions" version="8.0.3" />
+        <dependency id="System.Security.Cryptography.Pkcs" version="8.0.1" />
+      </group>
+      <group targetFramework=".NETStandard2.0">
+        <dependency id="Microsoft.Extensions.Logging.Abstractions" version="8.0.3" />
+        <dependency id="System.Security.Cryptography.Pkcs" version="8.0.1" />
+      </group>
+    </dependencies>
+    <frameworkReferences>
+      <group targetFramework="net8.0" />
+      <group targetFramework="net9.0" />
+      <group targetFramework="net10.0" />
+      <group targetFramework=".NETStandard2.0" />
+    </frameworkReferences>
+  </metadata>
+</package>

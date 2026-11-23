@@ -1,0 +1,9 @@
+@page "/rrhh/forecast/{IdForecastEscenario:long}/comparacion-real"
+@rendermode InteractiveServer
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Administrador,Recursos Humanos")]
+
+<ComparacionSnapshotForecast IdForecastEscenario="IdForecastEscenario" />
+
+@code {
+    [Parameter] public long IdForecastEscenario { get; set; }
+}

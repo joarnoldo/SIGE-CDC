@@ -1,0 +1,126 @@
+@page "/rrhh/periodos-planilla/{IdPeriodoPlanilla:long}"
+@rendermode InteractiveServer
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Recursos Humanos")]
+@inherits ComponenteRecorridoPlanilla
+@inject IConsultaRecorridoPlanilla Consulta
+@inject RecorridoPlanilla Recorrido
+@inject IReportePlanillaService Reportes
+
+<PageTitle>Período de Planilla | SIGE-CDC</PageTitle>
+<section class="section-shell"><div class="container stack">
+    <h1>@(datos?.Periodo.Nombre ?? "Período de Planilla")</h1>
+    <MensajeRecorrido Texto="@Mensaje" Error="@EsError" />
+    <nav class="page-actions" aria-label="Recorrido de Planilla">
+        <a class="btn btn--secondary" href="rrhh/periodos-planilla">Períodos</a>
+        <a class="btn btn--secondary" href="rrhh/colaboradores">Colaboradores y contratos</a>
+        <a class="btn btn--secondary" href="@($"rrhh/incidencias-planilla?periodo={IdPeriodoPlanilla}")">Incidencias y confirmación</a>
+        <a class="btn btn--secondary" href="rrhh/parametros-planilla">Parámetros internos</a>
+    </nav>
+    @if (datos is not null)
+    {
+        <p><strong>Estado: @datos.Periodo.EstadoPlanilla</strong> · @datos.Periodo.TipoPeriodo ·
+            @datos.Periodo.FechaInicio.ToString("dd/MM/yyyy") – @datos.Periodo.FechaFin.ToString("dd/MM/yyyy")</p>
+        @if (datos.Periodo.EstadoPlanilla == "Borrador")
+        {
+            <p>Complete condiciones laborales, confirme incidencias y revise los parámetros antes de calcular.
+                El cálculo no guarda resultados parciales si falta evidencia obligatoria.</p>
+            <PrepararCalculoPlanilla @key="IdPeriodoPlanilla" Periodo="datos" Calcular="CalcularAsync" Bloqueado="Ocupado" />
+        }
+        @if (reporte is not null)
+        {
+            <div class="alert alert--@(reporte.EstadoPlanilla == "Calculada" ? "warning" : "info")" role="status">
+                <strong>@reporte.Rotulo</strong> · Versión vigente V@(reporte.NumeroVersion)
+                <span>Resultado persistido. No se recalcula al consultar ni constituye ejecución de un pago.</span>
+            </div>
+            <div class="page-actions">
+                @if (datos.Periodo.EstadoPlanilla == "Calculada")
+                {
+                    <button class="btn btn--primary" disabled="@Ocupado" @onclick="AprobarAsync">Aprobar versión vigente</button>
+                    <button class="btn btn--secondary" disabled="@Ocupado" @onclick="() => mostrarReapertura = true">Reabrir para ajustes</button>
+                }
+                @if (datos.Periodo.EstadoPlanilla == "Aprobada")
+                {
+                    <button class="btn btn--primary" disabled="@Ocupado" @onclick="CerrarAsync">Cerrar planilla aprobada</button>
+                }
+                <a class="btn btn--secondary" href="@($"rrhh/reportes-planilla/{IdPeriodoPlanilla}/pdf?ejecucion={reporte.IdEjecucionPlanilla}")">Reporte PDF</a>
+                <a class="btn btn--secondary" href="@($"rrhh/reportes-planilla/{IdPeriodoPlanilla}/excel?ejecucion={reporte.IdEjecucionPlanilla}")">Reporte Excel</a>
+            </div>
+            @if (mostrarReapertura)
+            {
+                <div class="form-section stack">
+                    <label for="motivo-reapertura">Motivo de reapertura (obligatorio)</label>
+                    <textarea id="motivo-reapertura" maxlength="1000" @bind="motivo"></textarea>
+                    <p>V@(reporte.NumeroVersion) se conservará como histórica invalidada. El siguiente cálculo creará una versión nueva.</p>
+                    <div class="page-actions">
+                        <button class="btn btn--primary" disabled="@(Ocupado || string.IsNullOrWhiteSpace(motivo))" @onclick="ReabrirAsync">Confirmar reapertura</button>
+                        <button class="btn btn--secondary" disabled="@Ocupado" @onclick="() => mostrarReapertura = false">Cancelar</button>
+                    </div>
+                </div>
+            }
+            <dl>
+                <dt>Bruto salarial</dt><dd>@reporte.SalarioBrutoTotal.ToString("N2") CRC</dd>
+                <dt>Deducciones</dt><dd>@reporte.DeduccionesTotal.ToString("N2") CRC</dd>
+                <dt>Neto</dt><dd>@reporte.SalarioNetoTotal.ToString("N2") CRC</dd>
+                <dt>Cargas patronales</dt><dd>@reporte.CargasPatronalesTotal.ToString("N2") CRC</dd>
+                <dt>Costo laboral total</dt><dd>@reporte.CostoLaboralTotal.ToString("N2") CRC</dd>
+            </dl>
+            @foreach (var d in reporte.Detalles)
+            {
+                <DetallePagoSnapshot Detalle="d" MostrarCostos="true" />
+                <a href="@($"rrhh/reportes-planilla/colillas/{d.IdColillaPago}/pdf")">Colilla PDF de @d.NombreColaborador</a>
+            }
+        }
+        @if (datos.Versiones.Count > 0)
+        {
+            <h2>Versiones conservadas</h2>
+            <table class="data-table"><thead><tr><th>Versión</th><th>Estado de ejecución</th><th>Calculada (UTC)</th><th>Vigencia</th></tr></thead>
+                <tbody>@foreach (var v in datos.Versiones)
+                {
+                    <tr><td>V@(v.Version)</td><td>@v.Estado</td><td>@v.Fecha.ToString("dd/MM/yyyy HH:mm")</td>
+                        <td>@(v.Vigente ? "Vigente" : "Histórica conservada")</td></tr>
+                }</tbody>
+            </table>
+        }
+    }
+    else if (!Ocupado && Mensaje is null) { <p>Período no encontrado.</p> }
+</div></section>
+@code {
+    [Parameter] public long IdPeriodoPlanilla { get; set; }
+    private PeriodoRecorrido? datos;
+    private ReportePlanilla? reporte;
+    private bool mostrarReapertura;
+    private string motivo = "";
+    protected override Task OnParametersSetAsync() => AccionAsync(CargarAsync);
+    private async Task CargarAsync()
+    {
+        reporte = null;
+        var actor = await ActorAsync();
+        datos = await Consulta.PeriodoAsync(IdPeriodoPlanilla, actor);
+        var lectura = datos?.EjecucionVigente is not null ? await Reportes.ObtenerReporteAsync(IdPeriodoPlanilla, actor: actor) : null;
+        if (datos?.EjecucionVigente is not null && (lectura is null || lectura.IdEjecucionPlanilla != datos.EjecucionVigente
+            || lectura.EstadoPlanilla != datos.Periodo.EstadoPlanilla))
+            throw new ConfiguracionConceptoException("TRANSICION_O_EJECUCION_DESPLAZADA");
+        reporte = lectura;
+    }
+    private Task CalcularAsync(SolicitudSnapshotPlanilla solicitud) => AccionAsync(async () =>
+    {
+        await Recorrido.CalcularAsync(solicitud, await ActorAsync());
+        await CargarAsync();
+    }, "Nueva versión calculada y guardada. Revísela antes de aprobar.");
+    private Task ReabrirAsync() => AccionAsync(async () =>
+    {
+        await Recorrido.ReabrirAsync(IdPeriodoPlanilla, reporte!.IdEjecucionPlanilla, motivo, await ActorAsync());
+        mostrarReapertura = false; motivo = "";
+        await CargarAsync();
+    }, "Período reabierto. La versión anterior se conserva; ajuste los insumos y calcule una nueva.");
+    private Task AprobarAsync() => AccionAsync(async () =>
+    {
+        await Recorrido.AprobarAsync(IdPeriodoPlanilla, reporte!.IdEjecucionPlanilla, await ActorAsync());
+        await CargarAsync();
+    }, "Versión vigente aprobada.");
+    private Task CerrarAsync() => AccionAsync(async () =>
+    {
+        await Recorrido.CerrarAsync(IdPeriodoPlanilla, reporte!.IdEjecucionPlanilla, await ActorAsync());
+        await CargarAsync();
+    }, "Planilla cerrada; sus resultados quedan conservados sin modificaciones.");
+}

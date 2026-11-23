@@ -1,0 +1,10 @@
+﻿{
+    "modo":  "LocalAislado",
+    "esperados":  51,
+    "ejecutados":  51,
+    "PASS":  49,
+    "FAIL":  2,
+    "BLOCKED":  0,
+    "codigoVSTest":  1,
+    "fecha":  "2026-10-25T13:10:54.3319820-06:00"
+}

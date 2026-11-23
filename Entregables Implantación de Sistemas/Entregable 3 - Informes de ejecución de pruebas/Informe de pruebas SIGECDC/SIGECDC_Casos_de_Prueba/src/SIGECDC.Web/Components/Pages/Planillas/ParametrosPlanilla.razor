@@ -1,0 +1,28 @@
+@page "/rrhh/parametros-planilla"
+@rendermode InteractiveServer
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Recursos Humanos")]
+@inherits ComponenteRecorridoPlanilla
+@inject IConsultaRecorridoPlanilla Consulta
+
+<PageTitle>Parámetros internos | SIGE-CDC</PageTitle>
+<section class="section-shell"><div class="container stack">
+    <h1>Parámetros internos gobernados</h1>
+    <MensajeRecorrido Texto="@Mensaje" Error="@EsError" />
+    <div class="page-actions"><a class="btn btn--primary" href="rrhh/parametros-planilla/nuevo">Registrar versión</a><a href="rrhh/periodos-planilla">Períodos</a><a href="rrhh/incidencias-planilla">Aplicar en incidencia</a></div>
+    <p>Solo beneficios y deducciones internos con concepto y evidencia. Las tasas legales y los valores legados no gobernados no son editables en este recorrido.</p>
+    <p>Precedencia del valor: Colaborador → Período → Global, por sustitución, no suma. El valor se aplica a un hecho confirmado, no por existir en el catálogo.</p>
+    <table class="data-table"><thead><tr><th>Parámetro / concepto</th><th>Valor global</th><th>Vigencia</th><th>Estado</th><th>Acción</th></tr></thead><tbody>
+        @foreach (var p in parametros)
+        {
+            <tr><td>@p.Nombre · @p.Version.Codigo<br />@p.Concepto</td><td>@p.Version.ValorDecimal @p.Version.Tipo</td>
+                <td>@p.Version.Vigencia!.Inicio.ToString("dd/MM/yyyy") – @(p.Version.Vigencia.Fin?.ToString("dd/MM/yyyy") ?? "sin fin")</td>
+                <td>@(p.Version.Activo ? "Activo" : "Inactivo") · versión conservada</td>
+                <td><a href="@($"rrhh/parametros-planilla/{p.Version.IdVersion}")">Consultar / asignar</a></td></tr>
+        }
+    </tbody></table>
+    @if (parametros.Count == 0) { <p>No hay parámetros internos gobernados disponibles. No se interpretarán los valores legados como configuración válida.</p> }
+</div></section>
+@code {
+    private IReadOnlyList<ParametroRecorrido> parametros = [];
+    protected override Task OnInitializedAsync() => AccionAsync(async () => parametros = await Consulta.ParametrosAsync(await ActorAsync()));
+}

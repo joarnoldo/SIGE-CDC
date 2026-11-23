@@ -1,0 +1,18 @@
+using SIGECDC.Domain.SitioPublico;
+
+namespace SIGECDC.Domain.Activos;
+
+public sealed class CategoriaActivo
+{
+    public int IdCategoriaActivo { get; set; }
+
+    public int IdTipoActivo { get; set; }
+
+    public TipoActivo? TipoActivo { get; set; }
+
+    public string Nombre { get; set; } = string.Empty;
+
+    public string? Descripcion { get; set; }
+
+    public string EstadoRegistro { get; set; } = EstadosRegistro.Activo;
+}

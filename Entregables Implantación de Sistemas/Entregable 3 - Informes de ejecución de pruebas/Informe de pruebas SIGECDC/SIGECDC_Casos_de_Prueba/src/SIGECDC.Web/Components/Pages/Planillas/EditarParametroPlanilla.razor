@@ -1,0 +1,33 @@
+@page "/rrhh/parametros-planilla/{IdParametroPlanilla:int}"
+@rendermode InteractiveServer
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Recursos Humanos")]
+@inherits ComponenteRecorridoPlanilla
+@inject IConsultaRecorridoPlanilla Consulta
+
+<PageTitle>Consultar parámetro interno | SIGE-CDC</PageTitle>
+<section class="section-shell"><div class="container stack">
+    <h1>Versión del parámetro interno</h1>
+    <MensajeRecorrido Texto="@Mensaje" Error="@EsError" />
+    <a href="rrhh/parametros-planilla">Volver a parámetros</a>
+    @if (parametro is not null)
+    {
+        <h2>@parametro.Nombre</h2>
+        <dl><dt>Concepto</dt><dd>@parametro.Concepto</dd><dt>Código</dt><dd>@parametro.Version.Codigo</dd>
+            <dt>Valor global</dt><dd>@parametro.Version.ValorDecimal @parametro.Version.Tipo</dd>
+            <dt>Vigencia</dt><dd>@parametro.Version.Vigencia!.Inicio.ToString("dd/MM/yyyy") – @(parametro.Version.Vigencia.Fin?.ToString("dd/MM/yyyy") ?? "sin fin")</dd>
+            <dt>Estado</dt><dd>@(parametro.Version.Activo ? "Activo" : "Inactivo")</dd></dl>
+        <p>La versión gobernada es de solo lectura. No se sobrescriben valores consumidos por ejecuciones históricas.</p>
+        <div class="page-actions">
+            <a class="btn btn--secondary" href="@($"rrhh/parametros-planilla/{IdParametroPlanilla}/asignaciones")">Asignar valor por período o colaborador</a>
+            <a class="btn btn--secondary" href="@($"rrhh/parametros-planilla/nuevo?anterior={IdParametroPlanilla}")">Registrar otra vigencia</a>
+            <a href="rrhh/incidencias-planilla/nueva">Siguiente: registrar y confirmar el hecho que aplica este parámetro</a>
+        </div>
+    }
+    else if (!Ocupado) { <p class="alert alert--warning">Este parámetro no está disponible como interno gobernado. Los parámetros normativos y legados no se editan desde aquí.</p> }
+</div></section>
+@code {
+    [Parameter] public int IdParametroPlanilla { get; set; }
+    private ParametroRecorrido? parametro;
+    protected override Task OnParametersSetAsync() => AccionAsync(async () =>
+        parametro = (await Consulta.ParametrosAsync(await ActorAsync())).SingleOrDefault(p => p.Version.IdVersion == IdParametroPlanilla));
+}

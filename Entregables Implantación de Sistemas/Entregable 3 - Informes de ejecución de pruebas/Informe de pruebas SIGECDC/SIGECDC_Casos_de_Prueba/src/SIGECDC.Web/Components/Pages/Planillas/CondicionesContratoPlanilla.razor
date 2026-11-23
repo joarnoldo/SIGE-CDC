@@ -1,0 +1,137 @@
+@page "/rrhh/periodos-planilla/contratos/{IdContrato:long}/condiciones"
+@rendermode InteractiveServer
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Recursos Humanos")]
+@inherits ComponenteRecorridoPlanilla
+@inject IConsultaRecorridoPlanilla Consulta
+@inject ICondicionLaboralService Condiciones
+@inject IGobiernoFinancieroService Gobierno
+
+<PageTitle>Condición laboral para Planilla | SIGE-CDC</PageTitle>
+<section class="section-shell"><div class="container stack">
+    <h1>Condición laboral confirmada</h1>
+    <MensajeRecorrido Texto="@Mensaje" Error="@EsError" />
+    <div class="page-actions"><a href="@($"rrhh/contratos/{IdContrato}")">Contrato administrativo</a><a href="rrhh/periodos-planilla">Continuar a períodos</a></div>
+    @if (contrato is not null && catalogos is not null)
+    {
+        <p>@contrato.Colaborador · @contrato.Tipo · Pago @contrato.Periodicidad · Desde @contrato.Vigencia.Inicio.ToString("dd/MM/yyyy")</p>
+        <p>Los datos administrativos se reutilizan como propuesta visible. Guardar el contrato no confirma su historia salarial: revise y confirme la condición efectiva con respaldo.</p>
+        @if (contrato.IdJornada is null || contrato.IdRiesgo is null || contrato.IdOcupacion is null)
+        {
+            <article class="form-section stack"><h2>1. Completar asociaciones del contrato</h2>
+                <label>Ocupación homologada<select @bind="ocupacion"><option value="0">Seleccione</option>@foreach (var o in catalogos.Ocupaciones) { <option value="@o.Id">@o.Nombre</option> }</select></label>
+                <label>Jornada estructurada<select @bind="jornada"><option value="0">Seleccione</option>@foreach (var j in catalogos.Jornadas) { <option value="@j.Id">@j.Nombre · @j.Tipo · @j.HorasDia h/día · @j.Vigencia.Inicio.ToString("dd/MM/yyyy")</option> }</select></label>
+                <label>Póliza y actividad RT<select @bind="riesgo"><option value="0">Seleccione</option>@foreach (var r in catalogos.Riesgos) { <option value="@r.Id">@r.Poliza · @r.Actividad · @r.Vigencia.Inicio.ToString("dd/MM/yyyy")</option> }</select></label>
+                <label>Referencia contractual y de homologación<input maxlength="500" @bind="soporteAsociacion" /></label>
+                @if (contrato.IdOcupacion is null)
+                {
+                    <button class="btn btn--secondary" disabled="@(Ocupado || ocupacion == 0 || string.IsNullOrWhiteSpace(soporteAsociacion))" @onclick="HomologarAsync">Confirmar homologación del puesto</button>
+                }
+                <button class="btn btn--primary" disabled="@(Ocupado || jornada == 0 || riesgo == 0 || string.IsNullOrWhiteSpace(soporteAsociacion))" @onclick="AsociarAsync">Confirmar asociación de jornada y póliza al contrato</button>
+                <p>Las asociaciones existentes no se sustituyen. Si falta ocupación o mínimo vigente, complete su carga normativa revisada antes de calcular; no se inventan mínimos aquí.</p>
+            </article>
+        }
+        <article class="form-section stack"><h2>2. Registrar condición efectiva</h2>
+            <div class="form-grid">
+                <label>Vigente desde<input type="date" @bind="inicio" /></label>
+                <label>Vigente hasta (opcional)<input type="date" @bind="fin" /></label>
+                <label>Salario base mensual (CRC)<input type="number" step="0.01" @bind="salario" /></label>
+                <label>Puesto<select @bind="puesto"><option value="0">Seleccione</option>@foreach (var p in catalogos.Puestos) { <option value="@p.Id">@p.Nombre</option> }</select></label>
+                <label>Departamento<select @bind="departamento"><option value="0">Seleccione</option>@foreach (var d in catalogos.Departamentos) { <option value="@d.Id">@d.Nombre</option> }</select></label>
+                <label>Ocupación<select @bind="ocupacion"><option value="0">Seleccione</option>@foreach (var o in catalogos.Ocupaciones) { <option value="@o.Id">@o.Nombre</option> }</select></label>
+                <label>Jornada<select @bind="jornada"><option value="0">Seleccione</option>@foreach (var j in catalogos.Jornadas) { <option value="@j.Id">@j.Nombre · @j.HorasDia h/día · @j.Vigencia.Inicio.ToString("dd/MM/yyyy")</option> }</select></label>
+                <label>Referencia al documento que acredita la condición<input maxlength="500" @bind="soporte" /></label>
+            </div>
+            <button class="btn btn--primary" disabled="@(Ocupado || salario is null || salario <= 0 || jornada == 0 || ocupacion == 0 || string.IsNullOrWhiteSpace(soporte))" @onclick="ConfirmarAsync">Confirmar nueva condición</button>
+            <p>Una modificación salarial requiere fecha efectiva y respaldo. Se conserva la historia y no se permite alterar condiciones utilizadas en resultados guardados.</p>
+        </article>
+        <h2>Condiciones conservadas</h2>
+        <table class="data-table"><thead><tr><th>Desde</th><th>Hasta</th><th>Salario mensual</th><th>Jornada</th><th>Estado</th></tr></thead><tbody>
+            @foreach (var c in historia)
+            {
+                <tr><td>@c.Condicion.Vigencia.Inicio.ToString("dd/MM/yyyy")</td><td>@c.Condicion.Vigencia.Fin?.ToString("dd/MM/yyyy")</td><td>@c.Condicion.SalarioBase.ToString("N2")</td>
+                    <td>@catalogos.Jornadas.FirstOrDefault(j => j.Id == c.Condicion.IdJornadaLaboral)?.Nombre</td><td>@c.EstadoRegistro</td></tr>
+            }
+        </tbody></table>
+        <details class="form-section"><summary>Falta una jornada estructurada en el catálogo</summary>
+            <p>Registre la jornada real documentada; no se completan horas por defecto.</p>
+            <div class="form-grid">
+                <label>Código de jornada<input maxlength="50" @bind="codigoJornada" /></label><label>Nombre<input maxlength="150" @bind="nombreJornada" /></label>
+                <label>Tipo<select @bind="tipoJornada"><option value="">Seleccione</option><option>Diurna</option><option>Mixta</option><option>Nocturna</option></select></label>
+                <label>Horas ordinarias al día<input type="number" step="0.0001" @bind="horasDia" /></label><label>Horas ordinarias a la semana<input type="number" step="0.0001" @bind="horasSemana" /></label>
+                <label>Desde<input type="date" @bind="inicioJornada" /></label><label>Hasta<input type="date" @bind="finJornada" /></label><label>Referencia de respaldo<input maxlength="500" @bind="soporteJornada" /></label>
+            </div>
+            <button class="btn btn--secondary" disabled="@(Ocupado || inicioJornada is null || horasDia is null || horasSemana is null)" @onclick="RegistrarJornadaAsync">Registrar jornada documentada</button>
+        </details>
+        <details class="form-section"><summary>Falta la póliza empresarial de Riesgos del Trabajo</summary>
+            <p>Registre exclusivamente los datos de la póliza documentada de la empresa. No son tasas normativas editables ni valores sugeridos por el sistema.</p>
+            <div class="form-grid">
+                <label>Número de póliza<input maxlength="100" @bind="poliza" /></label><label>Actividad indicada en la póliza<input maxlength="100" @bind="actividad" /></label>
+                <label>Tarifa como fracción de la póliza (0.01 equivale a 1 %)<input type="number" step="0.0000000001" @bind="tarifa" /></label>
+                <label>Descuento como fracción (indique 0 expresamente si no existe)<input type="number" step="0.0000000001" @bind="descuento" /></label>
+                <label>Recargo como fracción (indique 0 expresamente si no existe)<input type="number" step="0.0000000001" @bind="recargo" /></label>
+                <label>Vigente desde<input type="date" @bind="inicioRt" /></label><label>Vigente hasta<input type="date" @bind="finRt" /></label>
+                <label>Referencia al documento de la póliza<input maxlength="500" @bind="soporteRt" /></label>
+            </div>
+            <button class="btn btn--secondary" disabled="@(Ocupado || inicioRt is null || tarifa is null || descuento is null || recargo is null)" @onclick="RegistrarRiesgoAsync">Registrar póliza documentada</button>
+        </details>
+    }
+</div></section>
+@code {
+    [Parameter] public long IdContrato { get; set; }
+    private ContratoRecorrido? contrato;
+    private CatalogosRecorridoPlanilla? catalogos;
+    private IReadOnlyList<CondicionLaboralResumen> historia = [];
+    private long ocupacion, jornada, riesgo;
+    private int puesto, departamento;
+    private DateTime inicio;
+    private DateTime? fin, inicioJornada, inicioRt, finJornada, finRt;
+    private decimal? salario, horasDia, horasSemana, tarifa, descuento, recargo;
+    private string poliza = "", actividad = "", soporteRt = "";
+    private string soporte = "", soporteAsociacion = "", codigoJornada = "", nombreJornada = "", tipoJornada = "", soporteJornada = "";
+    protected override Task OnParametersSetAsync() => AccionAsync(async () =>
+    {
+        await CargarAsync();
+        if (contrato is null) return;
+        inicio = contrato.Vigencia.Inicio; fin = contrato.Vigencia.Fin; salario = contrato.Salario;
+        puesto = contrato.IdPuesto; departamento = contrato.IdDepartamento;
+        ocupacion = contrato.IdOcupacion ?? 0; jornada = contrato.IdJornada ?? 0; riesgo = contrato.IdRiesgo ?? 0;
+    });
+    private async Task CargarAsync()
+    {
+        var actor = await ActorAsync(); contrato = await Consulta.ContratoAsync(IdContrato, actor);
+        catalogos = await Consulta.CatalogosAsync(actor); historia = await Condiciones.ConsultarCondicionesAsync(IdContrato, actor);
+    }
+    private Task HomologarAsync() => AccionAsync(async () =>
+    {
+        await Gobierno.HomologarPuestoAsync(contrato!.IdPuesto, ocupacion, soporteAsociacion.Trim(), await ActorAsync());
+        await CargarAsync();
+    }, "Homologación del puesto confirmada.");
+    private Task AsociarAsync() => AccionAsync(async () =>
+    {
+        var actor = await ActorAsync();
+        await Gobierno.AsociarContratoAsync(IdContrato, jornada, riesgo, soporteAsociacion.Trim(), actor);
+        await CargarAsync();
+    }, "Asociaciones guardadas. Ahora confirme la condición laboral efectiva.");
+    private Task ConfirmarAsync() => AccionAsync(async () =>
+    {
+        await Condiciones.RegistrarCondicionAsync(new(IdContrato, new(inicio, fin), salario!.Value, puesto, departamento,
+            ocupacion, jornada, soporte.Trim(), historia.Count == 0 ? null : historia.Max(h => h.IdCondicionLaboralVersion)), await ActorAsync());
+        await CargarAsync();
+    }, "Condición efectiva confirmada y conservada en la historia laboral.");
+    private Task RegistrarJornadaAsync() => AccionAsync(async () =>
+    {
+        if (inicioJornada is null || horasDia is null || horasSemana is null)
+            throw new System.ComponentModel.DataAnnotations.ValidationException();
+        jornada = await Gobierno.RegistrarJornadaAsync(new(codigoJornada.Trim(), nombreJornada.Trim(), tipoJornada,
+            horasDia.Value, horasSemana.Value, new(inicioJornada.Value, finJornada), soporteJornada.Trim()), await ActorAsync());
+        await CargarAsync();
+    }, "Jornada registrada. Selecciónela y confirme su asociación y condición laboral.");
+    private Task RegistrarRiesgoAsync() => AccionAsync(async () =>
+    {
+        if (inicioRt is null || tarifa is null || descuento is null || recargo is null)
+            throw new System.ComponentModel.DataAnnotations.ValidationException();
+        riesgo = await Gobierno.RegistrarRiesgoTrabajoAsync(new(poliza.Trim(), actividad.Trim(), tarifa!.Value,
+            descuento.Value, recargo.Value, new(inicioRt.Value, finRt), soporteRt.Trim()), await ActorAsync());
+        await CargarAsync();
+    }, "Póliza registrada mediante el gobierno financiero. Confirme su asociación al contrato.");
+}

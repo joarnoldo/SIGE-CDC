@@ -1,0 +1,41 @@
+@page "/rrhh/parametros-planilla/nuevo"
+@rendermode InteractiveServer
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Recursos Humanos")]
+@inherits ComponenteRecorridoPlanilla
+@inject IConsultaRecorridoPlanilla Consulta
+@inject RecorridoPlanilla Recorrido
+@inject NavigationManager Navegacion
+
+<PageTitle>Parámetro interno gobernado | SIGE-CDC</PageTitle>
+<section class="section-shell"><div class="container stack">
+    <h1>Registrar versión de parámetro interno</h1>
+    <MensajeRecorrido Texto="@Mensaje" Error="@EsError" />
+    <a href="rrhh/parametros-planilla">Volver a parámetros internos</a>
+    <p>Para beneficios y deducciones internas clasificados. No configura tasas legales, mínimos, renta ni valores técnicos legados.</p>
+    <EditForm Model="solicitud" OnValidSubmit="GuardarAsync" class="form-section stack">
+        <DataAnnotationsValidator /><ValidationSummary />
+        <ParametroPlanillaFormularioCampos Solicitud="solicitud" Conceptos="conceptos" />
+        <button class="btn btn--primary" disabled="@Ocupado">Registrar versión con respaldo</button>
+    </EditForm>
+    <p>La vigencia debe quedar dentro de la versión del concepto, sin solaparse con otra versión del mismo parámetro. Se preserva la historia.</p>
+</div></section>
+@code {
+    [SupplyParameterFromQuery(Name = "anterior")] public int? Anterior { get; set; }
+    private ParametroInternoInterfaz solicitud = new();
+    private IReadOnlyList<ConceptoMonetarioVersion> conceptos = [];
+    protected override Task OnInitializedAsync() => AccionAsync(async () =>
+    {
+        conceptos = (await Consulta.CatalogosAsync(await ActorAsync())).Conceptos;
+        if (Anterior is { } id)
+        {
+            var p = (await Consulta.ParametrosAsync(await ActorAsync())).SingleOrDefault(p => p.Version.IdVersion == id);
+            if (p is not null) { solicitud.Codigo = p.Version.Codigo; solicitud.Nombre = p.Nombre; }
+        }
+    });
+    private Task GuardarAsync() => AccionAsync(async () =>
+    {
+        var id = await Recorrido.RegistrarParametroAsync(solicitud.Codigo, solicitud.Nombre, solicitud.IdConceptoVersion,
+            solicitud.Valor!.Value, new(solicitud.Inicio!.Value, solicitud.Fin), solicitud.Soporte, await ActorAsync());
+        Navegacion.NavigateTo($"rrhh/parametros-planilla/{id}");
+    });
+}

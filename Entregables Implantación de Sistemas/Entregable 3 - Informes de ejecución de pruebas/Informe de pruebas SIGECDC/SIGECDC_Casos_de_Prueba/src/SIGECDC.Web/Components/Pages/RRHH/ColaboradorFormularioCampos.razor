@@ -1,0 +1,136 @@
+@using SIGECDC.Application.RecursosHumanos
+
+<section class="form-section">
+    <p class="eyebrow">Datos personales</p>
+    <div class="form-grid">
+        <div class="field">
+            <label for="codigoColaborador">Código colaborador</label>
+            <InputText id="codigoColaborador" @bind-Value="Solicitud.CodigoColaborador" autocomplete="off" />
+            <ValidationMessage For="() => Solicitud.CodigoColaborador" />
+        </div>
+        <div class="field">
+            <label for="tipoIdentificacion">Tipo identificación</label>
+            <InputSelect id="tipoIdentificacion" @bind-Value="Solicitud.TipoIdentificacion">
+                <option value="Cedula fisica">Cédula física</option>
+                <option value="Cedula juridica">Cédula jurídica</option>
+                <option value="DIMEX">DIMEX</option>
+                <option value="Pasaporte">Pasaporte</option>
+            </InputSelect>
+            <ValidationMessage For="() => Solicitud.TipoIdentificacion" />
+        </div>
+        <div class="field">
+            <label for="identificacion">Identificación</label>
+            <InputText id="identificacion" @bind-Value="Solicitud.Identificacion" autocomplete="off" />
+            <ValidationMessage For="() => Solicitud.Identificacion" />
+        </div>
+        <div class="field">
+            <label for="correoElectronico">Correo electrónico</label>
+            <InputText id="correoElectronico" @bind-Value="Solicitud.CorreoElectronico" type="email" autocomplete="email" />
+            <ValidationMessage For="() => Solicitud.CorreoElectronico" />
+        </div>
+        <div class="field">
+            <label for="nombre">Nombre</label>
+            <InputText id="nombre" @bind-Value="Solicitud.Nombre" autocomplete="given-name" />
+            <ValidationMessage For="() => Solicitud.Nombre" />
+        </div>
+        <div class="field">
+            <label for="primerApellido">Primer apellido</label>
+            <InputText id="primerApellido" @bind-Value="Solicitud.PrimerApellido" autocomplete="family-name" />
+            <ValidationMessage For="() => Solicitud.PrimerApellido" />
+        </div>
+        <div class="field">
+            <label for="segundoApellido">Segundo apellido</label>
+            <InputText id="segundoApellido" @bind-Value="Solicitud.SegundoApellido" autocomplete="family-name" />
+            <ValidationMessage For="() => Solicitud.SegundoApellido" />
+        </div>
+        <div class="field">
+            <label for="telefono">Teléfono</label>
+            <InputText id="telefono" @bind-Value="Solicitud.Telefono" autocomplete="tel" />
+            <ValidationMessage For="() => Solicitud.Telefono" />
+        </div>
+        <div class="field">
+            <label for="fechaNacimiento">Fecha nacimiento</label>
+            <InputDate id="fechaNacimiento" @bind-Value="Solicitud.FechaNacimiento" />
+            <ValidationMessage For="() => Solicitud.FechaNacimiento" />
+        </div>
+        <div class="field field--span-2">
+            <label for="direccion">Dirección</label>
+            <InputText id="direccion" @bind-Value="Solicitud.Direccion" autocomplete="street-address" />
+            <ValidationMessage For="() => Solicitud.Direccion" />
+        </div>
+    </div>
+</section>
+
+<section class="form-section">
+    <p class="eyebrow">Datos laborales</p>
+    <div class="form-grid">
+        <div class="field">
+            <label for="fechaIngreso">Fecha ingreso</label>
+            <InputDate id="fechaIngreso" @bind-Value="Solicitud.FechaIngreso" />
+            <ValidationMessage For="() => Solicitud.FechaIngreso" />
+        </div>
+        <div class="field">
+            <label for="fechaSalida">Fecha salida</label>
+            <InputDate id="fechaSalida" @bind-Value="Solicitud.FechaSalida" />
+            <ValidationMessage For="() => Solicitud.FechaSalida" />
+        </div>
+        <div class="field">
+            <label for="estadoLaboral">Estado laboral</label>
+            <InputSelect id="estadoLaboral" @bind-Value="Solicitud.IdEstadoLaboral">
+                <option value="0">Seleccione un estado</option>
+                @foreach (var estado in EstadosLaborales)
+                {
+                    <option value="@estado.Id">@estado.Nombre</option>
+                }
+            </InputSelect>
+            <ValidationMessage For="() => Solicitud.IdEstadoLaboral" />
+        </div>
+        <div class="field">
+            <label for="departamento">Departamento</label>
+            <InputSelect id="departamento"
+                         Value="Solicitud.IdDepartamento"
+                         ValueChanged="DepartamentoCambiado"
+                         ValueExpression="() => Solicitud.IdDepartamento">
+                <option value="0">Seleccione un departamento</option>
+                @foreach (var departamento in Departamentos)
+                {
+                    <option value="@departamento.Id">@departamento.Nombre</option>
+                }
+            </InputSelect>
+            <ValidationMessage For="() => Solicitud.IdDepartamento" />
+        </div>
+        <div class="field">
+            <label for="puesto">Puesto</label>
+            <InputSelect id="puesto" @bind-Value="Solicitud.IdPuesto">
+                <option value="0">Seleccione un puesto</option>
+                @foreach (var puesto in Puestos)
+                {
+                    <option value="@puesto.Id">@puesto.Nombre</option>
+                }
+            </InputSelect>
+            <ValidationMessage For="() => Solicitud.IdPuesto" />
+        </div>
+        <div class="field field--span-2">
+            <label for="observaciones">Observaciones</label>
+            <InputTextArea id="observaciones" @bind-Value="Solicitud.Observaciones" />
+            <ValidationMessage For="() => Solicitud.Observaciones" />
+        </div>
+    </div>
+</section>
+
+@code {
+    [Parameter, EditorRequired]
+    public SolicitudColaborador Solicitud { get; set; } = default!;
+
+    [Parameter]
+    public IReadOnlyList<OpcionCatalogo> EstadosLaborales { get; set; } = [];
+
+    [Parameter]
+    public IReadOnlyList<OpcionCatalogo> Departamentos { get; set; } = [];
+
+    [Parameter]
+    public IReadOnlyList<OpcionCatalogo> Puestos { get; set; } = [];
+
+    [Parameter]
+    public EventCallback<int> DepartamentoCambiado { get; set; }
+}
