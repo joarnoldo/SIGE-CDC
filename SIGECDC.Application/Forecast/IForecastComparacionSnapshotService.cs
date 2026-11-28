@@ -17,7 +17,15 @@ public sealed record FilaComparacionPersistida(long Id,string Granularidad,strin
 }
 public sealed record PeriodoComparacionPersistida(long IdComparacion,long IdPeriodo,string TipoPeriodo,DateTime Inicio,DateTime Fin,
     long? IdEjecucionReal,int? VersionReal,string? VersionMotorReal,string Disponibilidad,string? Motivo,string? EstadoReal,
-    DateTime FechaEvaluacion,IReadOnlyList<FilaComparacionPersistida> Filas);
+    DateTime FechaEvaluacion,IReadOnlyList<FilaComparacionPersistida> Filas)
+{
+    // Proyección de consulta; no son nuevas filas persistidas ni versiones del snapshot.
+    public IReadOnlyList<DesviacionDepartamentoComparacion> Departamentos { get; init; } = [];
+    public string? MotivoDepartamentos { get; init; } = "No existe una comparación real disponible para agrupar por departamento.";
+}
+public sealed record DesviacionDepartamentoComparacion(int IdDepartamento,string NombreForecast,string NombreReal,
+    decimal? MontoForecast,decimal? MontoReal,decimal? DiferenciaFirmada,decimal? DiferenciaAbsoluta,
+    decimal? DiferenciaPorcentual,string? Motivo,IReadOnlyList<FuenteComparacion> Fuentes);
 public sealed record ConsultaComparacionPersistida(long IdEscenario,string Nombre,string Estado,IReadOnlyList<PeriodoComparacionPersistida> Periodos);
 
 public interface IForecastComparacionSnapshotService

@@ -122,8 +122,10 @@ public sealed partial class ForecastComparacionSnapshotService
                 {Dimensiones=r.Granularidad!="Participante"?[]:segmentosF.Where(s=>fpIds.Contains(s.IdForecastParticipante)).Select(s=>new DimensionComparacion("Forecast",s.FechaInicio,s.FechaFin,s.NombrePuesto,s.NombreDepartamento,s.NombreJornada,s.SalarioMensual))
                     .Concat(segmentosR.Where(s=>rpIds.Contains(s.IdDetallePlanilla)).Select(s=>new DimensionComparacion("Real",s.FechaInicio,s.FechaFin,s.NombrePuesto!,s.NombreDepartamento!,s.CodigoJornada,s.SalarioMensual))).ToArray()});
             }
+            var departamentos=await AgruparDepartamentosAsync(filas,fs,segmentosF,segmentosR,periodo.FechaInicio,periodo.FechaFin,ct);
             salida.Add(new(cab.IdForecastComparacionReal,periodo.IdForecastPeriodo,periodo.TipoPeriodo,periodo.FechaInicio,periodo.FechaFin,ejecucion.IdEjecucionPlanilla,ejecucion.NumeroVersion,ejecucion.VersionMotor,
-                cab.Disponibilidad,cab.MotivoNoComparable,cab.EstadoPlanillaObservado,cab.FechaEvaluacion,filas));
+                cab.Disponibilidad,cab.MotivoNoComparable,cab.EstadoPlanillaObservado,cab.FechaEvaluacion,filas)
+                {Departamentos=departamentos.Filas,MotivoDepartamentos=departamentos.Motivo});
         }
         if(escenario.EstadoEscenario=="Comparado" && salida.Sum(p=>p.Filas.Single(f=>f.Granularidad=="Total").MontoForecast??0)!=escenario.MontoProyectadoTotal)throw Error("COMPARACION_NO_CONCILIA");
         return new(escenario.IdForecastEscenario,escenario.Nombre,escenario.EstadoEscenario,salida);
