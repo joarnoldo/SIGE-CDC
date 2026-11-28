@@ -5,6 +5,8 @@ namespace SIGECDC.Application.SitioPublico;
 
 public sealed class SolicitudGaleria
 {
+    public long? IdProyecto { get; set; }
+
     [Required(ErrorMessage = "El nombre es obligatorio.")]
     [StringLength(150, ErrorMessage = "El nombre no debe superar los 150 caracteres.")]
     public string Nombre { get; set; } = string.Empty;
@@ -54,6 +56,10 @@ public sealed class SolicitudActualizarImagenGaleria
 
 public sealed class GaleriaResumen
 {
+    public long? IdProyecto { get; set; }
+
+    public string? NombreProyecto { get; set; }
+
     public long IdGaleria { get; set; }
 
     public string Nombre { get; set; } = string.Empty;
@@ -92,6 +98,10 @@ public sealed class ImagenGaleriaResumen
 
 public sealed class GaleriaDetalle
 {
+    public long? IdProyecto { get; set; }
+
+    public string? NombreProyecto { get; set; }
+
     public long IdGaleria { get; set; }
 
     public string Nombre { get; set; } = string.Empty;

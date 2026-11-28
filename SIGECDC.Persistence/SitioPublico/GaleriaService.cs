@@ -27,6 +27,8 @@ public sealed class GaleriaService(
             .Select(galeria => new GaleriaResumen
             {
                 IdGaleria = galeria.IdGaleria,
+                IdProyecto = galeria.IdProyecto,
+                NombreProyecto = galeria.Proyecto == null ? null : galeria.Proyecto.NombreProyecto,
                 Nombre = galeria.Nombre,
                 Descripcion = galeria.Descripcion,
                 EstaPublicado = galeria.EstaPublicado,
@@ -47,6 +49,8 @@ public sealed class GaleriaService(
             .Select(galeria => new GaleriaResumen
             {
                 IdGaleria = galeria.IdGaleria,
+                IdProyecto = galeria.IdProyecto,
+                NombreProyecto = galeria.Proyecto == null ? null : galeria.Proyecto.NombreProyecto,
                 Nombre = galeria.Nombre,
                 Descripcion = galeria.Descripcion,
                 EstaPublicado = galeria.EstaPublicado,
@@ -67,6 +71,8 @@ public sealed class GaleriaService(
             .Select(galeria => new GaleriaDetalle
             {
                 IdGaleria = galeria.IdGaleria,
+                IdProyecto = galeria.IdProyecto,
+                NombreProyecto = galeria.Proyecto == null ? null : galeria.Proyecto.NombreProyecto,
                 Nombre = galeria.Nombre,
                 Descripcion = galeria.Descripcion,
                 EstaPublicado = galeria.EstaPublicado
@@ -124,6 +130,8 @@ public sealed class GaleriaService(
             .Select(galeria => new GaleriaResumen
             {
                 IdGaleria = galeria.IdGaleria,
+                IdProyecto = galeria.IdProyecto,
+                NombreProyecto = galeria.Proyecto == null ? null : galeria.Proyecto.NombreProyecto,
                 Nombre = galeria.Nombre,
                 Descripcion = galeria.Descripcion,
                 EstaPublicado = galeria.EstaPublicado,
@@ -164,8 +172,10 @@ public sealed class GaleriaService(
 
     public async Task<long> RegistrarAsync(SolicitudGaleria solicitud, string? idUsuarioActual = null, CancellationToken cancellationToken = default)
     {
+        await ValidarProyectoAsync(solicitud.IdProyecto, cancellationToken);
         var galeria = new Galeria
         {
+            IdProyecto = solicitud.IdProyecto,
             Nombre = LimpiarObligatorio(solicitud.Nombre, "El nombre de la galeria es obligatorio."),
             Descripcion = LimpiarOpcional(solicitud.Descripcion),
             EstaPublicado = false,
@@ -184,8 +194,13 @@ public sealed class GaleriaService(
     {
         var galeria = await ObtenerGaleriaEditableAsync(idGaleria, cancellationToken);
 
+        // Una asociación antigua puede conservarse aunque el proyecto haya sido desactivado.
+        // Seleccionar otro proyecto requiere que exista y esté activo.
+        if (solicitud.IdProyecto != galeria.IdProyecto)
+            await ValidarProyectoAsync(solicitud.IdProyecto, cancellationToken);
         galeria.Nombre = LimpiarObligatorio(solicitud.Nombre, "El nombre de la galeria es obligatorio.");
         galeria.Descripcion = LimpiarOpcional(solicitud.Descripcion);
+        galeria.IdProyecto = solicitud.IdProyecto;
         galeria.FechaModificacion = DateTime.Now;
         galeria.ModificadoPor = idUsuarioActual;
 
@@ -472,6 +487,14 @@ public sealed class GaleriaService(
         return await contexto.Galerias
             .FirstOrDefaultAsync(galeria => galeria.IdGaleria == idGaleria && galeria.EstadoRegistro == EstadoRegistroActivo, cancellationToken)
             ?? throw new InvalidOperationException("No se encontro la galeria solicitada.");
+    }
+
+    private async Task ValidarProyectoAsync(long? idProyecto, CancellationToken cancellationToken)
+    {
+        if (idProyecto is null) return;
+        if (!await contexto.Proyectos.AnyAsync(p => p.IdProyecto == idProyecto
+            && p.EstadoRegistro == EstadoRegistroActivo, cancellationToken))
+            throw new ArgumentException("Seleccione un proyecto existente y activo, o deje la galería sin proyecto.");
     }
 
     private async Task<ImagenGaleria> ObtenerImagenEditableAsync(

@@ -4,6 +4,10 @@ public class Galeria
 {
     public long IdGaleria { get; set; }
 
+    public long? IdProyecto { get; set; }
+
+    public Operaciones.Proyecto? Proyecto { get; set; }
+
     public string Nombre { get; set; } = string.Empty;
 
     public string? Descripcion { get; set; }
