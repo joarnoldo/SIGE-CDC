@@ -7,7 +7,7 @@ using SIGECDC.Application.Forecast;
 
 namespace SIGECDC.Infrastructure.Reportes;
 
-// Ambos canales presentan exclusivamente la proyección persistida de M. Sin servicios de datos ni cálculos.
+// Ambos canales presentan la misma consulta de M y su agrupación histórica. Sin servicios de datos ni cálculos.
 public sealed class GeneradorComparacionForecast:IGeneradorComparacionForecast
 {
     private static readonly CultureInfo Cultura=CultureInfo.GetCultureInfo("es-CR");
@@ -17,13 +17,16 @@ public sealed class GeneradorComparacionForecast:IGeneradorComparacionForecast
         ArgumentNullException.ThrowIfNull(consulta);
         using var libro=new XLWorkbook();
         var hoja=libro.Worksheets.Add("Comparacion");var dimensiones=libro.Worksheets.Add("Dimensiones historicas");
-        foreach(var h in new[]{hoja,dimensiones})
+        var departamentos=libro.Worksheets.Add("Departamentos");
+        foreach(var h in new[]{hoja,dimensiones,departamentos})
         {h.Cell(1,1).SetValue(consulta.Nombre);h.Cell(2,1).SetValue(consulta.Estado+" · Comparación histórica de snapshots · FIN-02 contenido");h.SheetView.FreezeRows(4);}
         string[] titulos=["Período","Inicio","Fin","Ejecución real","Versión real","Estado real observado","Disponibilidad","Dimensión","Código Forecast","Forecast histórico","Código real","Real histórico","Monto Forecast","Monto real","Diferencia firmada","Magnitud absoluta","Diferencia %","Motivo"];
         for(var i=0;i<titulos.Length;i++)hoja.Cell(4,i+1).SetValue(titulos[i]);
         string[] dims=["Período","Participante Forecast","Participante real","Lado","Inicio","Fin","Puesto","Departamento","Jornada","Salario mensual"];
         for(var i=0;i<dims.Length;i++)dimensiones.Cell(4,i+1).SetValue(dims[i]);
-        var fila=5;var dim=5;
+        string[] titulosDepartamento=["Período","Inicio","Fin","Departamento Forecast","Departamento real","Monto Forecast","Monto real","Diferencia firmada","Magnitud absoluta","Diferencia %","Motivo"];
+        for(var i=0;i<titulosDepartamento.Length;i++)departamentos.Cell(4,i+1).SetValue(titulosDepartamento[i]);
+        var fila=5;var dim=5;var dep=5;
         foreach(var p in consulta.Periodos)
         {
             void Cabecera(int f)
@@ -49,8 +52,22 @@ public sealed class GeneradorComparacionForecast:IGeneradorComparacionForecast
                     dimensiones.Cell(dim,7).SetValue(d.Puesto);dimensiones.Cell(dim,8).SetValue(d.Departamento);dimensiones.Cell(dim,9).SetValue(d.Jornada);Escribir(dimensiones.Cell(dim,10),d.SalarioMensual,"#,##0.00");dim++;
                 }
             }
+            void CabeceraDepartamento()
+            {
+                departamentos.Cell(dep,1).SetValue(p.TipoPeriodo);departamentos.Cell(dep,2).SetValue(p.Inicio);departamentos.Cell(dep,3).SetValue(p.Fin);
+                departamentos.Range(dep,2,dep,3).Style.DateFormat.Format="yyyy-mm-dd";
+            }
+            if(p.MotivoDepartamentos is {} motivo)
+            {CabeceraDepartamento();departamentos.Cell(dep,11).SetValue(motivo);dep++;}
+            else foreach(var d in p.Departamentos)
+            {
+                CabeceraDepartamento();departamentos.Cell(dep,4).SetValue(d.NombreForecast);departamentos.Cell(dep,5).SetValue(d.NombreReal);
+                decimal?[] valores=[d.MontoForecast,d.MontoReal,d.DiferenciaFirmada,d.DiferenciaAbsoluta,d.DiferenciaPorcentual];
+                for(var i=0;i<valores.Length;i++)if(valores[i] is {} n)Escribir(departamentos.Cell(dep,6+i),n,i==4?"0.0000":"#,##0.00");
+                departamentos.Cell(dep,11).SetValue(d.Motivo??"");dep++;
+            }
         }
-        foreach(var h in new[]{hoja,dimensiones})
+        foreach(var h in new[]{hoja,dimensiones,departamentos})
         {h.Row(4).Style.Font.Bold=true;h.Row(4).Style.Fill.BackgroundColor=XLColor.LightGray;h.Columns().AdjustToContents(8,45);h.RowsUsed().Style.Alignment.WrapText=true;}
         var memoria=new MemoryStream();libro.SaveAs(memoria);memoria.Position=0;
         return new(memoria,$"Forecast-{consulta.IdEscenario}-comparacion.xlsx","application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
@@ -98,6 +115,17 @@ public sealed class GeneradorComparacionForecast:IGeneradorComparacionForecast
                 Texto("Diferencia: "+Numero(r.DiferenciaFirmada)+" | Magnitud: "+Numero(r.DiferenciaAbsoluta)+" | %: "+Numero(r.DiferenciaPorcentual,4));
                 if(r.Motivo is {} motivo)Texto("Motivo: "+motivo);
                 foreach(var d in r.Dimensiones)Texto($"{d.Lado} {d.Inicio:yyyy-MM-dd}–{d.Fin:yyyy-MM-dd}: {d.Puesto} / {d.Departamento} / {d.Jornada} / salario CRC {Numero(d.SalarioMensual)}");
+            }
+            Texto("Desviaciones por departamento",true);
+            if(p.MotivoDepartamentos is {} motivoDepartamentos)Texto(motivoDepartamentos);
+            else foreach(var d in p.Departamentos)
+            {
+                if(y+120>pagina!.Height.Point-40)NuevaPagina();
+                Texto("Departamento Forecast: "+(d.MontoForecast is null?"Sin correspondencia":d.NombreForecast));
+                Texto("Departamento real: "+(d.MontoReal is null?"Sin correspondencia":d.NombreReal));
+                Texto("CRC Forecast: "+Numero(d.MontoForecast)+" | Real: "+Numero(d.MontoReal));
+                Texto("Diferencia: "+Numero(d.DiferenciaFirmada)+" | Magnitud: "+Numero(d.DiferenciaAbsoluta)+" | %: "+Numero(d.DiferenciaPorcentual,4));
+                if(d.Motivo is {} motivo)Texto("Motivo: "+motivo);
             }
         }
         g?.Dispose();var memoria=new MemoryStream();pdf.Save(memoria,false);memoria.Position=0;

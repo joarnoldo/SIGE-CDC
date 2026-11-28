@@ -464,6 +464,15 @@ public partial class ApplicationDbContext(DbContextOptions<ApplicationDbContext>
             entidad.HasIndex(galeria => galeria.EstaPublicado)
                 .HasDatabaseName("IX_Galeria_EstaPublicado");
 
+            entidad.HasIndex(galeria => galeria.IdProyecto)
+                .HasDatabaseName("IX_Galeria_IdProyecto");
+
+            entidad.HasOne(galeria => galeria.Proyecto)
+                .WithMany()
+                .HasForeignKey(galeria => galeria.IdProyecto)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_Galeria_Proyecto");
+
             entidad.HasOne<ApplicationUser>()
                 .WithMany()
                 .HasForeignKey(galeria => galeria.CreadoPor)

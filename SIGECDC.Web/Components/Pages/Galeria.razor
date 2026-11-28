@@ -47,6 +47,10 @@
                         <div class="section-heading__copy">
                             <p class="eyebrow">Galería</p>
                             <h2>@galeria.Nombre</h2>
+                            @if (galeria.IdProyecto is not null)
+                            {
+                                <p>Proyecto: @galeria.NombreProyecto</p>
+                            }
                             @if (!string.IsNullOrWhiteSpace(galeria.Descripcion))
                             {
                                 <p class="lead">@galeria.Descripcion</p>

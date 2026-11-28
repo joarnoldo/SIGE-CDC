@@ -35,6 +35,21 @@
                     </details></td></tr>}
                 }
                 </tbody></table></div>
+                <h4>Desviaciones por departamento</h4>
+                @if(p.MotivoDepartamentos is {} motivoDepartamentos)
+                {
+                    <p class="alert alert--warning" role="status">@motivoDepartamentos</p>
+                }
+                else
+                {
+                    <p>Agrupación de importes históricos. Los porcentajes se calculan sobre las bases de cada departamento.</p>
+                    <div class="table-responsive"><table class="data-table"><thead><tr><th>Departamento Forecast</th><th>Departamento real</th><th>Forecast CRC</th><th>Real CRC</th><th>Firmada CRC</th><th>Absoluta CRC</th><th>% con signo</th><th>Motivo</th></tr></thead><tbody>
+                    @foreach(var d in p.Departamentos)
+                    {
+                        <tr><td>@d.NombreForecast</td><td>@d.NombreReal</td><td>@N(d.MontoForecast)</td><td>@N(d.MontoReal)</td><td>@N(d.DiferenciaFirmada)</td><td>@N(d.DiferenciaAbsoluta)</td><td>@N(d.DiferenciaPorcentual,4)</td><td>@d.Motivo</td></tr>
+                    }
+                    </tbody></table></div>
+                }
             </article>
         }
     }
